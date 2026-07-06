@@ -1,0 +1,521 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    body { background-color: #f4f6f9; }
+    .dash-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 15px; }
+    .dash-title { color: var(--copp-blue); margin: 0; font-weight: 700; font-size: 24px; }
+    
+    .filter-panel { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .filter-group { display: flex; flex-direction: column; gap: 8px; }
+    .filter-group label { font-size: 13px; font-weight: 600; color: #555; text-transform: uppercase; }
+    
+    /* Custom Dropdowns */
+    .custom-select-wrapper { position: relative; user-select: none; width: 100%; }
+    .custom-select { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; font-size: 14px; color: #333; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .custom-select:hover, .custom-select-wrapper.open .custom-select { border-color: #70c6d1; box-shadow: 0 0 0 3px rgba(112, 198, 209, 0.2); }
+    .custom-select-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
+    .custom-select-options { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #70c6d1; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 100; max-height: 300px; overflow-y: auto; }
+    .custom-select-wrapper.open .custom-select-options { display: block; }
+    .custom-select-option { padding: 10px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; font-size: 14px; color: #333; }
+    .custom-select-option:hover { background: #eef8f9; } /* very light tropical blue */
+    .custom-select-option input[type="checkbox"], .custom-select-option input[type="radio"] { accent-color: #70c6d1; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .custom-select-arrow { transition: transform 0.2s; font-size: 12px; color: #888; }
+    .custom-select-wrapper.open .custom-select-arrow { transform: rotate(180deg); color: #70c6d1; }
+    
+    .stats-container { display: flex; background: #003e6b; /* var(--copp-blue) */ border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 62, 107, 0.2); margin-bottom: 40px; overflow: hidden; }
+    .stat-item { flex: 1; padding: 30px 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-right: 1px solid rgba(255, 255, 255, 0.15); }
+    .stat-item:last-child { border-right: none; }
+    .stat-item h5 { color: rgba(255, 255, 255, 0.85); font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 15px; margin-top: 0; line-height: 1.4; min-height: 36px; display: flex; align-items: center; }
+    .stat-value { font-size: 46px; font-weight: 800; color: #ffffff; line-height: 1; font-family: 'Arial Black', Impact, sans-serif; }
+    
+    @media (max-width: 768px) {
+        .stats-container { flex-direction: column; }
+        .stat-item { border-right: none; border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+        .stat-item:last-child { border-bottom: none; }
+    }
+    
+    /* Vacancy Grid */
+    .vacancy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; align-items: start; }
+    .vacancy-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s, box-shadow 0.2s; display: flex; flex-direction: column; min-height: 250px; border: 1px solid #eaeaea; }
+    .vacancy-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--copp-blue); }
+    
+    .vac-title { font-size: 18px; font-weight: 700; color: var(--copp-blue); margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .vac-company { font-size: 14px; color: #555; font-weight: 600; margin-bottom: 10px; }
+    .vac-salary { font-size: 18px; font-weight: 700; color: var(--copp-orange); margin-bottom: 15px; }
+    
+    .vac-meta { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #777; margin-bottom: 6px; }
+    
+    .vac-actions { margin-top: auto; padding-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; }
+    .btn-vac-primary { flex: 1; background-color: var(--copp-blue); color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: 600; font-size: 14px; text-align: center; transition: background 0.2s; cursor: pointer; }
+    .btn-vac-primary:hover { background-color: #002233; color: white; }
+    .btn-vac-secondary { flex: 1; background-color: transparent; color: var(--copp-blue); border: 2px solid var(--copp-blue); padding: 8px 12px; border-radius: 4px; font-weight: 600; font-size: 14px; text-align: center; text-decoration: none; transition: all 0.2s; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+    .btn-vac-secondary:hover { background-color: rgba(0, 62, 107, 0.05); color: var(--copp-blue); }
+    
+    .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    
+    /* Simple spinner without bootstrap */
+    .spinner { width: 50px; height: 50px; border: 5px solid rgba(0, 62, 107, 0.1); border-top-color: var(--copp-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="dash-container">
+    <div class="dash-header">
+        <h1 class="dash-title">Дашборд: Статистика профессий</h1>
+        <div class="text-muted" id="lastUpdated" style="color: #666;">Загрузка данных...</div>
+    </div>
+
+    <!-- Filters Row -->
+    <div class="filter-panel">
+        <div class="filter-group">
+            <label>Категория</label>
+            <div class="custom-select-wrapper" id="catWrapper">
+                <div class="custom-select" onclick="toggleDropdown('catWrapper', event)">
+                    <span class="custom-select-text" id="catText">Полный список</span>
+                    <span class="custom-select-arrow">▼</span>
+                </div>
+                <div class="custom-select-options" id="catOptions">
+                    <!-- Single select categories -->
+                    <label class="custom-select-option">
+                        <input type="radio" name="category" value="Полный список" checked onchange="changeCategory(this)"> Полный список
+                    </label>
+                    <label class="custom-select-option">
+                        <input type="radio" name="category" value="Свод по региону" onchange="changeCategory(this)"> Свод по региону
+                    </label>
+                    <label class="custom-select-option">
+                        <input type="radio" name="category" value="Иностранцы" onchange="changeCategory(this)"> Иностранцы
+                    </label>
+                    <label class="custom-select-option">
+                        <input type="radio" name="category" value="Квотируемые" onchange="changeCategory(this)"> Квотируемые
+                    </label>
+                    <label class="custom-select-option">
+                        <input type="radio" name="category" value="С предоставлением жилья" onchange="changeCategory(this)"> С предоставлением жилья
+                    </label>
+                    <label class="custom-select-option">
+                        <input type="radio" name="category" value="Соцкатегории" onchange="changeCategory(this)"> Соцкатегории
+                    </label>
+                    <label class="custom-select-option">
+                        <input type="radio" name="category" value="Трудовая мобильность" onchange="changeCategory(this)"> Трудовая мобильность
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="filter-group">
+            <label>Муниципалитеты</label>
+            <div class="custom-select-wrapper" id="muniWrapper">
+                <div class="custom-select" onclick="toggleDropdown('muniWrapper', event)">
+                    <span class="custom-select-text" id="muniText">Все муниципалитеты</span>
+                    <span class="custom-select-arrow">▼</span>
+                </div>
+                <div class="custom-select-options" id="muniOptions">
+                    <!-- Checkboxes generated by JS -->
+                </div>
+            </div>
+        </div>
+        <div class="filter-group">
+            <label>Работодатели</label>
+            <div class="custom-select-wrapper" id="empWrapper">
+                <div class="custom-select" onclick="toggleDropdown('empWrapper', event)">
+                    <span class="custom-select-text" id="empText">Все компании</span>
+                    <span class="custom-select-arrow">▼</span>
+                </div>
+                <div class="custom-select-options" id="empOptions">
+                    <!-- Checkboxes generated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-container">
+        <div class="stat-item">
+            <h5>Количество вакансий</h5>
+            <div class="stat-value" id="statVacancies">0</div>
+        </div>
+        <div class="stat-item">
+            <h5>Общее число рабочих мест</h5>
+            <div class="stat-value" id="statJobs">0</div>
+        </div>
+        <div class="stat-item">
+            <h5>Медианная заработная плата</h5>
+            <div class="stat-value" id="statSalary">0</div>
+        </div>
+    </div>
+
+    <!-- Vacancies Grid -->
+    <h4 class="mb-3" style="color: var(--copp-blue); font-weight: 700; margin-bottom: 20px;">Список вакансий</h4>
+    <div id="vacanciesGrid" class="vacancy-grid mb-5">
+        <!-- Rendered via JS -->
+    </div>
+    
+    <!-- Pagination (Load more) -->
+    <div class="text-center mb-5" id="loadMoreContainer" style="display: none; text-align: center; margin-top: 30px; margin-bottom: 50px;">
+        <button id="btnLoadMore" style="background: transparent; border: 2px solid var(--copp-blue); color: var(--copp-blue); font-weight: 600; padding: 10px 40px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">Показать еще</button>
+    </div>
+</div>
+
+<!-- Vacancy Details Modal -->
+<div id="vacancyModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; justify-content:center; align-items:center;">
+    <div style="position:absolute; width:100%; height:100%; cursor:pointer;" onclick="closeVacancyModal()"></div>
+    <div style="background:#fff; width:90%; max-width:800px; max-height:90vh; border-radius:8px; box-shadow:0 5px 25px rgba(0,0,0,0.2); position:relative; z-index:1; display:flex; flex-direction:column;">
+        <div style="padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; border-radius:8px 8px 0 0;">
+            <h5 id="modalTitle" style="color:var(--copp-blue); font-weight:700; margin:0; font-size:20px;">Детали вакансии</h5>
+            <button type="button" onclick="closeVacancyModal()" style="background:transparent; border:none; font-size:28px; cursor:pointer; color:#999; line-height:1;">&times;</button>
+        </div>
+        <div id="modalBody" style="padding:20px; font-size:15px; overflow-y:auto; flex:1;">
+            <!-- Content generated via JS -->
+        </div>
+        <div style="padding:15px 20px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; background:#f8f9fa; border-radius:0 0 8px 8px;">
+            <button type="button" onclick="closeVacancyModal()" style="padding:8px 15px; border:1px solid #ccc; background:#fff; border-radius:4px; cursor:pointer; font-weight:600; color:#555;">Закрыть</button>
+            <a href="#" id="modalLinkBtn" target="_blank" style="padding:8px 15px; background:var(--copp-blue); color:#fff; border-radius:4px; text-decoration:none; font-weight:600;">Перейти на источник</a>
+        </div>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div style="margin-top:20px; font-weight:bold; color: var(--copp-blue);">Загрузка данных...</div>
+</div>
+
+<script>
+    // Custom Dropdown Logic
+    function toggleDropdown(id, event) {
+        event.stopPropagation();
+        document.querySelectorAll('.custom-select-wrapper').forEach(el => {
+            if(el.id !== id) el.classList.remove('open');
+        });
+        document.getElementById(id).classList.toggle('open');
+    }
+    
+    document.addEventListener('click', function(e) {
+        if(!e.target.closest('.custom-select-wrapper')) {
+            document.querySelectorAll('.custom-select-wrapper').forEach(el => el.classList.remove('open'));
+        }
+    });
+
+    let currentCategory = "Полный список";
+
+    function changeCategory(radio) {
+        currentCategory = radio.value;
+        document.getElementById('catText').innerText = currentCategory;
+        document.getElementById('catWrapper').classList.remove('open');
+        loadData();
+    }
+
+    // Main Logic
+    let allData = [];
+    let filteredData = [];
+    let currentRenderLimit = 24;
+    
+    let currentVacancies = 0;
+    let currentJobs = 0;
+    let currentSalary = 0;
+    
+    const statVacancies = document.getElementById('statVacancies');
+    const statJobs = document.getElementById('statJobs');
+    const statSalary = document.getElementById('statSalary');
+    const vacanciesGrid = document.getElementById('vacanciesGrid');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    const btnLoadMore = document.getElementById('btnLoadMore');
+    
+    // Modal Logic
+    const vacancyModalEl = document.getElementById('vacancyModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalLinkBtn = document.getElementById('modalLinkBtn');
+    
+    function closeVacancyModal() {
+        vacancyModalEl.classList.remove('show');
+        vacancyModalEl.style.display = 'none';
+    }
+    vacancyModalEl.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+    function loadData() {
+        loadingOverlay.style.display = 'flex';
+        
+        fetch(`/api/dashboard?category=${encodeURIComponent(currentCategory)}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    allData = data.data;
+                    populateFilterOptions();
+                    applyFilters();
+                }
+            })
+            .catch(err => console.error("Error loading dashboard data:", err))
+            .finally(() => {
+                loadingOverlay.style.display = 'none';
+                document.getElementById('lastUpdated').innerText = `Данные загружены`;
+            });
+    }
+    
+    function populateFilterOptions() {
+        let munis = new Set();
+        let employers = new Set();
+        
+        allData.forEach(item => {
+            if(item.municipality && item.municipality !== 'None') munis.add(item.municipality);
+            if(item.employer && item.employer !== 'None') employers.add(item.employer);
+        });
+        
+        const muniOptionsEl = document.getElementById('muniOptions');
+        muniOptionsEl.innerHTML = '';
+        Array.from(munis).sort().forEach(m => {
+            muniOptionsEl.innerHTML += `
+                <label class="custom-select-option" onclick="event.stopPropagation()">
+                    <input type="checkbox" value="${m}" class="filter-muni-cb" onchange="applyFilters()"> ${m}
+                </label>
+            `;
+        });
+        document.getElementById('muniText').innerText = 'Все муниципалитеты';
+        
+        const empOptionsEl = document.getElementById('empOptions');
+        empOptionsEl.innerHTML = '';
+        Array.from(employers).sort().forEach(e => {
+            empOptionsEl.innerHTML += `
+                <label class="custom-select-option" onclick="event.stopPropagation()">
+                    <input type="checkbox" value="${e.replace(/"/g, '&quot;')}" class="filter-emp-cb" onchange="applyFilters()"> ${e}
+                </label>
+            `;
+        });
+        document.getElementById('empText').innerText = 'Все компании';
+    }
+
+    function applyFilters() {
+        // Collect checked filters
+        const checkedMunis = Array.from(document.querySelectorAll('.filter-muni-cb:checked')).map(cb => cb.value);
+        const checkedEmps = Array.from(document.querySelectorAll('.filter-emp-cb:checked')).map(cb => cb.value);
+        
+        // Update texts
+        document.getElementById('muniText').innerText = checkedMunis.length > 0 ? `Выбрано: ${checkedMunis.length}` : 'Все муниципалитеты';
+        document.getElementById('empText').innerText = checkedEmps.length > 0 ? `Выбрано: ${checkedEmps.length}` : 'Все компании';
+        
+        filteredData = allData.filter(item => {
+            if(checkedMunis.length > 0 && !checkedMunis.includes(item.municipality)) return false;
+            if(checkedEmps.length > 0 && !checkedEmps.includes(item.employer)) return false;
+            return true;
+        });
+        
+        updateStats();
+        
+        currentRenderLimit = 24;
+        renderGrid();
+    }
+    
+    function animateValue(obj, start, end, duration, suffix = "") {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // easeOutQuart
+            const easeOut = 1 - Math.pow(1 - progress, 4);
+            const currentVal = Math.floor(easeOut * (end - start) + start);
+            
+            let displayVal = formatNumber(currentVal);
+            if(suffix) {
+                obj.innerHTML = displayVal + ` <span style="font-size:24px;">${suffix}</span>`;
+            } else {
+                obj.innerHTML = displayVal;
+            }
+            
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                if(suffix) {
+                    obj.innerHTML = formatNumber(end) + ` <span style="font-size:24px;">${suffix}</span>`;
+                } else {
+                    obj.innerHTML = formatNumber(end);
+                }
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+    
+    function updateStats() {
+        let totalJobs = 0;
+        let salaries = [];
+        
+        filteredData.forEach(item => {
+            totalJobs += (item.jobs_count || 1);
+            if(item.salary && item.salary > 0) {
+                salaries.push(item.salary);
+            }
+        });
+        
+        let targetVacancies = filteredData.length;
+        let targetJobs = totalJobs;
+        let targetSalary = 0;
+        
+        if(salaries.length > 0) {
+            salaries.sort((a, b) => a - b);
+            let mid = Math.floor(salaries.length / 2);
+            if(salaries.length % 2 === 0) {
+                targetSalary = Math.round((salaries[mid-1] + salaries[mid]) / 2);
+            } else {
+                targetSalary = Math.round(salaries[mid]);
+            }
+        }
+        
+        // Animate the counters
+        animateValue(statVacancies, currentVacancies, targetVacancies, 1000);
+        animateValue(statJobs, currentJobs, targetJobs, 1000);
+        
+        if(targetSalary > 0) {
+            animateValue(statSalary, currentSalary, targetSalary, 1000, "₽");
+        } else {
+            statSalary.innerHTML = `<span style="font-size: 24px;">Н/Д</span>`;
+        }
+        
+        currentVacancies = targetVacancies;
+        currentJobs = targetJobs;
+        currentSalary = targetSalary;
+    }
+    
+    window.openVacancyModal = function(index) {
+        const item = filteredData[index];
+        modalTitle.innerText = item.vacancy_name || 'Детали вакансии';
+        
+        let html = `
+            <h5 style="color: var(--copp-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top:0; margin-bottom:15px;">Работодатель: <strong>${item.employer || 'Не указано'}</strong></h5>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <p style="margin-bottom:8px; color:#555;"><strong>Муниципалитет:</strong> ${item.municipality || 'Не указан'}</p>
+                    <p style="margin-bottom:8px; color:#555;"><strong>Зарплата:</strong> ${item.salary ? item.salary + ' ₽' : 'Не указана'}</p>
+                    <p style="margin-bottom:8px; color:#555;"><strong>Тип занятости:</strong> <br><span style="margin-left:15px;">${item.employment_type || 'Не указано'}</span></p>
+                </div>
+                <div>
+                    <p style="margin-bottom:8px; color:#555;"><strong>График:</strong> <br><span style="margin-left:15px;">${item.schedule || 'Не указано'}</span></p>
+                    <p style="margin-bottom:8px; color:#555;"><strong>Образование:</strong> <br><span style="margin-left:15px;">${item.education || 'Не указано'}</span></p>
+                </div>
+            </div>
+            
+            <h6 style="margin-top:25px; font-weight:700; color:#333;">Требования к кандидату:</h6>
+            <p style="color:#555; padding:15px; background:#f8f9fa; border-radius:6px; line-height:1.5; margin-bottom:20px;">${item.requirements && item.requirements !== 'None' ? item.requirements.replace(/\\n/g, '<br>') : 'Специфических требований не указано.'}</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 25px;">
+                <div>
+                    <h6 style="font-weight:700; margin-bottom:10px; color:#333;">Хард-скиллы:</h6>
+                    <p style="color:#555;">${item.hard_skills && item.hard_skills !== 'None' ? item.hard_skills : '-'}</p>
+                </div>
+                <div>
+                    <h6 style="font-weight:700; margin-bottom:10px; color:#333;">Софт-скиллы:</h6>
+                    <p style="color:#555;">${item.soft_skills && item.soft_skills !== 'None' ? item.soft_skills : '-'}</p>
+                </div>
+            </div>
+            
+            ${item.bonuses && item.bonuses !== 'None' ? `<h6 style="margin-top:20px; font-weight:700; color:#333;">Бонусы и соцпакет:</h6><p style="color:#555;">${item.bonuses}</p>` : ''}
+            
+            <div style="margin-top:25px; padding:20px; border-radius:6px; background: rgba(0, 102, 204, 0.05); border-left: 4px solid var(--copp-blue);">
+                <h6 style="font-weight:700; margin-bottom:15px; margin-top:0; color:#333;">Контакты работодателя:</h6>
+                <p style="margin-bottom:8px; color:#555;"><strong>Контактное лицо:</strong> ${item.contact_person && item.contact_person !== 'None' ? item.contact_person : 'Не указано'}</p>
+                <p style="margin-bottom:8px; color:#555;"><strong>Телефон:</strong> ${item.contact_phone && item.contact_phone !== 'None' ? item.contact_phone : 'Не указано'}</p>
+                <p style="margin-bottom:0; color:#555;"><strong>Email:</strong> ${item.contact_email && item.contact_email !== 'None' ? `<a href="mailto:${item.contact_email}" style="color:var(--copp-blue); text-decoration:none;">${item.contact_email}</a>` : 'Не указано'}</p>
+            </div>
+        `;
+        
+        modalBody.innerHTML = html;
+        
+        if(item.source_link && item.source_link !== 'None' && item.source_link.startsWith('http')) {
+            modalLinkBtn.href = item.source_link;
+            modalLinkBtn.style.display = 'inline-block';
+        } else {
+            modalLinkBtn.style.display = 'none';
+        }
+        
+        vacancyModalEl.classList.add('show');
+        vacancyModalEl.style.display = 'flex';
+    };
+
+    function renderGrid() {
+        let html = '';
+        
+        const itemsToRender = filteredData.slice(0, currentRenderLimit);
+        
+        itemsToRender.forEach((item, index) => {
+            let externalLink = (item.source_link && item.source_link !== 'None' && item.source_link.startsWith('http')) ? item.source_link : '#';
+            
+            html += `
+            <div class="vacancy-card">
+                <div class="vac-title" title="${item.vacancy_name || 'Без названия'}">${item.vacancy_name || 'Без названия'}</div>
+                <div class="vac-company" style="color:#666;">${item.employer || 'Не указано'}</div>
+                <div class="vac-salary">${item.salary && item.salary > 0 ? formatNumber(item.salary) + ' ₽' : 'З/П не указана'}</div>
+                
+                <div class="vac-meta" style="color:#777;"><strong>Муниципалитет:</strong> ${item.municipality || 'Не указан'}</div>
+                <div class="vac-meta" style="color:#777;"><strong>Рабочих мест:</strong> ${item.jobs_count || 1}</div>
+                ${item.schedule && item.schedule !== 'None' ? `<div class="vac-meta" style="color:#777;"><strong>График:</strong> ${item.schedule}</div>` : ''}
+                
+                <div class="vac-actions">
+                    <button class="btn-vac-primary" onclick="openVacancyModal(${index})">Подробнее</button>
+                    ${externalLink !== '#' ? `<a href="${externalLink}" target="_blank" class="btn-vac-secondary" title="Открыть на сайте источника">На источник</a>` : ''}
+                </div>
+            </div>
+            `;
+        });
+        
+        if(filteredData.length === 0) {
+            html = '<div style="grid-column: 1 / -1; padding: 50px; text-align: center; color: #777;"><h5>Нет вакансий, подходящих под выбранные фильтры</h5></div>';
+            loadMoreContainer.style.display = 'none';
+        } else {
+            if(currentRenderLimit < filteredData.length) {
+                loadMoreContainer.style.display = 'block';
+            } else {
+                loadMoreContainer.style.display = 'none';
+            }
+        }
+        
+        if(currentRenderLimit === 24) {
+            vacanciesGrid.innerHTML = html;
+        } else {
+            // If appending
+            vacanciesGrid.insertAdjacentHTML('beforeend', html);
+        }
+    }
+    
+    btnLoadMore.addEventListener('click', function() {
+        currentRenderLimit += 24;
+        const startIdx = currentRenderLimit - 24;
+        const itemsToRender = filteredData.slice(startIdx, currentRenderLimit);
+        
+        let html = '';
+        itemsToRender.forEach((item, index) => {
+            let actualIndex = startIdx + index;
+            let externalLink = (item.source_link && item.source_link !== 'None' && item.source_link.startsWith('http')) ? item.source_link : '#';
+            
+            html += `
+            <div class="vacancy-card">
+                <div class="vac-title" title="${item.vacancy_name || 'Без названия'}">${item.vacancy_name || 'Без названия'}</div>
+                <div class="vac-company" style="color:#666;">${item.employer || 'Не указано'}</div>
+                <div class="vac-salary">${item.salary && item.salary > 0 ? formatNumber(item.salary) + ' ₽' : 'З/П не указана'}</div>
+                
+                <div class="vac-meta" style="color:#777;"><strong>Муниципалитет:</strong> ${item.municipality || 'Не указан'}</div>
+                <div class="vac-meta" style="color:#777;"><strong>Рабочих мест:</strong> ${item.jobs_count || 1}</div>
+                ${item.schedule && item.schedule !== 'None' ? `<div class="vac-meta" style="color:#777;"><strong>График:</strong> ${item.schedule}</div>` : ''}
+                
+                <div class="vac-actions">
+                    <button class="btn-vac-primary" onclick="openVacancyModal(${actualIndex})">Подробнее</button>
+                    ${externalLink !== '#' ? `<a href="${externalLink}" target="_blank" class="btn-vac-secondary" title="Открыть на сайте источника">На источник</a>` : ''}
+                </div>
+            </div>
+            `;
+        });
+        
+        vacanciesGrid.insertAdjacentHTML('beforeend', html);
+        
+        if(currentRenderLimit >= filteredData.length) {
+            loadMoreContainer.style.display = 'none';
+        }
+    });
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadData();
+    });
+</script>
+
+{% endblock %}

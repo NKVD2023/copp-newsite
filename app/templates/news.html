@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news.css') }}">
+{% endblock %}
+
+
+
+
+{% block content %}
+<div class="news-search-box">
+    <span class="search-icon"></span>
+    <input type="text" class="news-search-input generic-search-input" data-target=".news-card-wrapper" placeholder="Поиск по заголовку или анонсу...">
+</div>
+</div>
+<div class="news-grid">
+
+    {% for news in news_list %}
+    <a href="{{ url_for('main.news_detail', news_id=news.id) }}" class="news-card-wrapper" style="text-decoration: none; color: inherit; display: block;">
+        <article class="news-card">
+            
+            {% if news.is_event == 1 %}
+            <div class="public-event-badge">Мероприятие</div>
+            {% endif %}
+
+            {% if news.main_image %}
+            <img src="{{ url_for('static', filename=news.main_image) }}" class="card-main-img" alt="Главное фото">
+            {% else %}
+            <div class="card-no-img">Нет фото</div>
+            {% endif %}
+
+            <div class="card-body-content">
+                <h3 class="card-title">{{ news.title }}</h3>
+
+                {% if news.teaser %}
+                <p class="card-teaser">{{ news.teaser }}</p>
+                {% endif %}
+
+                <div class="card-meta">
+                    <span class="card-date">{{ news.human_date }}</span>
+                </div>
+            </div>
+
+        </article>
+    </a>
+    {% endfor %}
+
+</div>
+<script src="{{ url_for('static', filename='js/news.js') }}"></script>
+{% endblock %}

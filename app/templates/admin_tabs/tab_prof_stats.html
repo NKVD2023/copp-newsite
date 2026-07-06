@@ -1,0 +1,61 @@
+<div class="admin-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5>Статистика профессий (Дашборд)</h5>
+        <a href="{{ url_for('main.dashboard') }}" target="_blank" class="btn btn-outline-primary btn-sm">Перейти на дашборд</a>
+    </div>
+    
+    <div class="alert alert-info">
+        Загружайте сюда файлы Excel (.xlsx) с актуальными данными. При загрузке система автоматически обработает данные и обновит дашборд.
+    </div>
+
+    <form action="{{ url_for('admin.upload_prof_stats') }}" method="POST" enctype="multipart/form-data" class="mb-4">
+        <div class="row align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Категория данных</label>
+                <select name="category" class="form-select" required>
+                    <option value="Свод по региону">Свод по региону</option>
+                    <option value="Полный список">Полный список</option>
+                    <option value="Иностранцы">Иностранцы</option>
+                    <option value="Квотируемые">Квотируемые</option>
+                    <option value="С предоставлением жилья">С предоставлением жилья</option>
+                    <option value="Соцкатегории">Соцкатегории</option>
+                    <option value="Трудовая мобильность">Трудовая мобильность</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Excel Файл (.xlsx)</label>
+                <input type="file" name="excel_file" class="form-control" accept=".xlsx" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Загрузить</button>
+            </div>
+        </div>
+    </form>
+    
+    <hr>
+    <h6>История загрузок</h6>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Категория</th>
+                    <th>Имя файла</th>
+                    <th>Дата обновления</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for upload in prof_uploads %}
+                <tr>
+                    <td><span class="badge bg-secondary">{{ upload.category }}</span></td>
+                    <td>{{ upload.filename }}</td>
+                    <td>{{ upload.upload_date }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">Загрузок еще не было</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

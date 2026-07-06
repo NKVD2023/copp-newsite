@@ -1,0 +1,149 @@
+<div class="news-module">
+
+    <div class="news-header-panel">
+        <div class="news-search-box">
+            <span class="search-icon"></span>
+            <input type="text" class="generic-search-input" data-target=".project-card" placeholder="Поиск по названию или анонсу...">
+        </div>
+        <button class="btn-create-news" onclick="toggleProjectsForm()">+ Создать проект</button>
+    </div>
+
+<div id="projects-form-container" class="news-form-wrapper" style="{% if edit_project_item %}display: block;{% else %}display: none;{% endif %}">
+    <div class="modern-form-card">
+        
+        <div class="form-header">
+            <h2>{% if edit_project_item %}Редактирование проекта{% else %}Создание проекта{% endif %}</h2>
+            
+            {% if edit_project_item %}
+                <a href="{{ url_for('admin.dashboard', tab='projects') }}" class="btn-cancel" style="text-decoration:none;">Отмена</a>
+            {% else %}
+                <button type="button" class="btn-cancel" onclick="toggleProjectsForm()">Отмена</button>
+            {% endif %}
+        </div>
+
+        <form action="{% if edit_project_item %}{{ url_for('admin.edit_project', project_id=edit_project_item.id) }}{% else %}/admin/add_project{% endif %}" method="POST" enctype="multipart/form-data">
+            
+            <div class="form-row">
+                <div class="form-group span-2">
+                    <label>Название проекта</label>
+                    <input type="text" name="title" required placeholder="Введите название" value="{{ edit_project_item.title if edit_project_item else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>URL ссылка (slug)</label>
+                    <input type="text" name="slug" required placeholder="example-project" value="{{ edit_project_item.slug if edit_project_item else '' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Краткое описание (анонс)</label>
+                <textarea name="teaser" rows="2">{{ edit_project_item.teaser if edit_project_item else '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Полное описание проекта</label>
+                <textarea id="projectContent" name="content" rows="8">{{ edit_project_item.content if edit_project_item else '' }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Главное фото / Логотип {% if edit_project_item and edit_project_item.main_image %}<span style="color:#0066cc;">(заменит текущее)</span>{% endif %}</label>
+                    <div class="file-upload-box">
+                        <input type="file" name="main_image" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Дополнительные фото (галерея)</label>
+                    <div class="file-upload-box">
+                        <input type="file" name="extra_images" accept="image/*" multiple>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group span-2">
+                    <label>Текст на кнопке участия (оставьте пустым, чтобы скрыть)</label>
+                    <input type="text" name="button_text" placeholder="Например: Подать заявку" value="{{ edit_project_item.button_text if edit_project_item else '' }}">
+                </div>
+                <div class="form-group span-2">
+                    <label>Ссылка для кнопки (URL)</label>
+                    <input type="text" name="button_url" placeholder="https://..." value="{{ edit_project_item.button_url if edit_project_item else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Цвет проекта</label>
+                    <input type="color" name="project_color" value="{{ edit_project_item.project_color if edit_project_item and edit_project_item.project_color else '#0066ff' }}" style="height: 45px; padding: 5px; cursor: pointer;">
+                </div>
+            </div>
+
+            {% if edit_project_item and extra_images_list %}
+            <div class="form-group">
+                <label>Существующие дополнительные фото (выберите для удаления):</label>
+                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;">
+                    {% for ext_img in extra_images_list %}
+                        <label>
+                            <input type="checkbox" name="delete_images" value="{{ ext_img }}">
+                            <img src="{{ url_for('static', filename=ext_img) }}" style="width: 50px; height: 50px; object-fit: cover;">
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn-submit-large">
+                {% if edit_project_item %}Сохранить изменения{% else %}Создать проект{% endif %}
+            </button>
+        </form>
+    </div>
+</div>
+</div>
+
+<div class="news-grid">
+    {% for project in projects_list %}
+    <article class="news-card project-card">
+
+        {% if project.main_image %}
+        <img src="{{ url_for('static', filename=project.main_image) }}" class="card-main-img" alt="Главное фото">
+        {% else %}
+        <div class="card-no-img">Нет фото</div>
+        {% endif %}
+
+        <div class="card-body-content">
+            <h3 class="card-title">{{ project.title }}</h3>
+            <p class="card-teaser">{{ project.teaser }}</p>
+            <div class="card-meta">
+                <span class="card-date">{{ project.created_at[:10] }}</span>
+                {% if project.status == 'published' %}
+                <span class="status-badge bg-published">Опубликован</span>
+                {% else %}
+                <span class="status-badge bg-archived">В архиве</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-actions">
+            <form action="{{ url_for('admin.toggle_project_status', project_id=project.id) }}" method="POST" style="flex: 1;">
+                <input type="hidden" name="current_status" value="{{ project.status }}">
+                {% if project.status == 'published' %}
+                <button type="submit" class="btn-card btn-archive w-100">В архив</button>
+                {% else %}
+                <button type="submit" class="btn-card btn-publish w-100">Опубликовать</button>
+                {% endif %}
+            </form>
+
+            <form action="/admin/edit_project/{{ project.id }}" method="GET" style="flex: 1;">
+                <button type="submit" class="btn-card btn-edit w-100">Редактировать</button>
+            </form>
+
+            <form action="{{ url_for('admin.delete_project', project_id=project.id) }}" method="POST" style="flex: 1;" onsubmit="return confirm('Вы уверены?');">
+                <button type="submit" class="btn-card btn-danger w-100">Удалить</button>
+            </form>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<script>
+    function toggleProjectsForm() {
+        const form = document.getElementById('projects-form-container');
+        form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+    }
+</script>

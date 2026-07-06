@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}Мероприятия - ЦОПП РК{% endblock %}
+
+{% block extra_css %}
+<style>
+.events-container {
+    background: white;
+    border-radius: 15px;
+    padding: 3rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    margin-bottom: 4rem;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.calendar-header h2 {
+    font-size: 2rem;
+    color: var(--copp-blue);
+    margin: 0;
+}
+
+.btn-cal {
+    background: #f0f4f8;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: var(--copp-blue);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cal:hover {
+    background: var(--copp-blue);
+    color: white;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.cal-day-header {
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+    padding: 10px;
+}
+
+.cal-cell {
+    border: 1px solid #eef2f5;
+    border-radius: 8px;
+    min-height: 120px;
+    padding: 10px;
+    background: #fff;
+    position: relative;
+    transition: box-shadow 0.2s;
+}
+
+.cal-cell:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.cal-cell.empty {
+    background: #fafbfc;
+    border-color: transparent;
+}
+
+.cal-date {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.cal-cell.today .cal-date {
+    color: var(--copp-blue);
+    background: #eef5ff;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.event-card {
+    background: #f8fbff;
+    border-left: 3px solid var(--copp-blue);
+    border-radius: 4px;
+    padding: 6px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s;
+}
+
+.event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.event-time {
+    color: var(--copp-blue);
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.event-img {
+    width: 100%;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.event-title {
+    font-weight: 600;
+    line-height: 1.2;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+@media (max-width: 991px) {
+    .calendar-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    .cal-day-header {
+        display: none;
+    }
+    .cal-cell {
+        min-height: auto;
+    }
+    .cal-cell.empty {
+        display: none;
+    }
+    .cal-date {
+        margin-bottom: 15px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem 0;">
+    <div class="events-container">
+        <div class="calendar-header">
+            <button class="btn-cal" onclick="changeMonth(-1)">&#8592; Назад</button>
+            <h2 id="monthYearDisplay">Загрузка...</h2>
+            <button class="btn-cal" onclick="changeMonth(1)">Вперед &#8594;</button>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- Дни недели -->
+            <div class="cal-day-header">Пн</div>
+            <div class="cal-day-header">Вт</div>
+            <div class="cal-day-header">Ср</div>
+            <div class="cal-day-header">Чт</div>
+            <div class="cal-day-header">Пт</div>
+            <div class="cal-day-header">Сб</div>
+            <div class="cal-day-header">Вс</div>
+            
+            <!-- Ячейки будут генерироваться через JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+const eventsData = {{ events_list|tojson|safe }};
+
+let currentDate = new Date();
+
+function renderCalendar() {
+    const monthYearDisplay = document.getElementById('monthYearDisplay');
+    const calendarGrid = document.getElementById('calendarGrid');
+    
+    // Clear old cells (keep headers)
+    const headers = calendarGrid.querySelectorAll('.cal-day-header');
+    calendarGrid.innerHTML = '';
+    headers.forEach(h => calendarGrid.appendChild(h));
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    const monthsRu = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+    monthYearDisplay.textContent = `${monthsRu[month]} ${year}`;
+
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    
+    let firstDayIndex = firstDayOfMonth.getDay() - 1;
+    if (firstDayIndex === -1) firstDayIndex = 6; // Sunday is 0 in JS, we want it to be 6 (Mon-Sun)
+
+    const daysInMonth = lastDayOfMonth.getDate();
+
+    // Empty cells before start of month
+    for (let i = 0; i < firstDayIndex; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell empty';
+        calendarGrid.appendChild(cell);
+    }
+
+    const today = new Date();
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell';
+        if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+            cell.classList.add('today');
+        }
+
+        const dateEl = document.createElement('div');
+        dateEl.className = 'cal-date';
+        dateEl.textContent = i;
+        cell.appendChild(dateEl);
+
+        // Find events for this day
+        // event_date string format: YYYY-MM-DDTHH:MM
+        const dayEvents = eventsData.filter(ev => {
+            if (!ev.event_date) return false;
+            const evDate = new Date(ev.event_date);
+            return evDate.getFullYear() === year && evDate.getMonth() === month && evDate.getDate() === i;
+        });
+
+        // Sort by time
+        dayEvents.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+
+        dayEvents.forEach(ev => {
+            const evLink = document.createElement('a');
+            evLink.href = `/news/${ev.id}`;
+            evLink.className = 'event-card';
+
+            const evTime = new Date(ev.event_date);
+            const timeStr = evTime.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'});
+
+            let innerHtml = `<div class="event-time">${timeStr}</div>`;
+            if (ev.main_image) {
+                innerHtml += `<img src="/static/${ev.main_image}" class="event-img" alt="фото">`;
+            }
+            innerHtml += `<div class="event-title">${ev.title}</div>`;
+
+            if (ev.event_location) {
+                innerHtml += `<div style="font-size: 0.75rem; color: #888; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    ${ev.event_location}
+                </div>`;
+            }
+
+            evLink.innerHTML = innerHtml;
+            cell.appendChild(evLink);
+        });
+
+        calendarGrid.appendChild(cell);
+    }
+}
+
+function changeMonth(delta) {
+    currentDate.setMonth(currentDate.getMonth() + delta);
+    renderCalendar();
+}
+
+document.addEventListener('DOMContentLoaded', renderCalendar);
+</script>
+{% endblock %}

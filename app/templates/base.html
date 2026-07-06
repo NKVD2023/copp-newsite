@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ЦОПП РК{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bvi.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body style="display: flex; flex-direction: column; min-height: 100vh; margin: 0;">
+    <div class="bvi-panel">
+        <div class="bvi-panel-group">
+            <span class="bvi-panel-title">Размер шрифта</span>
+            <button class="bvi-btn" onclick="bviChangeFont(-1)">A-</button>
+            <button class="bvi-btn" onclick="bviChangeFont(1)">A+</button>
+        </div>
+        <div class="bvi-panel-group">
+            <span class="bvi-panel-title">Цвета сайта</span>
+            <button class="bvi-btn bvi-theme-btn-bw" id="bvi-theme-bw" onclick="bviSetTheme('bw')">Ц</button>
+            <button class="bvi-btn bvi-theme-btn-wb" id="bvi-theme-wb" onclick="bviSetTheme('wb')">Ц</button>
+            <button class="bvi-btn bvi-theme-btn-blue" id="bvi-theme-blue" onclick="bviSetTheme('blue')">Ц</button>
+            <button class="bvi-btn bvi-theme-btn-brown" id="bvi-theme-brown" onclick="bviSetTheme('brown')">Ц</button>
+            <button class="bvi-btn bvi-theme-btn-green" id="bvi-theme-green" onclick="bviSetTheme('green')">Ц</button>
+        </div>
+        <div class="bvi-panel-group">
+            <span class="bvi-panel-title">Изображения</span>
+            <button class="bvi-btn" id="bvi-img-on" onclick="bviSetImages('on')" title="Включить"><svg class="bvi-icon" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></button>
+            <button class="bvi-btn" id="bvi-img-off" onclick="bviSetImages('off')" title="Выключить"><svg class="bvi-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"/></svg></button>
+            <button class="bvi-btn" id="bvi-img-grayscale" onclick="bviSetImages('grayscale')" title="Черно-белые"><svg class="bvi-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6V6z"/></svg></button>
+        </div>
+        <div class="bvi-panel-group">
+            <span class="bvi-panel-title">Синтез речи</span>
+            <button class="bvi-btn" id="bvi-speech-off" onclick="bviSetSpeech(false)" title="Выключить"><svg class="bvi-icon" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+            <button class="bvi-btn" id="bvi-speech-on" onclick="bviSetSpeech(true)" title="Включить"><svg class="bvi-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button>
+        </div>
+        <div class="bvi-panel-group">
+            <span class="bvi-panel-title">Настройки</span>
+            <button class="bvi-btn" onclick="bviToggle()">Обычная версия сайта</button>
+        </div>
+    </div>
+    <header>
+        <div class="header-container">
+            <a class="brand-container text-decoration-none" href="/">
+                <img src="{{ url_for('static', filename='img/logoblue2.png') }}" alt="Логотип">
+                <div class="brand-text">
+                    <span class="brand-main">Республики <br>Крым</span>
+                </div>
+            </a>
+
+            <nav>
+                <a href="{{ url_for('main.index') }}">Главная</a>
+                <a href="{{ url_for('main.news') }}">Новости</a>
+                <a href="{{ url_for('main.events') }}">Мероприятия</a>
+                <!-- <a href="{{ url_for('main.atlas') }}">Атлас профессий</a> -->
+                <a href="{{ url_for('main.dashboard') }}">Дашборд</a>
+                
+                {% if single_pages %}
+                    {% for page in single_pages %}
+                        <a href="{{ url_for('main.dynamic_page', slug=page['slug']) }}">{{ page['title'] }}</a>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="dropdown">
+                    <button class="dropbtn">Проекты <span class="arrow">&#9662;</span></button>
+                    <div class="dropdown-content">
+                        {% if dynamic_projects %}
+                            {% for project in dynamic_projects %}
+                                <a href="{{ url_for('main.project', slug=project['slug']) }}">{{ project['title'] }}</a>
+                            {% endfor %}
+                        {% else %}
+                            <a href="#">(Нет проектов)</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if grouped_pages %}
+                    {% for group_name, pages in grouped_pages.items() %}
+                    <div class="dropdown">
+                        <button class="dropbtn">{{ group_name }} <span class="arrow">&#9662;</span></button>
+                        <div class="dropdown-content">
+                            {% for page in pages %}
+                                <a href="{{ url_for('main.dynamic_page', slug=page['slug']) }}">{{ page['title'] }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" style="flex: 1 0 auto; width: 100%;">
+
+        {% if request.path.startswith('/admin') %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer style="flex-shrink: 0; background-color: var(--bg-card); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); width: 100%; margin-top: 4rem; padding: 3rem 0;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h2 style="font-weight: 800; font-size: 2.5rem; color: #1a1a1a; margin-bottom: 1rem; margin-top: 0;">{{ contact_settings.title if contact_settings else 'Контакты' }}</h2>
+                    <hr style="width: 100px; border: 2px solid var(--copp-blue); opacity: 1; margin-bottom: 2rem;">
+                    <h4 style="color: var(--copp-blue); font-weight: bold; margin-bottom: 1.5rem;">{{ contact_settings.org_name if contact_settings else 'ЦОПП Республики Крым' }}</h4>
+                    
+                    <div style="display: flex; gap: 15px; margin-bottom: 1.5rem;">
+                        <svg style="width: 24px; height: 24px; fill: var(--copp-blue); flex-shrink: 0; margin-top: 5px;" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                        <div style="color: #555; font-size: 1.1rem; line-height: 1.5; white-space: pre-line;">{{ contact_settings.phones if contact_settings else '8 (3652) 51-04-40\n7 (978) 391-46-44' }}</div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-bottom: 1.5rem;">
+                        <svg style="width: 24px; height: 24px; fill: var(--copp-blue); flex-shrink: 0;" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                        <div style="color: #555; font-size: 1.1rem;">{{ contact_settings.email if contact_settings else 'office@copp82.ru' }}</div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <svg style="width: 24px; height: 24px; fill: var(--copp-blue); flex-shrink: 0; margin-top: 2px;" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <div style="color: #555; font-size: 1.1rem; line-height: 1.5;">{{ contact_settings.address if contact_settings else '295051 Респ. Крым, г. Симферополь, ул. Металлистов, д. 13' }}</div>
+                    </div>
+
+                    {% if social_networks %}
+                    <div style="display: flex; gap: 15px; margin-top: 2rem;">
+                        {% for social in social_networks %}
+                        <a href="{{ social.url }}" target="_blank" title="{{ social.name }}" class="social-icon-link" style="display: inline-flex; align-items: center; justify-content: center; width: 45px; height: 45px; border-radius: 50%; background: rgba(0, 102, 204, 0.1); color: var(--copp-blue); transition: all 0.3s ease; text-decoration: none;">
+                            <div style="width: 24px; height: 24px; fill: currentColor; display: flex; align-items: center; justify-content: center;">
+                                {% if social.image_path %}
+                                <img src="{{ url_for('static', filename=social.image_path) }}" alt="{{ social.name }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                {% else %}
+                                {{ social.icon_svg|safe }}
+                                {% endif %}
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    <style>
+                        .social-icon-link:hover {
+                            background: var(--copp-blue) !important;
+                            color: white !important;
+                            transform: translateY(-3px);
+                        }
+                    </style>
+                    {% endif %}
+                </div>
+
+                <div style="flex: 1.5; min-width: 300px;">
+                    <form id="contactForm" style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 150px;">
+                                <label class="form-label" style="display: block; font-size: 0.9rem; color: #555; font-weight: 600; margin-bottom: 5px;">Имя <span style="color: red;">*</span></label>
+                                <input type="text" id="contactFirstName" style="width: 100%; border-radius: 4px; border: 1px solid #ddd; padding: 10px; box-sizing: border-box;" required>
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <label class="form-label" style="display: block; font-size: 0.9rem; color: #555; font-weight: 600; margin-bottom: 5px;">Отчество</label>
+                                <input type="text" id="contactMiddleName" style="width: 100%; border-radius: 4px; border: 1px solid #ddd; padding: 10px; box-sizing: border-box;">
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <label class="form-label" style="display: block; font-size: 0.9rem; color: #555; font-weight: 600; margin-bottom: 5px;">Фамилия <span style="color: red;">*</span></label>
+                                <input type="text" id="contactLastName" style="width: 100%; border-radius: 4px; border: 1px solid #ddd; padding: 10px; box-sizing: border-box;" required>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="form-label" style="display: block; font-size: 0.9rem; color: #555; font-weight: 600; margin-bottom: 5px;">Email или Телефон <span style="color: red;">*</span></label>
+                            <input type="text" id="contactEmail" style="width: 100%; border-radius: 4px; border: 1px solid #ddd; padding: 10px; box-sizing: border-box;" required>
+                        </div>
+
+                        <div>
+                            <label class="form-label" style="display: block; font-size: 0.9rem; color: #555; font-weight: 600; margin-bottom: 5px;">Напишите нам <span style="color: red;">*</span></label>
+                            <textarea id="contactMessage" rows="3" style="width: 100%; border-radius: 4px; border: 1px solid #ddd; padding: 10px; box-sizing: border-box; resize: vertical;" required></textarea>
+                        </div>
+
+                        <div>
+                            <label class="form-label" style="display: block; font-size: 0.9rem; color: #555; font-weight: 600; margin-bottom: 5px;">Согласие на обработку персональных данных <span style="color: red;">*</span></label>
+                            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                <input type="checkbox" id="contactConsent" style="margin-top: 4px;" required>
+                                <label style="color: #777; font-size: 0.85rem; line-height: 1.4; margin: 0; cursor: pointer;" for="contactConsent">
+                                    При нажатии на кнопку Вы выражаете свое согласие на обработку (действия (операции) с персональными данными) Ваших персональных данных
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="contactAlert" style="display: none; border-radius: 4px; padding: 10px; font-size: 0.95rem;"></div>
+
+                        <div>
+                            <button type="submit" id="contactSubmitBtn" style="background-color: var(--copp-blue); color: white; border: none; padding: 12px 30px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: opacity 0.2s;">ОТПРАВИТЬ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 3rem; color: #888; font-size: 0.9rem; padding-top: 2rem; border-top: 1px solid #eee;">
+                &copy; 2026 Центр опережающей профессиональной подготовки Республики Крым
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const alertBox = document.getElementById('contactAlert');
+            const submitBtn = document.getElementById('contactSubmitBtn');
+            const consent = document.getElementById('contactConsent').checked;
+            
+            if (!consent) return;
+            
+            const payload = {
+                firstName: document.getElementById('contactFirstName').value,
+                middleName: document.getElementById('contactMiddleName').value,
+                lastName: document.getElementById('contactLastName').value,
+                email: document.getElementById('contactEmail').value,
+                message: document.getElementById('contactMessage').value
+            };
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Отправка...';
+            alertBox.style.display = 'none';
+            alertBox.className = 'alert';
+            
+            try {
+                const res = await fetch('{{ url_for("main.contact_submit") }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                alertBox.className = 'alert ' + (data.success ? 'success' : 'error');
+                alertBox.innerText = data.message;
+                alertBox.style.display = 'block';
+                
+                if(data.success) {
+                    contactForm.reset();
+                }
+            } catch (err) {
+                alertBox.className = 'alert error';
+                alertBox.innerText = 'Произошла ошибка при отправке.';
+                alertBox.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'ОТПРАВИТЬ';
+            }
+        });
+    }
+    </script>
+    <script src="{{ url_for('static', filename='js/bvi.js') }}"></script>
+
+    <!-- Плавающая кнопка для слабовидящих -->
+    <button class="bvi-fixed-btn" onclick="bviToggle()" title="Включить версию для слабовидящих">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink: 0;"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        <span style="white-space: nowrap;">Версия для слабовидящих</span>
+    </button>
+
+    <!-- Consent Banner -->
+    <div id="consentOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999998; display: none;"></div>
+    <div id="consentBanner" style="position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; padding: 20px; z-index: 9999999; display: none; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); border-top: 1px solid #ddd;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+            <div style="font-size: 14px; color: #333; line-height: 1.5; font-family: sans-serif; flex: 1; min-width: 300px;">
+                Пользуясь сайтом, я даю свое согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных».<br>
+                Соглашаюсь с использованием файлов cookies и <a href="/page/personal-data" style="color: #0066ff; text-decoration: underline;">политикой в отношении обработки персональных данных</a>
+            </div>
+            <button id="consentBtn" style="background: #0066ff; color: #fff; border: none; padding: 12px 30px; font-weight: bold; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px;">Согласен</button>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!localStorage.getItem('personalDataConsent')) {
+            document.getElementById('consentOverlay').style.display = 'block';
+            document.getElementById('consentBanner').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // блокируем прокрутку
+        }
+
+        document.getElementById('consentBtn').addEventListener('click', function() {
+            localStorage.setItem('personalDataConsent', 'true');
+            document.getElementById('consentOverlay').style.display = 'none';
+            document.getElementById('consentBanner').style.display = 'none';
+            document.body.style.overflow = ''; // возвращаем прокрутку
+        });
+    });
+    </script>
+</body>
+
+</html>

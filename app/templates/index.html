@@ -1,0 +1,580 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+<style>
+.parallax-hero {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    min-height: 85vh;
+    background: #f8fcfd;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    margin-top: -20px;
+}
+
+.blob {
+    position: absolute;
+    filter: blur(40px);
+    border-radius: 50%;
+    z-index: 0;
+    opacity: 0.5;
+    animation: floatBlob 10s ease-in-out infinite alternate;
+}
+
+.blob-1 { width: 400px; height: 400px; background: #cfe2ff; top: -100px; left: -100px; }
+.blob-2 { width: 300px; height: 300px; background: #e0cffc; bottom: -50px; right: 20%; animation-delay: -3s; }
+.blob-3 { width: 250px; height: 250px; background: #d1e7dd; top: 20%; right: -50px; animation-delay: -5s; }
+
+@keyframes floatBlob {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(30px) scale(1.1); }
+}
+
+.ph-content {
+    position: relative;
+    z-index: 2;
+    max-width: 1300px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4rem;
+}
+
+.ph-text {
+    flex: 1;
+    max-width: 600px;
+}
+
+.ph-text h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
+}
+
+.ph-text h1 span {
+    color: var(--copp-blue);
+}
+
+.ph-text p {
+    font-size: 1.15rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+}
+
+.ph-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+}
+
+.btn-ph-primary {
+    background: var(--copp-blue);
+    color: white;
+    padding: 14px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+    transition: 0.3s;
+}
+
+.btn-ph-primary:hover {
+    background: #005bb5;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+    color: white;
+}
+
+.btn-ph-secondary {
+    background: white;
+    color: var(--copp-blue);
+    padding: 14px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    border: 1px solid #ddd;
+    transition: 0.3s;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.btn-ph-secondary:hover {
+    border-color: var(--copp-blue);
+    color: var(--copp-blue);
+    transform: translateY(-2px);
+}
+
+.ph-images {
+    flex: 1;
+    position: relative;
+    height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    perspective: 1000px;
+}
+
+.ph-img {
+    position: absolute;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    object-fit: cover;
+    transition: transform 0.1s ease-out;
+}
+
+.ph-img-1 {
+    width: 350px;
+    height: 450px;
+    z-index: 2;
+}
+
+.ph-img-2 {
+    width: 250px;
+    height: 300px;
+    top: 50px;
+    right: 0;
+    z-index: 1;
+}
+
+.ph-img-3 {
+    width: 280px;
+    height: 200px;
+    bottom: 50px;
+    left: 0;
+    z-index: 3;
+    border: 5px solid white;
+}
+
+.ph-shape {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 102, 204, 0.1) 10px, rgba(0, 102, 204, 0.1) 20px);
+    border-radius: 50%;
+    top: 80px;
+    left: 20px;
+    z-index: 0;
+    transition: transform 0.1s ease-out;
+}
+
+@media(max-width: 992px) {
+    .ph-content { flex-direction: column; text-align: center; }
+    .ph-text { margin: 0 auto; }
+    .ph-buttons { justify-content: center; }
+    .ph-images { height: 400px; width: 100%; transform: scale(0.8); }
+}
+
+/* Flip Cards Section */
+.target-audience-section {
+    max-width: 1200px;
+    margin: 4rem auto 4rem auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 0 2rem;
+    box-sizing: border-box;
+}
+
+.flip-card {
+    background-color: transparent;
+    width: calc(33.333% - 20px);
+    height: 300px;
+    perspective: 1000px;
+    box-sizing: border-box;
+}
+
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-radius: 20px;
+}
+
+.flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+
+.flip-card-front {
+    background-color: white;
+    color: var(--copp-text);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.flip-card-front svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1.5rem;
+    fill: var(--copp-blue);
+}
+
+.flip-card-front h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--copp-blue);
+}
+
+.flip-card-back {
+    background-color: var(--copp-blue);
+    color: white;
+    transform: rotateY(180deg);
+}
+
+.flip-card-back h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+}
+
+.flip-card-back p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+@media(max-width: 992px) {
+    .target-audience-section {
+        flex-direction: column;
+        align-items: center;
+    }
+    .flip-card {
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
+/* Animated Statistics Block (Unified Dashboard) */
+.stats-section {
+    max-width: 1200px;
+    margin: 4rem auto 5rem auto;
+    padding: 0 2rem;
+    color: white;
+    box-sizing: border-box;
+}
+
+.stats-container {
+    background: linear-gradient(135deg, var(--copp-blue) 0%, #004d99 100%);
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 51, 78, 0.12);
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-wrap: wrap;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.stat-box {
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+    transition: background 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.stat-box:last-child {
+    border-right: none;
+}
+
+.stat-box:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1.5rem;
+    color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    line-height: 1.4;
+}
+
+.stat-value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin: 0;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+@media(max-width: 992px) {
+    .stat-box {
+        flex: 1 1 50%;
+        border-right: 1px solid rgba(255, 255, 255, 0.15);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .stat-box:nth-child(2n) {
+        border-right: none;
+    }
+    .stat-box:nth-last-child(-n+2) {
+        border-bottom: none;
+    }
+}
+
+@media(max-width: 576px) {
+    .stat-box {
+        flex: 1 1 100%;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+    .stat-box:last-child {
+        border-bottom: none !important;
+    }
+}
+
+/* News Cards Hover Effects */
+.news-card {
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.news-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 15px 30px rgba(0, 51, 78, 0.12) !important;
+}
+.news-card .news-img-wrapper {
+    overflow: hidden;
+}
+.news-card .news-img-wrapper img {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.news-card:hover .news-img-wrapper img {
+    transform: scale(1.08);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="parallax-hero" id="parallaxHero">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+
+        <div class="ph-content">
+            <div class="ph-text" data-speed="2">
+                <h1>Что такое <span>ЦОПП</span>?</h1>
+                <p>
+                    Центр опережающей профессиональной подготовки Республики Крым — это агрегатор и оператор ресурсов региона. Мы координируем развитие системы образования для профориентации, ускоренного профессионального обучения и переподготовки всех категорий граждан.
+                </p>
+                <div class="ph-buttons">
+                    <a href="{{ url_for('main.dynamic_page', slug='about') }}" class="btn-ph-primary">О центре</a>
+                    <a href="#latest-news" class="btn-ph-secondary" onclick="document.querySelector('.latest-news-section').scrollIntoView({behavior: 'smooth'})">Новости и события</a>
+                </div>
+            </div>
+
+            <div class="ph-images">
+                <img src="{{ url_for('static', filename='img/холл.jpg') }}" alt="Холл" class="ph-img ph-img-1" data-speed="-3">
+                <img src="{{ url_for('static', filename='img/вход.jpg') }}" alt="Вход" class="ph-img ph-img-2" data-speed="4">
+                <img src="{{ url_for('static', filename='img/админ.jpg') }}" alt="Админ" class="ph-img ph-img-3" data-speed="-2">
+                <div class="ph-shape" data-speed="5"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Target Audience Section -->
+    <div class="target-audience-section">
+        <!-- Card 1 -->
+        <div class="flip-card">
+            <div class="flip-card-inner">
+                <div class="flip-card-front">
+                    <!-- Book icon -->
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V5A2 2 0 0 0 18 3H6.5A2.5 2.5 0 0 0 4 5.5v14zM4 19.5c0 .41.16.8.44 1.06A1.5 1.5 0 0 0 5.5 21H20v-2H6.5a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                    <h3>Школьникам</h3>
+                </div>
+                <div class="flip-card-back">
+                    <h3>Школьникам</h3>
+                    <p>Профориентация, информация о профессиях и компетенциях завтрашнего дня, свой собственный первый стартап.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="flip-card">
+            <div class="flip-card-inner">
+                <div class="flip-card-front">
+                    <!-- University icon -->
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3L1 9h22L12 3zm-9 8v8h2v-8H3zm4 0v8h2v-8H7zm4 0v8h2v-8h-2zm4 0v8h2v-8h-2zm4 0v8h2v-8h-2zM1 21h22v2H1v-2z"/>
+                    </svg>
+                    <h3>Студентам</h3>
+                </div>
+                <div class="flip-card-back">
+                    <h3>Студентам</h3>
+                    <p>Информация о компетенциях, дополняющих базовое образование, навыки для полноценного выхода на рынок труда, индивидуальная траектория обучения и развития.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="flip-card">
+            <div class="flip-card-inner">
+                <div class="flip-card-front">
+                    <!-- Workers/Group icon -->
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                    <h3>Работодателям</h3>
+                </div>
+                <div class="flip-card-back">
+                    <h3>Работодателям</h3>
+                    <p>Индивидуальные программы переподготовки сотрудников, повышение квалификации сотрудников в соответствии с запросами рынка.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="stats-section">
+        <div class="stats-container">
+            {% for stat in stats %}
+            <div class="stat-box">
+                <div class="stat-label">{{ stat.label }}</div>
+                <div class="stat-value" data-target="{{ stat.value }}">0</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="latest-news-section" style="padding: 4rem 2rem; max-width: 1200px; margin: 0 auto;">
+        <h2 style="color: var(--copp-blue); text-align: center; margin-bottom: 2rem; font-weight: bold;">Последние новости и мероприятия</h2>
+        <div class="news-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px;">
+            {% for news in latest_news %}
+            <a href="{{ url_for('main.news_detail', news_id=news.id) }}" style="text-decoration: none; color: inherit; display: block;">
+                <article class="news-card" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%;">
+                    <div class="news-img-wrapper" style="width: 100%; height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #eee; color: #aaa;">
+                        {% if news.main_image %}
+                        <img src="{{ url_for('static', filename=news.main_image) }}" alt="{{ news.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        Нет фото
+                        {% endif %}
+                    </div>
+                    <div style="padding: 20px; flex: 1; display: flex; flex-direction: column;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="color: #888; font-size: 0.9rem;">{{ news.human_date }}</span>
+                            {% if news.is_event %}
+                                <span style="background: #0d6efd; color: white; padding: 2px 8px; border-radius: 12px; font-size:0.7rem; font-weight: bold;">Мероприятие</span>
+                            {% endif %}
+                        </div>
+                        <h3 style="font-size: 1.25rem; font-weight: bold; color: #333; margin-bottom: 10px; line-height: 1.4;">{{ news.title }}</h3>
+                        {% if news.teaser %}
+                            <p style="color: #666; font-size: 0.95rem; margin-bottom: 15px; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{{ news.teaser }}</p>
+                        {% endif %}
+                    </div>
+                </article>
+            </a>
+            {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 3rem;">
+            <a href="{{ url_for('main.news') }}" style="display: inline-block; text-decoration: none; padding: 12px 25px; border-radius: 50px; background: var(--copp-blue); color: white; font-weight: bold; transition: opacity 0.2s; box-shadow: 0 4px 10px rgba(0,102,204,0.3);">Все новости</a>
+            <a href="{{ url_for('main.events') }}" style="display: inline-block; text-decoration: none; padding: 12px 25px; border-radius: 50px; background: #198754; color: white; font-weight: bold; margin-left: 15px; transition: opacity 0.2s; box-shadow: 0 4px 10px rgba(25,135,84,0.3);">Все мероприятия</a>
+        </div>
+    </div>
+    </div>
+
+<script>
+document.addEventListener('mousemove', function(e) {
+    const hero = document.getElementById('parallaxHero');
+    if (!hero) return;
+    
+    // Calculate mouse position relative to center of screen
+    const x = (e.clientX / window.innerWidth - 0.5) * 2;
+    const y = (e.clientY / window.innerHeight - 0.5) * 2;
+    
+    const elements = hero.querySelectorAll('[data-speed]');
+    elements.forEach(el => {
+        const speed = parseFloat(el.getAttribute('data-speed'));
+        const moveX = x * speed * 10;
+        const moveY = y * speed * 10;
+        el.style.transform = `translate(${moveX}px, ${moveY}px)`;
+    });
+});
+
+// Animated Counters
+const counters = document.querySelectorAll('.stat-value');
+const speed = 100; // Чем меньше, тем быстрее закончится анимация
+
+const animateCounters = () => {
+    counters.forEach(counter => {
+        const updateCount = () => {
+            const target = +counter.getAttribute('data-target');
+            const count = +counter.innerText;
+            
+            // Вычисляем шаг (increment)
+            const inc = target / speed;
+            
+            if (count < target) {
+                // Округляем вверх, чтобы не зависнуть на дробях
+                counter.innerText = Math.ceil(count + inc);
+                // Запускаем обновление только для этого конкретного счетчика
+                setTimeout(updateCount, 20);
+            } else {
+                counter.innerText = target;
+            }
+        };
+        updateCount();
+    });
+}
+
+// Intersection Observer for counters
+const observerOptions = {
+    threshold: 0.5
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if(entry.isIntersecting) {
+            animateCounters();
+            observer.unobserve(entry.target);
+        }
+    });
+}, observerOptions);
+
+const statsSection = document.querySelector('.stats-section');
+if (statsSection) {
+    observer.observe(statsSection);
+}
+
+</script>
+{% endblock %}

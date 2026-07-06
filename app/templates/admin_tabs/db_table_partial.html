@@ -1,0 +1,72 @@
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+    <h3 style="margin:0; color:#333;">Таблица: {{ table_name }}</h3>
+    <a href="{{ url_for('admin.db_export_csv', table_name=table_name) }}" class="btn" style="background:#28a745; color:white;"><i class="fas fa-file-csv"></i> Экспорт в CSV</a>
+</div>
+
+<h5 style="margin-top: 20px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Структура колонок</h5>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+    <thead>
+        <tr style="background: #f8f9fa;">
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Имя</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Тип</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Not Null</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">По умолчанию</th>
+            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Primary Key</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for col in columns_info %}
+        <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>{{ col.name }}</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{{ col.type }}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{{ 'Да' if col.notnull else 'Нет' }}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{{ col.dflt_value if col.dflt_value is not none else 'NULL' }}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">{{ 'PK' if col.pk else '' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h5 style="margin-top: 20px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Данные (последние 500 записей)</h5>
+<div style="overflow-x: auto; max-height: 400px;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap;">
+        <thead style="position: sticky; top: 0; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <tr style="background: #e9ecef;">
+                {% for col in columns %}
+                <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                {% for col in columns %}
+                <td style="padding: 8px; border: 1px solid #ddd; max-width: 200px; overflow: hidden; text-overflow: ellipsis; outline: none; transition: background 0.2s;"
+                    {% if pk_col %}
+                    contenteditable="true" 
+                    data-pk="{{ row[pk_col] }}" 
+                    data-col="{{ col }}" 
+                    oninput="markCellChanged(this)"
+                    {% endif %}
+                >
+                    {{ row[col] if row[col] is not none else 'NULL' }}
+                </td>
+                {% endfor %}
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="{{ columns|length }}" style="padding: 15px; text-align: center; color: #999;">Таблица пуста</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<input type="hidden" id="currentTableName" value="{{ table_name }}">
+<input type="hidden" id="currentTablePkCol" value="{{ pk_col if pk_col else '' }}">
+
+{% if not pk_col %}
+<div style="color: #856404; background-color: #fff3cd; padding: 10px; margin-top: 10px; border-radius: 5px;">
+    У этой таблицы нет Primary Key (PK), поэтому прямое редактирование ячеек отключено.
+</div>
+{% endif %}

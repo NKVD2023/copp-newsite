@@ -1,0 +1,208 @@
+<div class="db-container" style="display: flex; gap: 20px; height: calc(100vh - 120px);">
+    <div class="db-sidebar" style="width: 250px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
+        <h4 style="margin-top:0; color: #333; font-weight: 600;">Таблицы БД</h4>
+        <ul style="list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto;">
+            {% for tbl in tables_list %}
+            <li style="margin-bottom: 5px;">
+                <a href="#" onclick="loadTableData('{{ tbl.name }}')" style="display: block; padding: 8px 12px; background: #f8f9fa; border-radius: 5px; text-decoration: none; color: #0066ff; font-weight: 500;">
+                    <i class="fas fa-table" style="margin-right: 5px;"></i> {{ tbl.name }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <div style="display:flex; flex-direction: column; gap:10px;">
+            <a href="{{ url_for('admin.db_export_sqlite') }}" class="btn" style="background:#28a745; color:white; text-align:center; font-size: 14px;"><i class="fas fa-download"></i> Полный Бэкап (SQL)</a>
+            <button onclick="promptForPassword('import')" class="btn" style="background:#dc3545; color:white; font-size: 14px;"><i class="fas fa-upload"></i> Восстановить БД</button>
+            <form id="formImportSqlite" action="{{ url_for('admin.db_import_sqlite') }}" method="post" enctype="multipart/form-data" style="display:none;">
+                <input type="hidden" name="admin_password" id="importAdminPassword">
+                <input type="file" name="sqlite_file" id="importSqliteFile" accept=".sqlite,.db" onchange="if(confirm('ВНИМАНИЕ! Это полностью перезапишет текущую базу данных. Вы уверены?')) document.getElementById('formImportSqlite').submit();">
+            </form>
+        </div>
+    </div>
+    
+    <div class="db-main" style="flex-grow: 1; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative;">
+        
+        <div id="saveChangesBtn" style="display: none; position: absolute; top: 10px; right: 20px; z-index: 100;">
+            <button class="btn btn-warning shadow" onclick="promptForPassword('save')">
+                <i class="fas fa-save"></i> Сохранить изменения (<span id="changesCount">0</span>)
+            </button>
+        </div>
+
+        <div class="db-actions" style="margin-bottom: 15px; display: flex; gap: 10px;">
+            <button onclick="toggleSqlRunner()" class="btn btn-secondary">SQL Запрос</button>
+        </div>
+        
+        <div id="sqlRunner" style="display:none; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
+            <form id="formExecuteSql" action="{{ url_for('admin.db_execute_sql') }}" method="post" onsubmit="event.preventDefault(); promptForPassword('sql');">
+                <input type="hidden" name="admin_password" id="sqlAdminPassword">
+                <div class="form-group">
+                    <label>Произвольный SQL запрос (ВНИМАНИЕ! Выполняйте, только если понимаете, что делаете)</label>
+                    <textarea name="sql_query" class="form-control" rows="4" placeholder="SELECT * FROM news..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Выполнить</button>
+            </form>
+        </div>
+        
+        <div id="tableContentArea" style="flex-grow: 1; overflow: auto; border: 1px solid #eee; border-radius: 5px; padding: 10px;">
+            <div style="text-align: center; color: #999; margin-top: 100px;">
+                <i class="fas fa-database" style="font-size: 48px; margin-bottom: 15px;"></i><br>
+                Выберите таблицу слева для просмотра
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Password Prompt Modal -->
+<div class="modal fade" id="dbPasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="fas fa-lock"></i> Подтверждение действия</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <p>Для выполнения данного действия требуется пароль администратора.</p>
+        <input type="password" id="dbPasswordInput" class="form-control" placeholder="Введите пароль">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-danger" onclick="submitPassword()">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentDbAction = null;
+let pendingDbChanges = [];
+
+function promptForPassword(action) {
+    currentDbAction = action;
+    document.getElementById('dbPasswordInput').value = '';
+    var myModal = new bootstrap.Modal(document.getElementById('dbPasswordModal'));
+    myModal.show();
+}
+
+function submitPassword() {
+    const pwd = document.getElementById('dbPasswordInput').value;
+    if(!pwd) {
+        alert("Пожалуйста, введите пароль");
+        return;
+    }
+    
+    // Close modal
+    var myModalEl = document.getElementById('dbPasswordModal');
+    var modal = bootstrap.Modal.getInstance(myModalEl);
+    modal.hide();
+    
+    if(currentDbAction === 'import') {
+        document.getElementById('importAdminPassword').value = pwd;
+        document.getElementById('importSqliteFile').click();
+    } else if (currentDbAction === 'sql') {
+        document.getElementById('sqlAdminPassword').value = pwd;
+        document.getElementById('formExecuteSql').submit();
+    } else if (currentDbAction === 'save') {
+        submitPendingChanges(pwd);
+    }
+}
+
+function submitPendingChanges(pwd) {
+    if(pendingDbChanges.length === 0) return;
+    
+    const table_name = document.getElementById('currentTableName').value;
+    const pk_col = document.getElementById('currentTablePkCol').value;
+    
+    fetch('{{ url_for("admin.db_update_cells") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            table: table_name,
+            pk_col: pk_col,
+            changes: pendingDbChanges,
+            admin_password: pwd
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if(data.success) {
+            alert('Все изменения успешно сохранены!');
+            // Reset state
+            pendingDbChanges = [];
+            updateSaveBtn();
+            // Optional: reload table data
+            loadTableData(table_name);
+        } else {
+            alert('Ошибка сохранения: ' + data.error);
+            // Don't clear changes so user can retry
+        }
+    })
+    .catch(err => {
+        alert('Сетевая ошибка: ' + err);
+    });
+}
+
+function markCellChanged(cell) {
+    const pk_val = cell.dataset.pk;
+    const column = cell.dataset.col;
+    let current = cell.innerText.trim();
+    if (current === 'NULL') current = null;
+    
+    // Find if this cell is already in pending changes
+    let existingChange = pendingDbChanges.find(c => c.pk_val == pk_val && c.column == column);
+    
+    if (existingChange) {
+        existingChange.value = current;
+    } else {
+        pendingDbChanges.push({
+            pk_val: pk_val,
+            column: column,
+            value: current
+        });
+    }
+    
+    cell.style.background = '#fff3cd'; // Highlight yellow to show unsaved edit
+    updateSaveBtn();
+}
+
+function updateSaveBtn() {
+    const btn = document.getElementById('saveChangesBtn');
+    const cnt = document.getElementById('changesCount');
+    if(pendingDbChanges.length > 0) {
+        btn.style.display = 'block';
+        cnt.innerText = pendingDbChanges.length;
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+function loadTableData(tableName) {
+    // Reset pending changes when switching tables
+    if(pendingDbChanges.length > 0) {
+        if(!confirm('У вас есть несохраненные изменения! Вы уверены, что хотите переключить таблицу? Все несохраненные данные будут утеряны.')) {
+            return;
+        }
+    }
+    pendingDbChanges = [];
+    updateSaveBtn();
+    
+    const contentArea = document.getElementById('tableContentArea');
+    contentArea.innerHTML = '<div style="text-align:center; margin-top:100px; color:#666;">Загрузка...</div>';
+    
+    fetch('{{ url_for("admin.db_view_table", table_name="TABLENAME") }}'.replace('TABLENAME', tableName))
+        .then(response => response.text())
+        .then(html => {
+            contentArea.innerHTML = html;
+        })
+        .catch(err => {
+            contentArea.innerHTML = '<div style="color:red; text-align:center; margin-top:100px;">Ошибка загрузки</div>';
+        });
+}
+
+function toggleSqlRunner() {
+    const runner = document.getElementById('sqlRunner');
+    runner.style.display = runner.style.display === 'none' ? 'block' : 'none';
+}
+</script>

@@ -1,0 +1,94 @@
+/* =========================================
+   ГЛАВНАЯ СТРАНИЦА (ОБЩИЕ СТИЛИ)
+========================================= */
+span {
+    color: var(--copp-lochamara-hover);
+}
+
+.hero-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+    margin-top: 40px;
+    margin-bottom: 50px;
+}
+
+.hero-text-block {
+    flex: 1;
+}
+
+.hero-text-block h1 {
+    color: var(--copp-text);
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+}
+
+.hero-text-block h2 {
+    color: var(--copp-text);
+    font-size: 1.5rem;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.hero-text-block p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--copp-text);
+}
+
+.hero-image-block {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+/* =========================================
+   3D СЛАЙДЕР-КАРУСЕЛЬ (Coverflow)
+========================================= */
+.hero-3d-slider {
+    position: relative;
+    width: 100%;
+    max-width: 650px;
+    height: 550px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slide-3d {
+    position: absolute;
+    width: 70%;
+    height: 70%;
+    object-fit: cover;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    
+    opacity: 0;
+    transform: translateX(0) scale(0.5);
+    z-index: 0;
+    
+    transition: all var(--transition-slider); 
+    pointer-events: none;
+}
+
+.slide-3d.active {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    z-index: 3;
+    filter: blur(0);
+}
+
+.slide-3d.next {
+    opacity: 0.7;
+    transform: translateX(40%) scale(0.85); 
+    z-index: 1;
+    filter: blur(1px);
+}
+
+.slide-3d.prev {
+    opacity: 0.7;
+    transform: translateX(-40%) scale(0.85); 
+    z-index: 1;
+    filter: blur(3px);
+}

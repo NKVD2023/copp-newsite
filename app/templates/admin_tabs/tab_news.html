@@ -1,0 +1,191 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/news.css') }}">
+
+<div class="news-module">
+
+    <div class="news-header-panel">
+        <div class="news-search-box">
+            <span class="search-icon"></span>
+            <input type="text" class="generic-search-input" data-target=".news-card" placeholder="Поиск по заголовку или анонсу...">
+        </div>
+        <button class="btn-create-news" onclick="toggleNewsForm()">+ Создать новость</button>
+    </div>
+
+<div id="news-form-container" class="news-form-wrapper" style="{% if edit_item %}display: block;{% else %}display: none;{% endif %}">
+    <div class="modern-form-card">
+        
+        <div class="form-header">
+            <h2>{% if edit_item %}Редактирование новости{% else %}Создание новости{% endif %}</h2>
+            
+            {% if edit_item %}
+                <a href="{{ url_for('admin.dashboard') }}" class="btn-cancel" style="text-decoration:none;">Отмена</a>
+            {% else %}
+                <button type="button" class="btn-cancel" onclick="toggleNewsForm()">Отмена</button>
+            {% endif %}
+        </div>
+
+        <form action="{% if edit_item %}{{ url_for('admin.update_news', news_id=edit_item.id) }}{% else %}/admin/add_news{% endif %}" method="POST" enctype="multipart/form-data">
+            
+            <div class="form-row">
+                <div class="form-group span-2">
+                    <label>Полное наименование (Заголовок)</label>
+                    <input type="text" name="title" required placeholder="Введите заголовок" value="{{ edit_item.title if edit_item else '' }}">
+                </div>
+                <div class="form-group">
+                    <label>Статус публикации</label>
+                    <select name="status">
+                        <option value="draft" {% if edit_item and edit_item.status == 'draft' %}selected{% endif %}>Черновик</option>
+                        <option value="published" {% if edit_item and edit_item.status == 'published' %}selected{% endif %}>Опубликована</option>
+                        <option value="archived" {% if edit_item and edit_item.status == 'archived' %}selected{% endif %}>В архив</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row" style="background:#f9fbfc; padding: 15px; border-radius: 8px; border: 1px dashed #c2d1d9;">
+                <div class="form-group" style="flex: 0.5; justify-content: center;">
+                    <label>
+                        <input type="checkbox" name="is_event" value="1" id="is_event_cb" {% if edit_item and edit_item.is_event %}checked{% endif %} onchange="toggleEventFields()">
+                        Это мероприятие?
+                    </label>
+                </div>
+                <div class="form-group event-fields" style="display: {% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %};">
+                    <label>Дата и время</label>
+                    <input type="datetime-local" name="event_date" id="event_date_input" value="{{ edit_item.event_date if edit_item else '' }}" {% if edit_item and edit_item.is_event %}required{% endif %}>
+                </div>
+                <div class="form-group span-2 event-fields" style="display: {% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %};">
+                    <label>Место проведения (обязательно)</label>
+                    <input type="text" name="event_location" id="event_location_input" placeholder="Укажите адрес или место" value="{{ edit_item.event_location if edit_item else '' }}" {% if edit_item and edit_item.is_event %}required{% endif %}>
+                </div>
+            </div>
+
+            <script>
+                function toggleEventFields() {
+                    const cb = document.getElementById('is_event_cb');
+                    const fields = document.querySelectorAll('.event-fields');
+                    const loc = document.getElementById('event_location_input');
+                    const date = document.getElementById('event_date_input');
+                    fields.forEach(f => {
+                        f.style.display = cb.checked ? 'flex' : 'none';
+                    });
+                    if (cb.checked) {
+                        loc.setAttribute('required', 'required');
+                        date.setAttribute('required', 'required');
+                    } else {
+                        loc.removeAttribute('required');
+                        date.removeAttribute('required');
+                    }
+                }
+            </script>
+
+            <div class="form-group">
+                <label>Краткий анонс (для превью)</label>
+                <textarea name="teaser" rows="2">{{ edit_item.teaser if edit_item else '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Полный текст статьи</label>
+                <textarea id="newsContent" name="content" rows="8">{{ edit_item.content if edit_item else '' }}</textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Главная фотография {% if edit_item and edit_item.main_image %}<span style="color:#0066cc;">(Уже загружена. Выберите новый файл, чтобы заменить)</span>{% endif %}</label>
+                    <div class="file-upload-box">
+                        <input type="file" name="main_image" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Дополнительные фотографии {% if edit_item and edit_item.extra_images %}<span style="color:#0066cc;">(Загрузка новых фото удалит старые)</span>{% endif %}</label>
+                    <div class="file-upload-box">
+                        <input type="file" name="extra_images" accept="image/*" multiple>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit-large">
+                {% if edit_item %}Сохранить изменения{% else %}Сохранить новость{% endif %}
+            </button>
+        </form>
+    </div>
+</div>
+</div>
+
+<div class="news-grid admin-news-grid">
+    {% for news in news_list %}
+    <article class="news-card">
+
+        {% if news.main_image %}
+        <img src="{{ url_for('static', filename=news.main_image) }}" class="card-main-img" alt="Главное фото">
+        {% else %}
+        <div class="card-no-img">Нет фото</div>
+        {% endif %}
+
+        {% if news.extra_images %}
+        <div class="card-extra-gallery">
+            {% for ext_img in news.extra_images.split(',') %}
+            {% if ext_img %}
+            <img src="{{ url_for('static', filename=ext_img) }}" class="card-ext-img" alt="Доп">
+            {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="card-body-content">
+
+            <h3 class="card-title">{{ news.title }}</h3>
+
+            {% if news.teaser %}
+            <p class="card-teaser">{{ news.teaser }}</p>
+            {% endif %}
+
+            <p class="card-text line-clamp-4">{{ news.content }}</p>
+
+            <div class="card-meta">
+                <span class="card-date">{{ news.publish_date[:10] }}</span>
+
+                {% if news.status == 'published' %}
+                <span class="status-badge bg-published">Опубликована</span>
+                {% elif news.status == 'draft' %}
+                <span class="status-badge bg-draft">Черновик</span>
+                {% else %}
+                <span class="status-badge bg-archived">В архиве</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-actions">
+
+            <form action="{{ url_for('admin.toggle_news_status', news_id=news.id) }}" method="POST" style="flex: 1;">
+                <input type="hidden" name="current_status" value="{{ news.status }}">
+                {% if news.status == 'published' %}
+                <button type="submit" class="btn-card btn-archive w-100">В архив</button>
+                {% else %}
+                <button type="submit" class="btn-card btn-publish w-100">Опубликовать</button>
+                {% endif %}
+            </form>
+
+            <form action="/admin/edit_news/{{ news.id }}" method="GET" style="flex: 1;">
+                <button type="submit" class="btn-card btn-edit w-100">Редактировать</button>
+            </form>
+
+            <form action="{{ url_for('admin.delete_news', news_id=news.id) }}" method="POST" style="flex: 1;" onsubmit="return confirm('Вы уверены, что хотите навсегда удалить эту новость?');">
+                <button type="submit" class="btn-card btn-danger w-100">Удалить</button>
+            </form>
+
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+
+
+<script>
+    function toggleNewsForm() {
+        const form = document.getElementById('news-form-container');
+        if (form.style.display === 'none' || form.style.display === '') {
+            form.style.display = 'block';
+        } else {
+            form.style.display = 'none';
+        }
+    }
+</script>

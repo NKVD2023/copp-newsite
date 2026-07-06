@@ -1,0 +1,279 @@
+/* =========================================
+   ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ (ДИЗАЙН-СИСТЕМА)
+========================================= */
+:root {
+    /* 1. БАЗОВЫЕ ЦВЕТА */
+    --copp-bg: #f6f6f5; /* Основной фон сайта (White Rock) */
+    --copp-blue: #00334e; /* Фирменный синий (Prussian Blue) */
+    --copp-tropicalblue-hover: #70c6d1;
+    --copp-lochamara-hover: #007fbd; 
+    --copp-blue2: #0066ff; /* Яркий синий для кнопок */
+    --copp-text: #333333; /* Основной текст */
+    
+    /* 2. ВСПОМОГАТЕЛЬНЫЕ ЦВЕТА (Фоны и обводки) */
+    --bg-card: #ffffff; /* Белый фон для карточек и панелей */
+    --bg-input: #fafafa; /* Светло-серый фон для инпутов и поиска */
+    --border-light: 1px solid #e4e4e4; /* Стандартная тонкая рамка */
+    
+    /* 3. СКРУГЛЕНИЯ (Border Radius) */
+    --radius-sm: 4px;   /* Мелкие элементы: инпуты логина, скроллбары */
+    --radius-md: 8px;   /* Стандарт: кнопки, поля ввода, бейджи, табы */
+    --radius-lg: 12px;  /* Карточки: новости, формы, панели управления */
+    --radius-xl: 16px;  /* Крупные блоки: 3D-слайдер */
+
+    /* 4. ТЕНИ (Box Shadow) */
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.05);      /* Шапка, легкие элементы */
+    --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.04);      /* Карточки новостей, панели */
+    --shadow-lg: 0 10px 25px rgba(0, 51, 78, 0.15);   /* Hover-эффекты, hero-картинка */
+    --shadow-focus: 0 0 0 3px rgba(0, 123, 255, 0.1); /* Синее свечение при клике в инпут */
+
+    /* 5. АНИМАЦИИ (Transitions) */
+    --transition-fast: 0.2s ease; /* Стандартная плавная анимация кнопок и наведения */
+    --transition-slider: 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Анимация 3D слайдера */
+}
+
+/* =========================================
+   БАЗОВЫЕ СТИЛИ ДОКУМЕНТА
+========================================= */
+html {
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--copp-blue) var(--copp-bg);
+}
+
+body {
+    margin: 0;
+    font-family: 'Proxima Nova', sans-serif;
+    background-color: var(--copp-bg);
+    color: var(--copp-text);
+    overflow-x: hidden;
+}
+
+/* Кастомный скроллбар (бегунок) в стиле сайта */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--copp-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--copp-blue);
+    border-radius: 6px;
+    border: 3px solid var(--copp-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--copp-lochamara-hover);
+}
+
+/* =========================================
+   ШАПКА САЙТА (HEADER)
+========================================= */
+header {
+    background-color: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    width: 100%;
+    position: relative;
+    z-index: 1000;
+}
+
+/* Ограничитель ширины */
+/* Ограничитель ширины шапки */
+.header-container {
+    max-width: 1200px; /* Вернули 1200px, чтобы логотип был на одной линии с текстом */
+    margin: 0 auto;
+    padding: 15px 20px; 
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Логотип у левого края, меню занимает оставшееся место */
+    gap: 30px; 
+    min-height: 80px;
+}
+
+/* Логотип и текст */
+.brand-container {
+    /* Убрали position: absolute, теперь логотип в общем потоке */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    text-decoration: none;
+    flex-shrink: 0; /* Запрещаем логотипу сплющиваться при нехватке места */
+}
+
+.brand-container img {
+    height: 80px;
+    min-width: 80px;
+    object-fit: contain;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.brand-main {
+    font-size: 1.4rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    color: var(--copp-blue);
+    font-weight: bold;
+}
+
+/* Навигация (Меню) */
+header nav {
+    display: flex;
+    flex-wrap: wrap; /* Универсальное правило: если не влезает - переносим на новую строку */
+    gap: 12px 25px; /* 12px между рядами по вертикали, 25px между ссылками */
+    align-items: center;
+    justify-content: center; /* Центрируем все ряды */
+    flex: 1; 
+}
+
+.container {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+/* Флеш-сообщения */
+.alert { padding: 10px; margin-bottom: 20px; border-radius: var(--radius-sm); }
+.alert.success { background-color: #d4edda; color: #155724; }
+.alert.error { background-color: #f8d7da; color: #721c24; }
+
+/* =========================================
+   ВЫПАДАЮЩИЕ МЕНЮ И ССЫЛКИ В ШАПКЕ
+========================================= */
+
+/* Общие стили для главных ссылок и кнопок выпадающего меню */
+header nav > a, 
+.dropbtn {
+    color: var(--copp-text);
+    text-decoration: none;
+    font-size: 1.05rem;
+    padding: 8px 16px;
+    white-space: nowrap;
+    font-weight: 500;
+    
+    /* Сбрасываем стили кнопок для dropbtn */
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    /* Скругляем углы для эффекта плитки */
+    /* border-radius: var(--radius-md); */
+    
+    /* Плавная анимация цвета, смещения и тени */
+    transition: all var(--transition-fast);
+}
+
+/* Эффект при наведении: сразу синий фон, подъем и тень */
+header nav > a:hover,
+.dropdown:hover .dropbtn {
+    color: white;
+    background-color: var(--copp-blue);
+    transform: translateY(-3px); /* Смещение вверх */
+    /* box-shadow: 0px 6px 15px rgba(0, 9, 14, 0.87); */
+}
+
+/* Контейнер выпадающего меню */
+.dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%; 
+}
+
+/* Стрелочка рядом с текстом */
+.arrow {
+    font-size: 0.8rem;
+    transition: transform var(--transition-fast);
+}
+
+.dropdown:hover .arrow {
+    transform: rotate(180deg);
+}
+
+/* Сама выпадающая плашка с ссылками */
+.dropdown-content {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 150%; /* Изначально сдвинуто немного вниз */
+    left: -20px; /* Выравнивание по левому краю с небольшим запасом */
+    background-color: var(--bg-card);
+    min-width: 280px; /* Ширина меню, чтобы влез длинный текст */
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-md);
+    border: var(--border-light);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+    
+    /* Плавное появление и выезд снизу-вверх */
+    transition: all var(--transition-fast);
+    transform: translateY(15px);
+}
+
+/* Показываем меню при наведении на родительский блок */
+.dropdown:hover .dropdown-content {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+    top: 100%; /* Меню прилипает прямо под шапкой */
+}
+
+/* Стили для ссылок внутри меню */
+.dropdown-content a {
+    color: var(--copp-text);
+    padding: 12px 20px;
+    text-decoration: none;
+    display: block;
+    font-size: 0.95rem;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    white-space: normal; /* Разрешаем перенос текста на новую строку, если он слишком длинный */
+    line-height: 1.4;
+}
+
+/* Наведение на пункты внутри меню */
+.dropdown-content a:hover {
+    background-color: var(--copp-blue);
+    color: white;
+}
+
+/* =========================================
+   АДАПТИВНОСТЬ (Responsive)
+========================================= */
+@media (max-width: 992px) {
+    .header-container {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+    header nav {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    header nav {
+        flex-direction: column;
+        gap: 5px;
+    }
+    .brand-main {
+        font-size: 1.2rem;
+    }
+    .brand-container img {
+        height: 60px;
+        min-width: 60px;
+    }
+}

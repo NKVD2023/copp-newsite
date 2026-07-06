@@ -1,0 +1,77 @@
+from flask import render_template, redirect, url_for, session
+from app.admin import bp
+from app.db import get_db_connection
+
+@bp.route('/')
+def dashboard():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin.login'))
+    
+    from flask import request
+    active_tab = request.args.get('tab', 'news')
+    
+    import os
+    from datetime import datetime
+
+    uploads_dir = os.path.join('app', 'static', 'uploads')
+    all_media_files = []
+    
+    if os.path.exists(uploads_dir):
+        for root, dirs, files in os.walk(uploads_dir):
+            for file in files:
+                filepath = os.path.join(root, file)
+                rel_path = os.path.relpath(filepath, os.path.join('app', 'static')).replace('\\', '/')
+                folder = os.path.basename(root)
+                
+                stat = os.stat(filepath)
+                size_kb = round(stat.st_size / 1024, 1)
+                
+                # Format date
+                date_obj = datetime.fromtimestamp(stat.st_mtime)
+                date_str = date_obj.strftime('%Y-%m-%d %H:%M')
+                
+                ext = file.rsplit('.', 1)[-1].lower() if '.' in file else ''
+                is_image = ext in ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp']
+                
+                all_media_files.append({
+                    'filename': file,
+                    'filepath': rel_path,
+                    'folder': folder,
+                    'size_kb': size_kb,
+                    'date_str': date_str,
+                    'is_image': is_image,
+                    'timestamp': stat.st_mtime
+                })
+    
+    # Sort files by newest first
+    all_media_files.sort(key=lambda x: x['timestamp'], reverse=True)
+
+    with get_db_connection() as conn:
+        news_list = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
+        pages_list = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
+        documents_list = conn.execute('SELECT * FROM documents ORDER BY id DESC').fetchall()
+        projects_list = conn.execute('SELECT * FROM projects ORDER BY id DESC').fetchall()
+        stats_list = conn.execute('SELECT * FROM statistics ORDER BY display_order ASC').fetchall()
+        socials_list = conn.execute('SELECT * FROM social_networks ORDER BY display_order ASC').fetchall()
+        contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
+        menu_groups_list = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
+        tables_list = conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall()
+        
+        try:
+            prof_uploads = conn.execute('SELECT * FROM dashboard_uploads ORDER BY upload_date DESC').fetchall()
+        except:
+            prof_uploads = []
+            
+    return render_template('admin_dashboard.html', 
+                           active_tab=active_tab,
+                           news_list=news_list,
+                           pages_list=pages_list,
+                           documents_list=documents_list,
+                           projects_list=projects_list,
+                           stats_list=stats_list,
+                           socials_list=socials_list,
+                           contact_settings=contact_settings,
+                           menu_groups_list=menu_groups_list,
+                           tables_list=tables_list,
+                           all_media_files=all_media_files,
+                           prof_uploads=prof_uploads)

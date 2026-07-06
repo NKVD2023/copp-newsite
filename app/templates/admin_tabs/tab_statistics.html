@@ -1,0 +1,55 @@
+<div class="news-module">
+
+    <div class="news-header-panel">
+        <div class="news-search-box">
+            <span class="search-icon"></span>
+            <input type="text" class="generic-search-input" data-target=".stat-row" placeholder="Поиск по показателю...">
+        </div>
+    </div>
+
+    <div class="modern-form-card" style="margin-top: 20px;">
+        <div class="form-header">
+            <h2>Показатели статистики</h2>
+        </div>
+
+        <form action="/admin/statistics" method="POST">
+            <div class="modern-table-wrapper">
+                <table class="table modern-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Показатель (Метка)</th>
+                            <th>Значение</th>
+                            <th>Порядок отображения</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_list %}
+                        <tr class="stat-row">
+                            <td>
+                                {{ stat.id }}
+                                <input type="hidden" name="id" value="{{ stat.id }}">
+                            </td>
+                            <td class="search-text">
+                                <input type="text" name="label" value="{{ stat.label }}" class="form-control" required>
+                            </td>
+                            <td>
+                                <input type="number" name="value" value="{{ stat.value }}" class="form-control" required>
+                            </td>
+                            <td>
+                                <input type="number" name="display_order" value="{{ stat.display_order }}" class="form-control" required>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">Нет показателей статистики.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="submit" class="btn-submit-large mt-3" {% if not stats_list %}disabled{% endif %}>Сохранить изменения</button>
+        </form>
+    </div>
+</div>

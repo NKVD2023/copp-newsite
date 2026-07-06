@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ news.title }} - ЦОПП РК{% endblock %}
+
+{% block extra_css %}
+<style>
+.news-container {
+    background: transparent;
+    padding: 3rem 4rem;
+    margin-bottom: 4rem;
+}
+
+@media (max-width: 768px) {
+    .news-container {
+        padding: 2rem 1.5rem;
+    }
+}
+
+.news-detail-header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #eef2f5;
+}
+
+.news-detail-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
+}
+
+.news-detail-meta {
+    color: #888;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 2.5rem;
+}
+
+.news-layout {
+    display: flex;
+    gap: 50px;
+    align-items: flex-start;
+}
+
+.news-text-content {
+    flex: 1;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #555;
+}
+
+.news-gallery-container {
+    flex: 0 0 500px;
+    width: 500px;
+}
+
+@media (max-width: 991px) {
+    .news-layout {
+        flex-direction: column;
+    }
+    .news-gallery-container {
+        flex: 1 1 100%;
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+.carousel-inner {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.carousel-item img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+}
+
+/* Swiper Styles */
+.swiper {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    border-radius: 15px;
+    overflow: visible; /* Позволяет тени выходить за края */
+}
+.swiper-slide {
+    background: transparent; /* Убрали "колхозный" фон */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.swiper-slide img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.15); /* Красивая мягкая тень */
+    transition: transform 0.3s ease;
+}
+.swiper-slide img:hover {
+    transform: scale(1.02); /* Легкий эффект при наведении */
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 2rem;
+    color: var(--copp-blue);
+    text-decoration: none;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.back-link:hover {
+    transform: translateX(-5px);
+    color: #004b99;
+}
+
+/* Background Blobs */
+body {
+    background-color: #f8fcfd !important; /* Убираем серый фон страницы */
+}
+
+.news-bg-wrapper {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    background: #f8fcfd;
+    overflow: hidden;
+    padding: 3rem 2rem 6rem 2rem; /* Увеличили паддинг снизу */
+    margin-top: -20px;
+    margin-bottom: -4rem; /* Убираем отступ перед футером */
+    min-height: calc(100vh - 100px); /* Тянем на весь экран */
+}
+
+.blob {
+    position: absolute;
+    filter: blur(40px);
+    border-radius: 50%;
+    z-index: 0;
+    opacity: 0.5;
+    animation: floatBlob 10s ease-in-out infinite alternate;
+}
+
+.blob-1 { width: 400px; height: 400px; background: #cfe2ff; top: -100px; left: -100px; }
+.blob-2 { width: 300px; height: 300px; background: #e0cffc; bottom: -50px; right: 20%; animation-delay: -3s; }
+.blob-3 { width: 250px; height: 250px; background: #d1e7dd; top: 20%; right: -50px; animation-delay: -5s; }
+
+@keyframes floatBlob {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(30px) scale(1.1); }
+}
+
+.news-content-layer {
+    position: relative;
+    z-index: 2;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+/* Geometric Patterns */
+.shape-pattern {
+    position: absolute;
+    z-index: 1;
+    transition: transform 0.1s ease-out;
+    filter: blur(1px); /* Меньше размытия */
+    opacity: 0.65;
+}
+.shape-stripes {
+    width: 150px;
+    height: 150px;
+    background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 102, 204, 0.15) 10px, rgba(0, 102, 204, 0.15) 20px);
+    border-radius: 50%;
+}
+.shape-dots {
+    width: 120px;
+    height: 120px;
+    background-image: radial-gradient(rgba(0, 102, 204, 0.2) 3px, transparent 3px);
+    background-size: 15px 15px;
+    border-radius: 15px;
+    transform: rotate(15deg);
+}
+.shape-grid {
+    width: 180px;
+    height: 180px;
+    background-image: linear-gradient(rgba(0, 102, 204, 0.15) 2px, transparent 2px), linear-gradient(90deg, rgba(0, 102, 204, 0.15) 2px, transparent 2px);
+    background-size: 20px 20px;
+    border-radius: 50%;
+}
+.shape-diagonal-grid {
+    width: 160px;
+    height: 160px;
+    background-image: repeating-linear-gradient(45deg, rgba(0, 102, 204, 0.1) 0, rgba(0, 102, 204, 0.1) 2px, transparent 2px, transparent 15px),
+                      repeating-linear-gradient(-45deg, rgba(0, 102, 204, 0.1) 0, rgba(0, 102, 204, 0.1) 2px, transparent 2px, transparent 15px);
+    border-radius: 30px;
+    transform: rotate(10deg);
+}
+.shape-waves {
+    width: 200px;
+    height: 200px;
+    background-image: repeating-radial-gradient(circle at 0 0, transparent 0, rgba(0, 102, 204, 0.08) 4px, transparent 5px, transparent 20px);
+    border-radius: 50%;
+}
+.shape-checkers {
+    width: 140px;
+    height: 140px;
+    background-image: linear-gradient(45deg, rgba(0, 102, 204, 0.08) 25%, transparent 25%, transparent 75%, rgba(0, 102, 204, 0.08) 75%, rgba(0, 102, 204, 0.08)), 
+                      linear-gradient(45deg, rgba(0, 102, 204, 0.08) 25%, transparent 25%, transparent 75%, rgba(0, 102, 204, 0.08) 75%, rgba(0, 102, 204, 0.08));
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    border-radius: 50%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="news-bg-wrapper" id="parallaxNewsWrapper">
+    <!-- Blobs -->
+    <div class="blob blob-1" data-speed="1.5"></div>
+    <div class="blob blob-2" data-speed="-2"></div>
+    <div class="blob blob-3" data-speed="2.5"></div>
+
+    <!-- Random Patterns (More variations, central placements) -->
+    {% set shapes = ['shape-stripes', 'shape-dots', 'shape-grid', 'shape-diagonal-grid', 'shape-waves', 'shape-checkers'] %}
+    {% set s1 = shapes[news.id % 6] %}
+    {% set s2 = shapes[(news.id + 2) % 6] %}
+    {% set s3 = shapes[(news.id + 4) % 6] %}
+    {% set s4 = shapes[(news.id + 5) % 6] %}
+    
+    <!-- Вычисляем позиции ближе к центру (от 15% до 75%), чтобы элементы накладывались под текст и фото -->
+    {% set p1_top = (news.id * 7 % 40) + 15 %}
+    {% set p1_left = (news.id * 11 % 40) + 20 %}
+    
+    {% set p2_top = (news.id * 13 % 40) + 30 %}
+    {% set p2_left = (news.id * 17 % 40) + 40 %}
+    
+    {% set p3_top = (news.id * 19 % 40) + 20 %}
+    {% set p3_left = (news.id * 23 % 30) + 50 %}
+
+    {% set p4_top = (news.id * 29 % 30) + 50 %}
+    {% set p4_left = (news.id * 31 % 30) + 15 %}
+    
+    <div class="shape-pattern {{ s1 }}" data-speed="4" style="top: {{ p1_top }}%; left: {{ p1_left }}%;"></div>
+    <div class="shape-pattern {{ s2 }}" data-speed="-2.5" style="top: {{ p2_top }}%; left: {{ p2_left }}%;"></div>
+    <div class="shape-pattern {{ s3 }}" data-speed="3" style="top: {{ p3_top }}%; left: {{ p3_left }}%;"></div>
+    <div class="shape-pattern {{ s4 }}" data-speed="-1.5" style="top: {{ p4_top }}%; left: {{ p4_left }}%;"></div>
+
+    <div class="news-content-layer">
+        <a href="{{ url_for('main.news') }}" class="back-link">&larr; Ко всем новостям</a>
+
+        <div class="news-container">
+        <div class="news-detail-header">
+            <h1 class="news-detail-title">{{ news.title }}</h1>
+            <div class="news-detail-meta">
+                <span>{{ human_publish_date if human_publish_date else 'Не указано' }}</span>
+                {% if news.is_event %}
+                <span style="background: #0d6efd; color: white; padding: 3px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">Мероприятие</span>
+                {% endif %}
+                {% if news.is_event and news.event_date %}
+                <span>Дата мероприятия: {{ human_event_date }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="news-layout">
+            <!-- Текст новости (слева) -->
+            <div class="news-text-content">
+                {{ news.content|safe }}
+            </div>
+
+            <!-- Галерея картинок (справа) -->
+            {% set all_images = [] %}
+            {% if news.main_image %}
+                {% set _ = all_images.append(news.main_image) %}
+            {% endif %}
+            {% for img in extra_imgs %}
+                {% set _ = all_images.append(img) %}
+            {% endfor %}
+
+            {% if all_images|length > 0 %}
+            <div class="news-gallery-container">
+                {% if all_images|length == 1 %}
+                    <a data-fancybox="gallery" href="{{ url_for('static', filename=all_images[0]) }}" style="display: block; cursor: zoom-in;">
+                        <img src="{{ url_for('static', filename=all_images[0]) }}" alt="Изображение новости" style="width: 100%; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                    </a>
+                {% else %}
+                    <!-- Swiper 3D Slider -->
+                    <div class="swiper mySwiper">
+                        <div class="swiper-wrapper">
+                            {% for img in all_images %}
+                            <div class="swiper-slide">
+                                <a data-fancybox="gallery" href="{{ url_for('static', filename=img) }}" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; cursor: zoom-in;">
+                                    <img src="{{ url_for('static', filename=img) }}" alt="Изображение новости">
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="swiper-pagination"></div>
+                    </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    </div>
+</div>
+
+<!-- Swiper and Fancybox JS CDNs -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+
+<script>
+    // Parallax mouse move
+    document.addEventListener('mousemove', function(e) {
+        const wrapper = document.getElementById('parallaxNewsWrapper');
+        if (!wrapper) return;
+        
+        const x = (e.clientX / window.innerWidth - 0.5) * 2;
+        const y = (e.clientY / window.innerHeight - 0.5) * 2;
+        
+        const elements = wrapper.querySelectorAll('[data-speed]');
+        elements.forEach(el => {
+            const speed = parseFloat(el.getAttribute('data-speed'));
+            const moveX = x * speed * 10;
+            const moveY = y * speed * 10;
+            // Учитываем возможное изначальное трансформирование (например rotate)
+            if (el.classList.contains('shape-dots') || el.classList.contains('shape-diagonal-grid')) {
+                el.style.transform = `translate(${moveX}px, ${moveY}px) rotate(10deg)`;
+            } else {
+                el.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            }
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Initialize Fancybox
+        Fancybox.bind("[data-fancybox]", {
+            // Options
+        });
+
+        if (document.querySelector('.mySwiper')) {
+            var swiper = new Swiper(".mySwiper", {
+                effect: "cards",
+                grabCursor: true,
+                cardsEffect: {
+                    perSlideOffset: 8,
+                    perSlideRotate: 2,
+                    rotate: true,
+                    slideShadows: false,
+                },
+                autoplay: {
+                    delay: 3000,
+                    disableOnInteraction: false,
+                },
+                pagination: {
+                    el: ".swiper-pagination",
+                    clickable: true,
+                    dynamicBullets: true,
+                },
+            });
+        }
+    });
+</script>
+{% endblock %}

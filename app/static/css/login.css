@@ -1,0 +1,54 @@
+/* =========================================
+   СТРАНИЦА ВХОДА АДМИНИСТРАТОРА
+========================================= */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    background: var(--bg-card);
+    padding: 40px 30px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    text-align: center;
+}
+
+.login-container h2 {
+    color: var(--copp-blue);
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 1.6rem;
+}
+
+.login-form input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border: var(--border-light);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all var(--transition-fast);
+}
+
+.login-form input[type="password"]:focus {
+    border-color: var(--copp-blue2);
+    box-shadow: var(--shadow-focus);
+    outline: none;
+}
+
+.login-form button {
+    width: 100%;
+    background-color: var(--copp-blue);
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.login-form button:hover {
+    background-color: var(--copp-lochamara-hover);
+}

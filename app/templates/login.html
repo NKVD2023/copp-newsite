@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Вход в панель управления - ЦОПП РК{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h2>Вход для сотрудников</h2>
+    <form method="POST" action="{{ url_for('admin.login') }}" class="login-form">
+        <input type="password" name="password" placeholder="Введите пароль доступа" required autocomplete="current-password">
+        <button type="submit">Войти в систему</button>
+    </form>
+</div>
+{% endblock %}
