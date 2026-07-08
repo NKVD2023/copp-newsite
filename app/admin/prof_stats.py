@@ -12,6 +12,11 @@ def clean_val(v):
 
 @bp.route('/upload_prof_stats', methods=['POST'])
 def upload_prof_stats():
+    """
+    Загрузка и парсинг Excel-файла со статистикой по профессиям/вакансиям.
+    Данные из файла используются для Дашборда (dashboard_vacancies).
+    При загрузке старые записи указанной категории удаляются и заменяются новыми.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         

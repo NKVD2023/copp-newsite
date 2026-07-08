@@ -4,13 +4,22 @@ from app.db import get_db_connection
 
 @bp.route('/')
 def index():
+    """
+    Главная страница сайта.
+    Загружает: 5 последних новостей (с учетом таймера публикации), 
+    блок статистики, контакты и передает это в шаблон index.html.
+    """
+    from datetime import datetime
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     conn = get_db_connection()
-    latest_news_rows = conn.execute("SELECT * FROM news WHERE status = 'published' ORDER BY id DESC LIMIT 5").fetchall()
+    latest_news_rows = conn.execute(
+        "SELECT * FROM news WHERE status = 'published' AND publish_date <= ? ORDER BY publish_date DESC LIMIT 5",
+        (current_time,)
+    ).fetchall()
     stats = conn.execute('SELECT * FROM statistics ORDER BY display_order ASC').fetchall()
     contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
     conn.close()
     
-    from datetime import datetime
     months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
     
     latest_news = []
@@ -27,6 +36,10 @@ def index():
 
 @bp.route('/contact/submit', methods=['POST'])
 def contact_submit():
+    """
+    Обработчик AJAX-запроса (POST) с формы обратной связи.
+    Принимает JSON данные, проверяет обязательные поля и сохраняет заявку в БД.
+    """
     data = request.json
     first_name = data.get('firstName')
     middle_name = data.get('middleName', '')
@@ -53,11 +66,19 @@ def contact_submit():
 
 @bp.route('/news')
 def news():
+    """
+    Страница списка всех новостей.
+    Выводит только опубликованные новости, дата которых уже наступила.
+    """
+    from datetime import datetime
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     conn = get_db_connection()
-    news_rows = conn.execute("SELECT * FROM news WHERE status = 'published' ORDER BY id DESC").fetchall()
+    news_rows = conn.execute(
+        "SELECT * FROM news WHERE status = 'published' AND publish_date <= ? ORDER BY publish_date DESC",
+        (current_time,)
+    ).fetchall()
     conn.close()
     
-    from datetime import datetime
     months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
     
     news_list = []
@@ -74,6 +95,11 @@ def news():
 
 @bp.route('/news/<int:news_id>')
 def news_detail(news_id):
+    """
+    Страница детального просмотра одной новости.
+    Форматирует дату для красивого отображения и парсит дополнительные картинки.
+    Если новость не найдена, выдает ошибку 404.
+    """
     conn = get_db_connection()
     news_item = conn.execute('SELECT * FROM news WHERE id = ?', (news_id,)).fetchone()
     conn.close()
@@ -117,9 +143,18 @@ def news_detail(news_id):
 
 @bp.route('/events')
 def events():
+    """
+    Страница со списком предстоящих мероприятий.
+    Фильтрует новости с флагом is_event=1 и сортирует их по дате проведения.
+    """
+    from datetime import datetime
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     conn = get_db_connection()
-    # Получаем опубликованные мероприятия, сортируем по дате создания (или дате проведения, но date - это строка)
-    events_rows = conn.execute("SELECT * FROM news WHERE status = 'published' AND is_event = 1 ORDER BY event_date ASC, id DESC").fetchall()
+    # Получаем опубликованные мероприятия, сортируем по дате проведения
+    events_rows = conn.execute(
+        "SELECT * FROM news WHERE status = 'published' AND is_event = 1 AND publish_date <= ? ORDER BY event_date ASC, id DESC",
+        (current_time,)
+    ).fetchall()
     conn.close()
     
     events_list = []
@@ -148,6 +183,10 @@ from flask import abort
 
 @bp.route('/page/<slug>')
 def dynamic_page(slug):
+    """
+    Обработчик динамических страниц (созданных через админку).
+    Ищет страницу по уникальному идентификатору (slug).
+    """
     conn = get_db_connection()
     page = conn.execute('SELECT * FROM pages WHERE slug = ?', (slug,)).fetchone()
     conn.close()
@@ -159,6 +198,10 @@ def dynamic_page(slug):
 
 @bp.route('/project/<slug>')
 def project(slug):
+    """
+    Страница детального просмотра проекта.
+    Парсит JSON-массив с дополнительными картинками.
+    """
     conn = get_db_connection()
     project = conn.execute("SELECT * FROM projects WHERE slug = ? AND status = 'published'", (slug,)).fetchone()
     conn.close()
@@ -180,6 +223,10 @@ def dashboard():
 
 @bp.route('/api/dashboard')
 def api_dashboard():
+    """
+    API-эндпоинт для получения данных дашборда вакансий.
+    Возвращает данные в формате JSON для построения графиков на клиенте.
+    """
     category = request.args.get('category', 'Полный список')
     
     conn = get_db_connection()

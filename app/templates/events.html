@@ -57,15 +57,27 @@
 .cal-cell {
     border: 1px solid #eef2f5;
     border-radius: 8px;
-    min-height: 120px;
+    height: 160px; /* Фиксированная высота, чтобы не растягивался */
     padding: 10px;
     background: #fff;
     position: relative;
-    transition: box-shadow 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
 }
 
 .cal-cell:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0, 51, 78, 0.12);
+    border-color: rgba(0, 102, 255, 0.3);
+    z-index: 10; /* Чтобы увеличенная ячейка перекрывала соседей */
+}
+
+/* Акцент на событиях при наведении на ячейку дня */
+.cal-cell:hover .event-card {
+    background: #f0f7ff;
+    border-left-color: var(--copp-blue2, #0066ff);
 }
 
 .cal-cell.empty {
@@ -74,18 +86,47 @@
 }
 
 .cal-date {
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 8px;
-    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--copp-blue);
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: rgba(0, 102, 255, 0.08); /* Легкий фон для выделения */
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.cal-cell:hover .cal-date {
+    background-color: rgba(0, 102, 255, 0.15);
 }
 
 .cal-cell.today .cal-date {
-    color: var(--copp-blue);
-    background: #eef5ff;
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
+    color: #fff;
+    background: var(--copp-blue);
+}
+
+.cal-events {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+}
+
+/* Стили скроллбара для событий */
+.cal-events::-webkit-scrollbar {
+    width: 4px;
+}
+.cal-events::-webkit-scrollbar-track {
+    background: transparent;
+}
+.cal-events::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.15);
+    border-radius: 4px;
 }
 
 .event-card {
@@ -223,6 +264,9 @@ function renderCalendar() {
         dateEl.textContent = i;
         cell.appendChild(dateEl);
 
+        const eventsContainer = document.createElement('div');
+        eventsContainer.className = 'cal-events';
+
         // Find events for this day
         // event_date string format: YYYY-MM-DDTHH:MM
         const dayEvents = eventsData.filter(ev => {
@@ -256,9 +300,10 @@ function renderCalendar() {
             }
 
             evLink.innerHTML = innerHtml;
-            cell.appendChild(evLink);
+            eventsContainer.appendChild(evLink);
         });
 
+        cell.appendChild(eventsContainer);
         calendarGrid.appendChild(cell);
     }
 }

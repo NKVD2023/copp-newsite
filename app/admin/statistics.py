@@ -4,6 +4,10 @@ from app.db import get_db_connection
 
 @bp.route('/statistics', methods=['POST'])
 def statistics():
+    """
+    Массовое обновление статических блоков со статистикой (цифры на главной странице).
+    Перезаписывает значения и порядок отображения для всех переданных ID.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         

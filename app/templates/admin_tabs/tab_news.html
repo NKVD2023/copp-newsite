@@ -3,6 +3,9 @@
 
 <div class="news-module">
 
+    <!-- ========================================== -->
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ (ПОИСК И КНОПКА ДОБАВЛЕНИЯ) -->
+    <!-- ========================================== -->
     <div class="news-header-panel">
         <div class="news-search-box">
             <span class="search-icon"></span>
@@ -11,6 +14,9 @@
         <button class="btn-create-news" onclick="toggleNewsForm()">+ Создать новость</button>
     </div>
 
+<!-- ========================================== -->
+<!-- ФОРМА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ НОВОСТИ -->
+<!-- ========================================== -->
 <div id="news-form-container" class="news-form-wrapper" style="{% if edit_item %}display: block;{% else %}display: none;{% endif %}">
     <div class="modern-form-card">
         
@@ -39,8 +45,14 @@
                         <option value="archived" {% if edit_item and edit_item.status == 'archived' %}selected{% endif %}>В архив</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label>Дата публикации (Таймер)</label>
+                    {% set p_date = edit_item.publish_date.replace(' ', 'T') if edit_item and edit_item.publish_date else '' %}
+                    <input type="datetime-local" name="publish_date" value="{{ p_date }}" step="1" title="Оставьте пустым для публикации прямо сейчас">
+                </div>
             </div>
 
+            <!-- Блок настроек мероприятия -->
             <div class="form-row" style="background:#f9fbfc; padding: 15px; border-radius: 8px; border: 1px dashed #c2d1d9;">
                 <div class="form-group" style="flex: 0.5; justify-content: center;">
                     <label>
@@ -50,7 +62,7 @@
                 </div>
                 <div class="form-group event-fields" style="display: {% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %};">
                     <label>Дата и время</label>
-                    <input type="datetime-local" name="event_date" id="event_date_input" value="{{ edit_item.event_date if edit_item else '' }}" {% if edit_item and edit_item.is_event %}required{% endif %}>
+                    <input type="datetime-local" name="event_date" id="event_date_input" value="{{ edit_item.event_date if edit_item else '' }}" step="1" {% if edit_item and edit_item.is_event %}required{% endif %}>
                 </div>
                 <div class="form-group span-2 event-fields" style="display: {% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %};">
                     <label>Место проведения (обязательно)</label>
@@ -58,6 +70,7 @@
                 </div>
             </div>
 
+            <!-- Скрипт для скрытия/показа полей мероприятия -->
             <script>
                 function toggleEventFields() {
                     const cb = document.getElementById('is_event_cb');
@@ -78,8 +91,8 @@
             </script>
 
             <div class="form-group">
-                <label>Краткий анонс (для превью)</label>
-                <textarea name="teaser" rows="2">{{ edit_item.teaser if edit_item else '' }}</textarea>
+                <label>Краткий анонс (для превью, макс. 180 символов)</label>
+                <textarea name="teaser" rows="2" maxlength="180">{{ edit_item.teaser if edit_item else '' }}</textarea>
             </div>
 
             <div class="form-group">
@@ -110,6 +123,9 @@
 </div>
 </div>
 
+<!-- ========================================== -->
+<!-- СПИСОК НОВОСТЕЙ (СЕТКА КАРТОЧЕК) -->
+<!-- ========================================== -->
 <div class="news-grid admin-news-grid">
     {% for news in news_list %}
     <article class="news-card">
@@ -144,11 +160,19 @@
                 <span class="card-date">{{ news.publish_date[:10] }}</span>
 
                 {% if news.status == 'published' %}
-                <span class="status-badge bg-published">Опубликована</span>
+                    {% if news.publish_date and news.publish_date > now_str %}
+                        <span class="status-badge" style="background: #e3f2fd; color: #1565c0;">Запланирована</span>
+                    {% else %}
+                        <span class="status-badge bg-published">Опубликована</span>
+                    {% endif %}
                 {% elif news.status == 'draft' %}
                 <span class="status-badge bg-draft">Черновик</span>
                 {% else %}
                 <span class="status-badge bg-archived">В архиве</span>
+                {% endif %}
+                
+                {% if news.publish_date %}
+                <span class="status-badge" style="background: #eef; color: #55a;">⏱ {{ news.publish_date[:16] }}</span>
                 {% endif %}
             </div>
         </div>

@@ -3,6 +3,7 @@ from app.admin import bp
 from app.db import get_db_connection
 import os
 from werkzeug.utils import secure_filename
+from app.utils.image_utils import save_image_as_webp
 
 UPLOAD_SOCIALS_FOLDER = os.path.join('app', 'static', 'uploads', 'socials')
 ALLOWED_EXTENSIONS = {'png', 'svg', 'jpg', 'jpeg', 'webp'}
@@ -12,22 +13,17 @@ def allowed_file(filename):
 
 def handle_icon_upload(file):
     if file and file.filename != '' and allowed_file(file.filename):
-        os.makedirs(UPLOAD_SOCIALS_FOLDER, exist_ok=True)
-        filename = secure_filename(file.filename)
-        base, extension = os.path.splitext(filename)
-        counter = 1
-        filepath = os.path.join(UPLOAD_SOCIALS_FOLDER, filename)
-        while os.path.exists(filepath):
-            filename = f"{base}_{counter}{extension}"
-            filepath = os.path.join(UPLOAD_SOCIALS_FOLDER, filename)
-            counter += 1
-            
-        file.save(filepath)
-        return f"uploads/socials/{filename}"
+        filename = save_image_as_webp(file, UPLOAD_SOCIALS_FOLDER, add_uuid=True)
+        if filename:
+            return f"uploads/socials/{filename}"
     return None
 
 @bp.route('/socials/add', methods=['POST'])
 def add_social():
+    """
+    Добавление новой социальной сети (ссылка + иконка).
+    Поддерживает как SVG-код, так и загрузку картинки/иконки файлом.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -52,6 +48,9 @@ def add_social():
 
 @bp.route('/socials/<int:id>/edit', methods=['POST'])
 def edit_social(id):
+    """
+    Редактирование параметров социальной сети (название, ссылка, иконка, порядок отображения, статус).
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -86,6 +85,9 @@ def edit_social(id):
 
 @bp.route('/socials/<int:id>/delete', methods=['POST'])
 def delete_social(id):
+    """
+    Удаление социальной сети и связанного с ней файла иконки.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         

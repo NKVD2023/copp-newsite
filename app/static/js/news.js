@@ -1,5 +1,9 @@
+/* ==========================================
+ * СКРИПТЫ ДЛЯ СТРАНИЦЫ НОВОСТЕЙ
+ * Обработка поиска по сетке карточек
+ * ========================================== */
 document.addEventListener("DOMContentLoaded", function () {
-    // Generic Search Logic
+    // Общая логика фильтрации (поиска) по элементам на странице
     const searchInputs = document.querySelectorAll('.generic-search-input');
     
     searchInputs.forEach(function(searchInput) {

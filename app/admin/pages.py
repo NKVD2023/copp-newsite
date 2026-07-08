@@ -5,6 +5,7 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 import json
+from app.utils.image_utils import save_image_as_webp
 
 UPLOAD_PAGES_FILES_FOLDER = os.path.join('app', 'static', 'uploads', 'page_files')
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'rar', 'txt', 'rtf', 'png', 'jpg', 'jpeg', 'webp'}
@@ -14,6 +15,10 @@ def allowed_file(filename):
 
 @bp.route('/add_page', methods=['POST'])
 def add_page():
+    """
+    Создание новой статической страницы.
+    Обрабатывает текст (через TinyMCE), файлы (вложения) и привязку к меню.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -29,13 +34,9 @@ def add_page():
         files = request.files.getlist('attached_files')
         for file in files:
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_name = str(uuid.uuid4()) + "_" + filename
-                file_path = os.path.join(UPLOAD_PAGES_FILES_FOLDER, unique_name)
-                file.save(file_path)
-                # Store original name alongside path, or just path if we use basename later
-                # For simplicity, we'll store a list of dicts or just paths. Let's just store paths and infer names.
-                attached_files_paths.append(f"uploads/page_files/{unique_name}")
+                filename = save_image_as_webp(file, UPLOAD_PAGES_FILES_FOLDER, add_uuid=True)
+                if filename:
+                    attached_files_paths.append(f"uploads/page_files/{filename}")
 
     attached_files_json = json.dumps(attached_files_paths)
     
@@ -54,6 +55,10 @@ def add_page():
 
 @bp.route('/edit_page/<int:page_id>', methods=['GET'])
 def edit_page(page_id):
+    """
+    Страница редактирования статической страницы.
+    Отображает дашборд с формой редактирования выбранной страницы.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -90,6 +95,10 @@ def edit_page(page_id):
 
 @bp.route('/update_page/<int:page_id>', methods=['POST'])
 def update_page(page_id):
+    """
+    Обновление существующей статической страницы.
+    Обрабатывает новые файлы, удаление старых файлов из ФС и обновляет БД.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -121,11 +130,9 @@ def update_page(page_id):
         files = request.files.getlist('attached_files')
         for file in files:
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_name = str(uuid.uuid4()) + "_" + filename
-                file_path = os.path.join(UPLOAD_PAGES_FILES_FOLDER, unique_name)
-                file.save(file_path)
-                attached_files_paths.append(f"uploads/page_files/{unique_name}")
+                filename = save_image_as_webp(file, UPLOAD_PAGES_FILES_FOLDER, add_uuid=True)
+                if filename:
+                    attached_files_paths.append(f"uploads/page_files/{filename}")
 
     attached_files_json = json.dumps(attached_files_paths)
     
@@ -145,6 +152,9 @@ def update_page(page_id):
 
 @bp.route('/delete_page/<int:page_id>', methods=['POST'])
 def delete_page(page_id):
+    """
+    Полное удаление страницы и всех прикрепленных к ней файлов из ФС и БД.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -165,6 +175,9 @@ def delete_page(page_id):
 
 @bp.route('/toggle_page_navbar/<int:page_id>', methods=['POST'])
 def toggle_page_navbar(page_id):
+    """
+    Включение/Отключение отображения страницы в главном меню навигации.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -186,6 +199,10 @@ UPLOAD_PAGES_FOLDER = os.path.join('app', 'static', 'uploads', 'pages')
 
 @bp.route('/upload_image', methods=['POST'])
 def upload_image():
+    """
+    Обработчик асинхронной загрузки картинок напрямую из редактора TinyMCE.
+    Возвращает JSON с URL загруженной картинки.
+    """
     if not session.get('is_admin'):
         return jsonify({'error': 'Unauthorized'}), 403
         
@@ -197,9 +214,8 @@ def upload_image():
         return jsonify({'error': 'No selected file'}), 400
         
     if file:
-        os.makedirs(UPLOAD_PAGES_FOLDER, exist_ok=True)
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(UPLOAD_PAGES_FOLDER, filename)
-        file.save(filepath)
-        return jsonify({'location': url_for('static', filename=f'uploads/pages/{filename}')})
+        filename = save_image_as_webp(file, UPLOAD_PAGES_FOLDER, add_uuid=True)
+        if filename:
+            return jsonify({'location': url_for('static', filename=f'uploads/pages/{filename}')})
+        return jsonify({'error': 'Failed to upload image'}), 500
 

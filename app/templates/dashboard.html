@@ -61,12 +61,16 @@
 
 <div class="dash-container">
     <div class="dash-header">
-        <h1 class="dash-title">Дашборд: Статистика профессий</h1>
+        <h1 class="dash-title">Статистика востребованных профессий Республики Крым</h1>
         <div class="text-muted" id="lastUpdated" style="color: #666;">Загрузка данных...</div>
     </div>
 
     <!-- Filters Row -->
     <div class="filter-panel">
+        <div class="filter-group" style="grid-column: 1 / -1;">
+            <label>Поиск по вакансиям</label>
+            <input type="text" id="vacSearch" placeholder="Например: Сварщик, IT, Слесарь..." oninput="applyFilters()" style="padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+        </div>
         <div class="filter-group">
             <label>Категория</label>
             <div class="custom-select-wrapper" id="catWrapper">
@@ -290,6 +294,7 @@
         // Collect checked filters
         const checkedMunis = Array.from(document.querySelectorAll('.filter-muni-cb:checked')).map(cb => cb.value);
         const checkedEmps = Array.from(document.querySelectorAll('.filter-emp-cb:checked')).map(cb => cb.value);
+        const searchQuery = document.getElementById('vacSearch') ? document.getElementById('vacSearch').value.toLowerCase().trim() : '';
         
         // Update texts
         document.getElementById('muniText').innerText = checkedMunis.length > 0 ? `Выбрано: ${checkedMunis.length}` : 'Все муниципалитеты';
@@ -298,6 +303,15 @@
         filteredData = allData.filter(item => {
             if(checkedMunis.length > 0 && !checkedMunis.includes(item.municipality)) return false;
             if(checkedEmps.length > 0 && !checkedEmps.includes(item.employer)) return false;
+            
+            if(searchQuery !== '') {
+                const title = (item.vacancy_name || '').toLowerCase();
+                const reqs = (item.requirements || '').toLowerCase();
+                const emp = (item.employer || '').toLowerCase();
+                if (!title.includes(searchQuery) && !reqs.includes(searchQuery) && !emp.includes(searchQuery)) {
+                    return false;
+                }
+            }
             return true;
         });
         

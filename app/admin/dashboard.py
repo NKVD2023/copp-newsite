@@ -1,9 +1,19 @@
+"""
+Модуль отображения главной страницы админ-панели (Дашборд).
+Собирает все необходимые данные из БД для вывода вкладок админки.
+"""
 from flask import render_template, redirect, url_for, session
 from app.admin import bp
 from app.db import get_db_connection
 
 @bp.route('/')
 def dashboard():
+    """
+    Главная страница администратора (/admin/).
+    Проверяет сессию. Если не авторизован - перенаправляет на логин.
+    Собирает данные из всех таблиц БД и список файлов из папки загрузок
+    для отображения на соответствующих вкладках.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
     
@@ -13,13 +23,16 @@ def dashboard():
     import os
     from datetime import datetime
 
+    # Сканирование директории загрузок для менеджера файлов
     uploads_dir = os.path.join('app', 'static', 'uploads')
     all_media_files = []
     
     if os.path.exists(uploads_dir):
+        # Рекурсивный проход по всем подпапкам в uploads
         for root, dirs, files in os.walk(uploads_dir):
             for file in files:
                 filepath = os.path.join(root, file)
+                # Вычисляем относительный путь для HTML тегов (src/href)
                 rel_path = os.path.relpath(filepath, os.path.join('app', 'static')).replace('\\', '/')
                 folder = os.path.basename(root)
                 
@@ -43,9 +56,10 @@ def dashboard():
                     'timestamp': stat.st_mtime
                 })
     
-    # Sort files by newest first
+    # Сортируем файлы по дате изменения (новые сверху)
     all_media_files.sort(key=lambda x: x['timestamp'], reverse=True)
 
+    # Загружаем данные из всех таблиц для заполнения вкладок дашборда
     with get_db_connection() as conn:
         news_list = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
         pages_list = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
@@ -74,4 +88,5 @@ def dashboard():
                            menu_groups_list=menu_groups_list,
                            tables_list=tables_list,
                            all_media_files=all_media_files,
-                           prof_uploads=prof_uploads)
+                           prof_uploads=prof_uploads,
+                           now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

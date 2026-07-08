@@ -277,3 +277,193 @@ header nav > a:hover,
         min-width: 60px;
     }
 }
+
+/* =========================================
+   ГЛОБАЛЬНЫЙ ФОН И АНИМАЦИИ (КЛЯКСЫ)
+========================================= */
+.global-blobs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.blob {
+    position: absolute;
+    filter: blur(80px); /* Усиленный блюр для мягкого фона */
+    border-radius: 50%;
+    z-index: 0;
+    opacity: 0.6;
+    animation: floatBlob 15s ease-in-out infinite alternate;
+}
+
+/* Светлая тема (по умолчанию) */
+.blob-1 { width: 500px; height: 500px; background: #cfe2ff; top: -10%; left: -10%; }
+.blob-2 { width: 400px; height: 400px; background: #e0cffc; bottom: -10%; right: 10%; animation-delay: -5s; }
+.blob-3 { width: 350px; height: 350px; background: #d1e7dd; top: 30%; right: -10%; animation-delay: -10s; }
+
+@keyframes floatBlob {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+
+/* =========================================
+   ТЕМНАЯ ТЕМА (DARK MODE - ОПЦИЯ 2: GRAPHITE & NEON GLASS)
+========================================= */
+body.dark-theme {
+    --copp-bg: #121212; /* Чистый темно-серый, почти черный */
+    --copp-blue: #0066ff; /* Ваш фирменный яркий синий неон */
+    --copp-text: #f0f0f0; /* Белый/светло-серый */
+    --bg-card: rgba(255, 255, 255, 0.05); /* Почти прозрачный белый для стекла */
+    --bg-input: rgba(255, 255, 255, 0.08); /* Чуть светлее для полей ввода */
+    --border-light: 1px solid rgba(255, 255, 255, 0.08); /* Ультратонкая белая рамка */
+}
+
+body.dark-theme {
+    background-color: var(--copp-bg) !important;
+    color: var(--copp-text) !important;
+}
+
+/* Эффект матового стекла (Glassmorphism) */
+body.dark-theme header,
+body.dark-theme footer,
+body.dark-theme .flip-card-front,
+body.dark-theme .news-card,
+body.dark-theme .dash-header,
+body.dark-theme .filter-panel,
+body.dark-theme .vacancy-card,
+body.dark-theme .custom-select,
+body.dark-theme .custom-select-options,
+body.dark-theme .dropdown-content,
+body.dark-theme #vacancyModal > div:nth-child(2) {
+    background-color: var(--bg-card) !important;
+    border: var(--border-light) !important;
+    color: var(--copp-text) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-theme h1, body.dark-theme h2, body.dark-theme h3, 
+body.dark-theme h4, body.dark-theme h5, body.dark-theme h6,
+body.dark-theme .vac-title, body.dark-theme .card-title,
+body.dark-theme footer h2, body.dark-theme footer h4,
+body.dark-theme .flip-card-front h3 {
+    color: var(--copp-blue) !important;
+}
+
+body.dark-theme .parallax-hero {
+    background: transparent !important;
+}
+
+body.dark-theme .ph-text h1 {
+    color: var(--copp-text) !important;
+}
+
+body.dark-theme .ph-text h1 span {
+    color: var(--copp-blue) !important;
+}
+
+/* Кляксы для Графита: холодные стальные монохромные цвета с синим отливом */
+body.dark-theme .blob-1 { background: rgba(0, 102, 255, 0.15); } /* Неоновый синий, очень прозрачный */
+body.dark-theme .blob-2 { background: rgba(200, 200, 200, 0.08); } /* Серебристый */
+body.dark-theme .blob-3 { background: rgba(100, 149, 237, 0.1); } /* Приглушенный васильковый */
+
+body.dark-theme .custom-select-option:hover { 
+    background: rgba(255, 255, 255, 0.08) !important; 
+}
+
+body.dark-theme input, body.dark-theme textarea {
+    background-color: var(--bg-input) !important;
+    color: var(--copp-text) !important;
+    border: var(--border-light) !important;
+    backdrop-filter: blur(10px);
+}
+
+body.dark-theme input:focus, body.dark-theme textarea:focus {
+    border-color: var(--copp-blue) !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.25) !important;
+}
+
+body.dark-theme .text-muted, body.dark-theme p[style*="color: #555"], body.dark-theme p[style*="color:#555"], body.dark-theme div[style*="color: #555"] {
+    color: #a1a1aa !important; /* Серый текст для контраста на графите */
+}
+
+body.dark-theme .news-img-wrapper {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+body.dark-theme .brand-main {
+    color: var(--copp-text) !important;
+}
+
+/* =========================================
+   FOOTER DIVIDER (OPTION 1)
+========================================= */
+.footer-divider {
+    width: 2px;
+    background: #e4e4e4;
+    margin: 0 30px;
+}
+@media (max-width: 768px) {
+    .footer-divider {
+        display: none;
+    }
+}
+body.dark-theme .footer-divider {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* =========================================
+   CONTACT FORM GLASSMORPHISM
+========================================= */
+.contact-glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    box-shadow: 0 10px 30px rgba(0, 51, 78, 0.08);
+}
+
+body.dark-theme .contact-glass-card {
+    background: rgba(82, 86, 94, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.contact-glass-input {
+    width: 100%; 
+    border-radius: var(--radius-md); 
+    border: 1px solid rgba(0, 0, 0, 0.1); 
+    padding: 12px 15px; 
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.contact-glass-input:focus {
+    outline: none;
+    border-color: var(--copp-blue);
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.15);
+    background: #ffffff;
+}
+
+body.dark-theme .contact-glass-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--copp-text);
+}
+
+body.dark-theme .contact-glass-input:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--copp-blue);
+}

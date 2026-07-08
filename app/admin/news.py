@@ -3,11 +3,17 @@ import os
 from werkzeug.utils import secure_filename
 from app.admin import bp
 from app.db import get_db_connection
+from app.utils.image_utils import save_image_as_webp
 
 UPLOAD_FOLDER = os.path.join('app', 'static', 'uploads', 'news')
 
 @bp.route('/add_news', methods=['POST'])
 def add_news():
+    """
+    Создание новой новости или мероприятия.
+    Обрабатывает загрузку файлов (основное фото и доп. фото),
+    формирует дату публикации (по таймеру или текущую) и сохраняет запись в БД.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
 
@@ -18,6 +24,15 @@ def add_news():
     is_event = 1 if request.form.get('is_event') else 0
     event_date = request.form.get('event_date') if is_event else None
     event_location = request.form.get('event_location') if is_event else None
+    
+    publish_date = request.form.get('publish_date')
+    if publish_date:
+        publish_date = publish_date.replace('T', ' ')
+        if len(publish_date) == 16:
+            publish_date += ":00"
+    else:
+        from datetime import datetime
+        publish_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -25,29 +40,27 @@ def add_news():
     if 'main_image' in request.files:
         file = request.files['main_image']
         if file and file.filename != '':
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(filepath)
-            main_image_path = f"uploads/news/{filename}"
+            filename = save_image_as_webp(file, UPLOAD_FOLDER)
+            if filename:
+                main_image_path = f"uploads/news/{filename}"
 
     extra_images_paths = []
     if 'extra_images' in request.files:
         files = request.files.getlist('extra_images')
         for file in files:
             if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(filepath)
-                extra_images_paths.append(f"uploads/news/{filename}")
+                filename = save_image_as_webp(file, UPLOAD_FOLDER)
+                if filename:
+                    extra_images_paths.append(f"uploads/news/{filename}")
     
     extra_images_str = ",".join(extra_images_paths)
 
     with get_db_connection() as conn:
         try:
             conn.execute('''
-                INSERT INTO news (title, teaser, content, main_image, extra_images, status, is_event, event_date, event_location)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location))
+                INSERT INTO news (title, teaser, content, main_image, extra_images, status, is_event, event_date, event_location, publish_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, publish_date))
             conn.commit()
             flash("Новость успешно добавлена!", "success")
         except Exception as e:
@@ -58,6 +71,11 @@ def add_news():
 
 @bp.route('/edit_news/<int:news_id>', methods=['GET'])
 def edit_news(news_id):
+    """
+    Страница редактирования новости.
+    Загружает полный дашборд, но передает конкретную новость (edit_item)
+    для заполнения формы редактирования в модальном окне/вкладке.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -72,6 +90,7 @@ def edit_news(news_id):
         menu_groups_list = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
         edit_item = conn.execute('SELECT * FROM news WHERE id = ?', (news_id,)).fetchone()
     
+    from datetime import datetime
     return render_template('admin_dashboard.html', 
                            active_tab='news',
                            news_list=news_list, 
@@ -82,11 +101,17 @@ def edit_news(news_id):
                            socials_list=socials_list,
                            contact_settings=contact_settings,
                            menu_groups_list=menu_groups_list,
-                           edit_item=edit_item)
+                           edit_item=edit_item,
+                           now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 
 @bp.route('/update_news/<int:news_id>', methods=['POST'])
 def update_news(news_id):
+    """
+    Обработчик сохранения изменений новости.
+    Принимает новые данные, загружает новые картинки (с удалением старых из ФС),
+    обновляет запись в БД.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -97,6 +122,12 @@ def update_news(news_id):
     is_event = 1 if request.form.get('is_event') else 0
     event_date = request.form.get('event_date') if is_event else None
     event_location = request.form.get('event_location') if is_event else None
+    
+    publish_date = request.form.get('publish_date')
+    if publish_date:
+        publish_date = publish_date.replace('T', ' ')
+        if len(publish_date) == 16:
+            publish_date += ":00"
     
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     
@@ -116,9 +147,9 @@ def update_news(news_id):
                     if os.path.exists(old_path):
                         os.remove(old_path)
                         
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(UPLOAD_FOLDER, filename))
-                main_image_path = f"uploads/news/{filename}"
+                filename = save_image_as_webp(file, UPLOAD_FOLDER)
+                if filename:
+                    main_image_path = f"uploads/news/{filename}"
                 
         # Обновление доп. фото и удаление старых
         if 'extra_images' in request.files:
@@ -135,16 +166,23 @@ def update_news(news_id):
                 extra_paths = []
                 for file in files:
                     if file and file.filename != '':
-                        filename = secure_filename(file.filename)
-                        file.save(os.path.join(UPLOAD_FOLDER, filename))
-                        extra_paths.append(f"uploads/news/{filename}")
+                        filename = save_image_as_webp(file, UPLOAD_FOLDER)
+                        if filename:
+                            extra_paths.append(f"uploads/news/{filename}")
                 extra_images_str = ",".join(extra_paths)
                 
-        conn.execute('''
-            UPDATE news 
-            SET title = ?, teaser = ?, content = ?, main_image = ?, extra_images = ?, status = ?, is_event = ?, event_date = ?, event_location = ?
-            WHERE id = ?
-        ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, news_id))
+        if publish_date:
+            conn.execute('''
+                UPDATE news 
+                SET title = ?, teaser = ?, content = ?, main_image = ?, extra_images = ?, status = ?, is_event = ?, event_date = ?, event_location = ?, publish_date = ?
+                WHERE id = ?
+            ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, publish_date, news_id))
+        else:
+            conn.execute('''
+                UPDATE news 
+                SET title = ?, teaser = ?, content = ?, main_image = ?, extra_images = ?, status = ?, is_event = ?, event_date = ?, event_location = ?
+                WHERE id = ?
+            ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, news_id))
         conn.commit()
     
     flash("Новость успешно обновлена!", "success")
@@ -153,6 +191,10 @@ def update_news(news_id):
 
 @bp.route('/toggle_news_status/<int:news_id>', methods=['POST'])
 def toggle_news_status(news_id):
+    """
+    Быстрое переключение статуса новости (Опубликована <-> В архиве).
+    Вызывается кнопкой из таблицы новостей на дашборде.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
     
@@ -169,6 +211,10 @@ def toggle_news_status(news_id):
 
 @bp.route('/delete_news/<int:news_id>', methods=['POST'])
 def delete_news(news_id):
+    """
+    Полное удаление новости из БД.
+    Также физически удаляет прикрепленные к новости картинки из файловой системы.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         

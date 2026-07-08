@@ -8,15 +8,22 @@
 
 
 {% block content %}
+<!-- ========================================== -->
+<!-- БЛОК ПОИСКА ПО НОВОСТЯМ -->
+<!-- ========================================== -->
 <div class="news-search-box">
     <span class="search-icon"></span>
     <input type="text" class="news-search-input generic-search-input" data-target=".news-card-wrapper" placeholder="Поиск по заголовку или анонсу...">
 </div>
 </div>
+
+<!-- ========================================== -->
+<!-- СЕТКА КАРТОЧЕК НОВОСТЕЙ И МЕРОПРИЯТИЙ -->
+<!-- ========================================== -->
 <div class="news-grid">
 
     {% for news in news_list %}
-    <a href="{{ url_for('main.news_detail', news_id=news.id) }}" class="news-card-wrapper" style="text-decoration: none; color: inherit; display: block;">
+    <a href="{{ url_for('main.news_detail', news_id=news.id) }}" class="news-card-wrapper" style="text-decoration: none; color: inherit; display: block; height: 100%;">
         <article class="news-card">
             
             {% if news.is_event == 1 %}

@@ -9,31 +9,13 @@
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
     min-height: 85vh;
-    background: #f8fcfd;
+    background: transparent;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 2rem;
     margin-top: -20px;
-}
-
-.blob {
-    position: absolute;
-    filter: blur(40px);
-    border-radius: 50%;
-    z-index: 0;
-    opacity: 0.5;
-    animation: floatBlob 10s ease-in-out infinite alternate;
-}
-
-.blob-1 { width: 400px; height: 400px; background: #cfe2ff; top: -100px; left: -100px; }
-.blob-2 { width: 300px; height: 300px; background: #e0cffc; bottom: -50px; right: 20%; animation-delay: -3s; }
-.blob-3 { width: 250px; height: 250px; background: #d1e7dd; top: 20%; right: -50px; animation-delay: -5s; }
-
-@keyframes floatBlob {
-    0% { transform: translateY(0) scale(1); }
-    100% { transform: translateY(30px) scale(1.1); }
 }
 
 .ph-content {
@@ -385,11 +367,10 @@
 {% endblock %}
 
 {% block content %}
+    <!-- ========================================== -->
+    <!-- ГЛАВНЫЙ ЭКРАН (HERO СЕКЦИЯ С ПАРАЛЛАКСОМ) -->
+    <!-- ========================================== -->
     <div class="parallax-hero" id="parallaxHero">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-
         <div class="ph-content">
             <div class="ph-text" data-speed="2">
                 <h1>Что такое <span>ЦОПП</span>?</h1>
@@ -411,9 +392,11 @@
         </div>
     </div>
 
-    <!-- Target Audience Section -->
+    <!-- ========================================== -->
+    <!-- ЦЕЛЕВАЯ АУДИТОРИЯ (ПЕРЕВОРАЧИВАЮЩИЕСЯ КАРТОЧКИ) -->
+    <!-- ========================================== -->
     <div class="target-audience-section">
-        <!-- Card 1 -->
+        <!-- Карточка 1: Школьники -->
         <div class="flip-card">
             <div class="flip-card-inner">
                 <div class="flip-card-front">
@@ -465,7 +448,9 @@
         </div>
     </div>
 
-    <!-- Statistics Section -->
+    <!-- ========================================== -->
+    <!-- БЛОК СТАТИСТИКИ (АНИМИРОВАННЫЕ ЦИФРЫ) -->
+    <!-- ========================================== -->
     <div class="stats-section">
         <div class="stats-container">
             {% for stat in stats %}
@@ -477,8 +462,13 @@
         </div>
     </div>
 
+    <!-- ========================================== -->
+    <!-- СЕКЦИЯ ПОСЛЕДНИХ НОВОСТЕЙ И МЕРОПРИЯТИЙ -->
+    <!-- ========================================== -->
     <div class="latest-news-section" style="padding: 4rem 2rem; max-width: 1200px; margin: 0 auto;">
-        <h2 style="color: var(--copp-blue); text-align: center; margin-bottom: 2rem; font-weight: bold;">Последние новости и мероприятия</h2>
+        <h2 style="color: var(--copp-blue); text-align: center; margin-bottom: 2rem; font-weight: bold;">Актуальные новости и мероприятия</h2>
+        
+        <!-- Сетка карточек -->
         <div class="news-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px;">
             {% for news in latest_news %}
             <a href="{{ url_for('main.news_detail', news_id=news.id) }}" style="text-decoration: none; color: inherit; display: block;">
@@ -514,11 +504,14 @@
     </div>
 
 <script>
+// ==========================================
+// ПАРАЛЛАКС-ЭФФЕКТ НА ГЛАВНОМ ЭКРАНЕ
+// ==========================================
 document.addEventListener('mousemove', function(e) {
     const hero = document.getElementById('parallaxHero');
     if (!hero) return;
     
-    // Calculate mouse position relative to center of screen
+    // Вычисляем позицию мыши относительно центра экрана (от -1 до 1)
     const x = (e.clientX / window.innerWidth - 0.5) * 2;
     const y = (e.clientY / window.innerHeight - 0.5) * 2;
     
@@ -531,9 +524,11 @@ document.addEventListener('mousemove', function(e) {
     });
 });
 
-// Animated Counters
+// ==========================================
+// АНИМАЦИЯ ЦИФР В БЛОКЕ СТАТИСТИКИ
+// ==========================================
 const counters = document.querySelectorAll('.stat-value');
-const speed = 100; // Чем меньше, тем быстрее закончится анимация
+const speed = 100; // Делитель: чем меньше значение, тем быстрее закончится анимация
 
 const animateCounters = () => {
     counters.forEach(counter => {

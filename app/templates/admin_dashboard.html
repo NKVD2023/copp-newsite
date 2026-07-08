@@ -17,6 +17,9 @@
             <a href="{{ url_for('admin.logout') }}" class="btn btn-danger btn-sm">Выйти</a>
         </div>
 
+        <!-- ========================================== -->
+        <!-- НАВИГАЦИОННЫЕ ВКЛАДКИ (TABS) -->
+        <!-- ========================================== -->
         <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
             <li class="nav-item"><button class="nav-link {% if not active_tab or active_tab == 'news' or active_tab == 'users' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#usersTab"
                     type="button">Управления новостями</button></li>
@@ -38,6 +41,9 @@
                     type="button"><i class="fas fa-database"></i> База Данных</button></li>
         </ul>
 
+        <!-- ========================================== -->
+        <!-- СОДЕРЖИМОЕ ВКЛАДОК (КОНТЕНТ ПОДКЛЮЧАЕТСЯ ИЗ admin_tabs) -->
+        <!-- ========================================== -->
         <div class="tab-content">
             <div class="tab-pane fade {% if not active_tab or active_tab == 'news' or active_tab == 'users' %}show active{% endif %}" id="usersTab" role="tabpanel">
                 {% include 'admin_tabs/tab_news.html' %}
@@ -81,9 +87,13 @@
         </div>
     </div>
 
+    <!-- Подключение Bootstrap и TinyMCE -->
     <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/tinymce/js/tinymce/tinymce.min.js') }}"></script>
     <script>
+      // ==========================================
+      // ИНИЦИАЛИЗАЦИЯ ВИЗУАЛЬНОГО РЕДАКТОРА TINYMCE
+      // ==========================================
       let currentEditor = null;
       tinymce.init({
         selector: '#pageContent, #projectContent, #newsContent',
@@ -114,6 +124,9 @@
       });
     </script>
 
+<!-- ========================================== -->
+<!-- МОДАЛЬНОЕ ОКНО ФАЙЛОВОГО МЕНЕДЖЕРА (ДЛЯ TINYMCE) -->
+<!-- ========================================== -->
 <!-- Модальное окно для вставки документов в редактор -->
 <div class="modal fade" id="tinymceFileModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
@@ -157,6 +170,9 @@
   </div>
 </div>
 
+<!-- ========================================== -->
+<!-- СКРИПТЫ ЗАГРУЗКИ И ВСТАВКИ ФАЙЛОВ ИЗ МОДАЛКИ -->
+<!-- ========================================== -->
 <script>
 function insertDocToEditor(url, name) {
     if(currentEditor) {

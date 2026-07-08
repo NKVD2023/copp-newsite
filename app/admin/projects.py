@@ -4,6 +4,7 @@ from flask import render_template, request, redirect, url_for, session, flash, c
 from werkzeug.utils import secure_filename
 from app.admin import bp
 from app.db import get_db_connection
+from app.utils.image_utils import save_image_as_webp
 import json
 
 UPLOAD_PROJECTS_FOLDER = os.path.join('app', 'static', 'uploads', 'projects')
@@ -13,6 +14,10 @@ def allowed_file(filename):
 
 @bp.route('/add_project', methods=['POST'])
 def add_project():
+    """
+    Создание нового проекта в разделе "Наши проекты".
+    Загружает главную картинку, дополнительные фото, обрабатывает текст и цвет карточки.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -30,22 +35,18 @@ def add_project():
     if 'main_image' in request.files:
         file = request.files['main_image']
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            unique_name = str(uuid.uuid4()) + "_" + filename
-            file_path = os.path.join(UPLOAD_PROJECTS_FOLDER, unique_name)
-            file.save(file_path)
-            main_image_path = f"uploads/projects/{unique_name}"
+            filename = save_image_as_webp(file, UPLOAD_PROJECTS_FOLDER, add_uuid=True)
+            if filename:
+                main_image_path = f"uploads/projects/{filename}"
             
     extra_images_paths = []
     if 'extra_images' in request.files:
         files = request.files.getlist('extra_images')
         for file in files:
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_name = str(uuid.uuid4()) + "_" + filename
-                file_path = os.path.join(UPLOAD_PROJECTS_FOLDER, unique_name)
-                file.save(file_path)
-                extra_images_paths.append(f"uploads/projects/{unique_name}")
+                filename = save_image_as_webp(file, UPLOAD_PROJECTS_FOLDER, add_uuid=True)
+                if filename:
+                    extra_images_paths.append(f"uploads/projects/{filename}")
 
     extra_images_json = json.dumps(extra_images_paths)
     
@@ -66,6 +67,11 @@ def add_project():
 
 @bp.route('/edit_project/<int:project_id>', methods=['GET', 'POST'])
 def edit_project(project_id):
+    """
+    Редактирование проекта.
+    Если GET - отображает форму редактирования на дашборде.
+    Если POST - применяет изменения, загружает новые файлы и удаляет старые (по выбору пользователя).
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -90,11 +96,15 @@ def edit_project(project_id):
         if 'main_image' in request.files:
             file = request.files['main_image']
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_name = str(uuid.uuid4()) + "_" + filename
-                file_path = os.path.join(UPLOAD_PROJECTS_FOLDER, unique_name)
-                file.save(file_path)
-                main_image_path = f"uploads/projects/{unique_name}"
+                if main_image_path:
+                    try:
+                        os.remove(os.path.join('app', 'static', main_image_path))
+                    except:
+                        pass
+                
+                filename = save_image_as_webp(file, UPLOAD_PROJECTS_FOLDER, add_uuid=True)
+                if filename:
+                    main_image_path = f"uploads/projects/{filename}"
                 
         # Parse existing extra images
         try:
@@ -117,11 +127,9 @@ def edit_project(project_id):
             files = request.files.getlist('extra_images')
             for file in files:
                 if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    unique_name = str(uuid.uuid4()) + "_" + filename
-                    file_path = os.path.join(UPLOAD_PROJECTS_FOLDER, unique_name)
-                    file.save(file_path)
-                    extra_images_paths.append(f"uploads/projects/{unique_name}")
+                    filename = save_image_as_webp(file, UPLOAD_PROJECTS_FOLDER, add_uuid=True)
+                    if filename:
+                        extra_images_paths.append(f"uploads/projects/{filename}")
 
         extra_images_json = json.dumps(extra_images_paths)
         
@@ -175,6 +183,9 @@ def edit_project(project_id):
 
 @bp.route('/toggle_project_status/<int:project_id>', methods=['POST'])
 def toggle_project_status(project_id):
+    """
+    Переключатель статуса проекта (Опубликован / В архиве).
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -190,6 +201,9 @@ def toggle_project_status(project_id):
 
 @bp.route('/delete_project/<int:project_id>', methods=['POST'])
 def delete_project(project_id):
+    """
+    Удаление проекта. Также физически удаляет главное фото и дополнительные картинки.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         

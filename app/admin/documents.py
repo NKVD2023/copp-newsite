@@ -12,6 +12,10 @@ def allowed_file(filename):
 
 @bp.route('/upload_document', methods=['POST'])
 def upload_document():
+    """
+    Загрузка нового документа (PDF, Word, Excel и т.д.) через Файловый менеджер
+    или напрямую из модального окна TinyMCE (с флагом ajax).
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -60,6 +64,9 @@ def upload_document():
 
 @bp.route('/delete_document/<int:doc_id>', methods=['POST'])
 def delete_document(doc_id):
+    """
+    Удаление загруженного документа по его ID в БД.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -79,6 +86,11 @@ def delete_document(doc_id):
 
 @bp.route('/delete_media', methods=['POST'])
 def delete_media():
+    """
+    Универсальный обработчик удаления любого файла из директории uploads/
+    по его относительному пути (используется во вкладке файлов).
+    Включает защиту от выхода за пределы директории (directory traversal).
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         

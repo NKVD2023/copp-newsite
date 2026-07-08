@@ -4,6 +4,10 @@ from app.db import get_db_connection
 
 @bp.route('/contact_settings/update', methods=['POST'])
 def update_contact_settings():
+    """
+    Обновление контактной информации организации (телефон, email, адрес и т.д.).
+    Данные сохраняются в таблице contact_settings.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -27,6 +31,9 @@ def update_contact_settings():
 
 @bp.route('/contact_requests/<int:id>/mark_read', methods=['POST'])
 def mark_request_read(id):
+    """
+    Пометка входящей заявки с формы обратной связи как "прочитанной".
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -40,6 +47,9 @@ def mark_request_read(id):
 
 @bp.route('/contact_requests/<int:id>/delete', methods=['POST'])
 def delete_request(id):
+    """
+    Удаление входящей заявки (формы обратной связи) из базы данных.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         

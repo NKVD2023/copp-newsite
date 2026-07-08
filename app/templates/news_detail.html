@@ -221,13 +221,18 @@ body {
 {% endblock %}
 
 {% block content %}
+<!-- ========================================== -->
+<!-- ОБЕРТКА С ФОНОВЫМ ПАРАЛЛАКСОМ И КЛЯКСАМИ -->
+<!-- ========================================== -->
 <div class="news-bg-wrapper" id="parallaxNewsWrapper">
-    <!-- Blobs -->
+    <!-- Фоновые кляксы -->
     <div class="blob blob-1" data-speed="1.5"></div>
     <div class="blob blob-2" data-speed="-2"></div>
     <div class="blob blob-3" data-speed="2.5"></div>
 
-    <!-- Random Patterns (More variations, central placements) -->
+    <!-- ========================================== -->
+    <!-- ГЕНЕРАЦИЯ ГЕОМЕТРИЧЕСКИХ ПАТТЕРНОВ НА ФОНЕ -->
+    <!-- ========================================== -->
     {% set shapes = ['shape-stripes', 'shape-dots', 'shape-grid', 'shape-diagonal-grid', 'shape-waves', 'shape-checkers'] %}
     {% set s1 = shapes[news.id % 6] %}
     {% set s2 = shapes[(news.id + 2) % 6] %}
@@ -252,10 +257,15 @@ body {
     <div class="shape-pattern {{ s3 }}" data-speed="3" style="top: {{ p3_top }}%; left: {{ p3_left }}%;"></div>
     <div class="shape-pattern {{ s4 }}" data-speed="-1.5" style="top: {{ p4_top }}%; left: {{ p4_left }}%;"></div>
 
+    <!-- ========================================== -->
+    <!-- ОСНОВНОЙ КОНТЕНТ НОВОСТИ -->
+    <!-- ========================================== -->
     <div class="news-content-layer">
+        <!-- Кнопка возврата -->
         <a href="{{ url_for('main.news') }}" class="back-link">&larr; Ко всем новостям</a>
 
         <div class="news-container">
+        <!-- Шапка новости (заголовок, дата, бейджики) -->
         <div class="news-detail-header">
             <h1 class="news-detail-title">{{ news.title }}</h1>
             <div class="news-detail-meta">
@@ -275,7 +285,9 @@ body {
                 {{ news.content|safe }}
             </div>
 
-            <!-- Галерея картинок (справа) -->
+            <!-- ========================================== -->
+            <!-- ГАЛЕРЕЯ КАРТИНОК (СЛАЙДЕР СПРАВА) -->
+            <!-- ========================================== -->
             {% set all_images = [] %}
             {% if news.main_image %}
                 {% set _ = all_images.append(news.main_image) %}
@@ -312,14 +324,16 @@ body {
     </div>
 </div>
 
-<!-- Swiper and Fancybox JS CDNs -->
+<!-- Swiper and Fancybox JS CDNs (Для слайдера и полноэкранного просмотра фото) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 
 <script>
-    // Parallax mouse move
+    // ==========================================
+    // СКРИПТ: ПАРАЛЛАКС ФОНА ПРИ ДВИЖЕНИИ МЫШИ
+    // ==========================================
     document.addEventListener('mousemove', function(e) {
         const wrapper = document.getElementById('parallaxNewsWrapper');
         if (!wrapper) return;
@@ -341,8 +355,11 @@ body {
         });
     });
 
+    // ==========================================
+    // СКРИПТ: ИНИЦИАЛИЗАЦИЯ ФОТО-ПЛАГИНОВ
+    // ==========================================
     document.addEventListener("DOMContentLoaded", function() {
-        // Initialize Fancybox
+        // Инициализация Fancybox (Попап при клике на картинку)
         Fancybox.bind("[data-fancybox]", {
             // Options
         });

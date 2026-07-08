@@ -12,6 +12,10 @@ DB_FILE_PATH = 'coppdb.sqlite'
 
 @bp.route('/db/table/<table_name>')
 def db_view_table(table_name):
+    """
+    Отображение содержимого таблицы БД в админке.
+    Для предотвращения падения браузера лимит установлен на 500 записей.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -38,6 +42,9 @@ def db_view_table(table_name):
 
 @bp.route('/db/export/csv/<table_name>')
 def db_export_csv(table_name):
+    """
+    Экспорт выбранной таблицы БД в формате CSV.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -73,6 +80,9 @@ def db_export_csv(table_name):
 
 @bp.route('/db/export/sql')
 def db_export_sqlite():
+    """
+    Создание и скачивание резервной копии всей базы данных (файла SQLite).
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -84,6 +94,10 @@ def db_export_sqlite():
 
 @bp.route('/db/execute_sql', methods=['POST'])
 def db_execute_sql():
+    """
+    Выполнение произвольного SQL-запроса из админки.
+    Требует ввода пароля администратора для подтверждения полномочий.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -122,6 +136,10 @@ def db_execute_sql():
 
 @bp.route('/db/import/sqlite', methods=['POST'])
 def db_import_sqlite():
+    """
+    Импорт (восстановление) базы данных из загруженного .sqlite файла.
+    Перед заменой создает бэкап текущей БД с суффиксом .bak.
+    """
     if not session.get('is_admin'):
         return redirect(url_for('admin.login'))
         
@@ -157,6 +175,9 @@ def db_import_sqlite():
 
 @bp.route('/db/update_cells', methods=['POST'])
 def db_update_cells():
+    """
+    Обработчик AJAX-запросов для inline-редактирования ячеек БД прямо из таблицы.
+    """
     if not session.get('is_admin'):
         return {"success": False, "error": "Unauthorized"}, 403
         
