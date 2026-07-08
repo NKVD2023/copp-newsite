@@ -173,7 +173,67 @@ def events():
 
 @bp.route('/atlas')
 def atlas():
-    return render_template('atlas.html')
+    import json
+    import os
+    from flask import current_app
+    
+    conn = get_db_connection()
+    professions = conn.execute("SELECT * FROM professions WHERE status = 'published' ORDER BY code ASC, name ASC").fetchall()
+    conn.close()
+    
+    colleges_path = os.path.join(current_app.static_folder, 'data', 'colleges.json')
+    try:
+        with open(colleges_path, 'r', encoding='utf-8') as f:
+            colleges = json.load(f)
+    except Exception as e:
+        print(f"Error loading colleges: {e}")
+        colleges = []
+        
+    return render_template('atlas.html', professions=professions, colleges=colleges)
+
+@bp.route('/atlas/<int:prof_id>')
+def profession_detail(prof_id):
+    import json
+    import os
+    from flask import current_app, abort, session
+    
+    conn = get_db_connection()
+    prof = conn.execute('SELECT * FROM professions WHERE id = ?', (prof_id,)).fetchone()
+    conn.close()
+    
+    if not prof or (prof['status'] != 'published' and not session.get('is_admin')):
+        abort(404)
+        
+    colleges_path = os.path.join(current_app.static_folder, 'data', 'colleges.json')
+    try:
+        with open(colleges_path, 'r', encoding='utf-8') as f:
+            colleges = json.load(f)
+    except:
+        colleges = []
+        
+    # Разбираем привязанные учебные заведения
+    selected_colleges = []
+    inst_val = prof['institutions']
+    if inst_val:
+        val = inst_val.strip()
+        if val.startswith('[') and val.endswith(']'):
+            try:
+                selected_colleges = json.loads(val)
+            except:
+                selected_colleges = [val]
+        else:
+            selected_colleges = [c.strip() for c in val.split(',') if c.strip()]
+            
+    # Сопоставляем их с ссылками на сайты
+    colleges_with_links = []
+    for name in selected_colleges:
+        found = next((c for c in colleges if c['name'] == name), None)
+        colleges_with_links.append({
+            'name': name,
+            'url': found['url'] if found else None
+        })
+        
+    return render_template('profession_detail.html', prof=prof, colleges=colleges_with_links)
 
 @bp.route('/contacts')
 def contacts():

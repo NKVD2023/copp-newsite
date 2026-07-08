@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+
+{% block title %}Атлас профессий - ЦОПП РК{% endblock %}
+
+{% block extra_css %}
+<style>
+/* --- ДИЗАЙН КАТАЛОГА АТЛАСА --- */
+.atlas-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 0 4rem 0;
+}
+
+.atlas-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.atlas-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--copp-blue, #00334e);
+    margin-bottom: 0.5rem;
+}
+
+.atlas-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Переключатель вкладок */
+.atlas-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    border-bottom: 2px solid #eef2f5;
+    padding-bottom: 1rem;
+}
+
+.atlas-tab-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #888;
+    padding: 0.75rem 2rem;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+}
+
+.atlas-tab-btn:hover {
+    color: var(--copp-blue, #00334e);
+    background: rgba(0, 51, 78, 0.04);
+}
+
+.atlas-tab-btn.active {
+    color: white;
+    background: var(--copp-blue, #00334e);
+    box-shadow: 0 4px 15px rgba(0, 51, 78, 0.2);
+}
+
+/* Поиск */
+.search-wrapper {
+    max-width: 600px;
+    margin: 0 auto 3rem auto;
+    position: relative;
+}
+
+.search-input {
+    width: 100%;
+    padding: 1.1rem 1.5rem 1.1rem 3.5rem;
+    font-size: 1.1rem;
+    border: 2px solid #eef2f5;
+    border-radius: 50px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    background: white;
+}
+
+.search-input:focus {
+    border-color: var(--copp-blue, #00334e);
+    box-shadow: 0 8px 30px rgba(0, 51, 78, 0.08);
+}
+
+.search-icon-svg {
+    position: absolute;
+    left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.3rem;
+    height: 1.3rem;
+    fill: #888;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus + .search-icon-svg {
+    fill: var(--copp-blue, #00334e);
+}
+
+/* Сетка профессий */
+.prof-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.prof-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid #f3f6f9;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.prof-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 51, 78, 0.16);
+    border-color: rgba(0, 51, 78, 0.15);
+}
+
+.prof-img-box {
+    width: 100%;
+    height: 220px;
+    background: #f8f9fa;
+    position: relative;
+    overflow: hidden;
+}
+
+.prof-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.prof-card:hover .prof-img {
+    transform: scale(1.08);
+}
+
+.prof-no-img {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.prof-body {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.prof-code {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--copp-blue, #00334e);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+}
+
+.prof-name {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #222;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    height: 3.6rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.prof-desc {
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+    height: 4.8rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.btn-details {
+    align-self: center;
+    padding: 0.8rem 3rem;
+    background: var(--copp-blue, #00334e);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.btn-details:hover {
+    background: #00507d;
+    box-shadow: 0 5px 15px rgba(0, 80, 125, 0.3);
+}
+
+/* Сетка учебных заведений */
+.college-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .college-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.college-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+    border: 1px solid #eef2f5;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.college-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 10px 25px rgba(0, 51, 78, 0.05);
+    border-color: rgba(0, 51, 78, 0.1);
+}
+
+.college-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 51, 78, 0.06);
+    color: var(--copp-blue, #00334e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+    font-size: 1rem;
+}
+
+.college-info {
+    flex-grow: 1;
+}
+
+.college-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.4;
+    margin-bottom: 0.25rem;
+}
+
+.college-web-link {
+    font-size: 0.85rem;
+    color: #0066ff;
+    text-decoration: none;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.college-web-link:hover {
+    text-decoration: underline;
+}
+
+.college-web-link svg {
+    width: 12px;
+    height: 12px;
+    fill: currentColor;
+}
+
+/* Кнопки фильтрации по категориям */
+.cat-filter-btn {
+    background: white;
+    border: 1px solid #eef2f5;
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    outline: none;
+}
+
+.cat-filter-btn:hover {
+    background: #eef2f5;
+    color: var(--copp-blue, #00334e);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 51, 78, 0.05);
+}
+
+.cat-filter-btn.active {
+    background: var(--copp-blue, #00334e);
+    color: white;
+    border-color: var(--copp-blue, #00334e);
+    box-shadow: 0 6px 15px rgba(0, 51, 78, 0.2);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="atlas-container">
+    <div class="atlas-header">
+        <h1 class="atlas-title">Атлас профессий</h1>
+        <p class="atlas-subtitle">Познакомьтесь с актуальными профессиями среднего профессионального образования Республики Крым</p>
+    </div>
+
+    <!-- Вкладки -->
+    <div class="atlas-tabs">
+        <button class="atlas-tab-btn active" onclick="switchAtlasTab('professions')">Профессии</button>
+        <button class="atlas-tab-btn" onclick="switchAtlasTab('colleges')">Учебные заведения</button>
+    </div>
+
+    <!-- ВКЛАДКА 1: ПРОФЕССИИ -->
+    <div id="tab-content-professions">
+        {% include 'atlas/tab_professions.html' %}
+    </div>
+
+    <!-- ВКЛАДКА 2: УЧЕБНЫЕ ЗАВЕДЕНИЯ -->
+    <div id="tab-content-colleges" style="display: none;">
+        {% include 'atlas/tab_colleges.html' %}
+    </div>
+</div>
+
+<!-- СКРИПТЫ СТРАНИЦЫ -->
+<script>
+// Переключение вкладок
+function switchAtlasTab(tabName) {
+    const btnProf = document.querySelector('.atlas-tabs button:nth-child(1)');
+    const btnColl = document.querySelector('.atlas-tabs button:nth-child(2)');
+    const contentProf = document.getElementById('tab-content-professions');
+    const contentColl = document.getElementById('tab-content-colleges');
+
+    if (tabName === 'professions') {
+        btnProf.classList.add('active');
+        btnColl.classList.remove('active');
+        contentProf.style.display = 'block';
+        contentColl.style.display = 'none';
+    } else {
+        btnProf.classList.remove('active');
+        btnColl.classList.add('active');
+        contentProf.style.display = 'none';
+        contentColl.style.display = 'block';
+    }
+}
+
+// Глобальное состояние фильтрации
+let currentSearchQuery = "";
+let currentCategory = "all";
+
+function applyProfessionsFilters() {
+    const cards = document.querySelectorAll('.prof-card');
+    let countVisible = 0;
+    
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name');
+        const code = card.getAttribute('data-code');
+        const category = card.getAttribute('data-category');
+        
+        const matchesSearch = name.includes(currentSearchQuery) || code.includes(currentSearchQuery);
+        const matchesCategory = currentCategory === 'all' || category === currentCategory;
+        
+        if (matchesSearch && matchesCategory) {
+            card.style.display = 'flex';
+            countVisible++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // Обработка сообщения "Ничего не найдено"
+    const listContainer = document.getElementById('professions-list');
+    if (listContainer) {
+        let noResultsMsg = document.getElementById('no-search-results');
+        if (countVisible === 0) {
+            if (!noResultsMsg) {
+                noResultsMsg = document.createElement('div');
+                noResultsMsg.id = 'no-search-results';
+                noResultsMsg.className = 'w-100 text-center text-muted p-5 bg-white rounded shadow-sm';
+                noResultsMsg.style.gridColumn = '1 / -1';
+                noResultsMsg.style.fontSize = '1.1rem';
+                noResultsMsg.textContent = 'Профессии по выбранным фильтрам не найдены.';
+                listContainer.appendChild(noResultsMsg);
+            }
+        } else {
+            if (noResultsMsg) {
+                noResultsMsg.remove();
+            }
+        }
+    }
+}
+
+// Фильтрация по клику на кнопку отрасли
+function filterProfessionsByCategory(cat) {
+    currentCategory = cat;
+    
+    // Переключение активного класса у кнопок фильтров
+    const buttons = document.querySelectorAll('.cat-filter-btn');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('data-cat') === cat) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+    
+    applyProfessionsFilters();
+}
+
+// Живой поиск
+const searchInput = document.getElementById('prof-search');
+if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+        currentSearchQuery = e.target.value.toLowerCase().trim();
+        applyProfessionsFilters();
+    });
+}
+</script>
+{% endblock %}

@@ -25,6 +25,8 @@
                     type="button">Управления новостями</button></li>
             <li class="nav-item"><button class="nav-link {% if active_tab == 'prof_stats' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#reportsTab"
                     type="button">Статистика профессий (Дашборд)</button></li>
+            <li class="nav-item"><button class="nav-link {% if active_tab == 'prof_atlas' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#profAtlasTab"
+                    type="button">Атлас профессий</button></li>
             <li class="nav-item"><button class="nav-link {% if active_tab == 'projects' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#projectsTab"
                     type="button">Наши проекты</button></li>
             <li class="nav-item"><button class="nav-link {% if active_tab == 'pages' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#pagesTab"
@@ -51,6 +53,10 @@
 
             <div class="tab-pane fade {% if active_tab == 'prof_stats' %}show active{% endif %}" id="reportsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_prof_stats.html' %}
+            </div>
+
+            <div class="tab-pane fade {% if active_tab == 'prof_atlas' %}show active{% endif %}" id="profAtlasTab" role="tabpanel">
+                {% include 'admin_tabs/tab_prof_atlas.html' %}
             </div>
 
             <div class="tab-pane fade {% if active_tab == 'projects' %}show active{% endif %}" id="projectsTab" role="tabpanel">

@@ -76,6 +76,22 @@ def dashboard():
         except:
             prof_uploads = []
             
+        try:
+            professions_list = conn.execute('SELECT * FROM professions ORDER BY id DESC').fetchall()
+        except:
+            professions_list = []
+            
+    # Загружаем список учебных заведений для чекбоксов
+    import json
+    colleges_list = []
+    colleges_path = os.path.join('app', 'static', 'data', 'colleges.json')
+    try:
+        with open(colleges_path, 'r', encoding='utf-8') as f:
+            colleges_list = json.load(f)
+    except Exception as e:
+        print(f"Error loading colleges: {e}")
+            
+    from app.admin.professions import CATEGORIES_RU
     return render_template('admin_dashboard.html', 
                            active_tab=active_tab,
                            news_list=news_list,
@@ -89,4 +105,7 @@ def dashboard():
                            tables_list=tables_list,
                            all_media_files=all_media_files,
                            prof_uploads=prof_uploads,
+                           professions_list=professions_list,
+                           colleges_list=colleges_list,
+                           categories_dict=CATEGORIES_RU,
                            now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

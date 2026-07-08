@@ -1,0 +1,207 @@
+<div class="news-module">
+
+    <div class="news-header-panel d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="news-search-box">
+            <span class="search-icon"></span>
+            <input type="text" class="generic-search-input" data-target=".profession-card" placeholder="Поиск по коду или названию...">
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <button class="btn-create-news" onclick="toggleProfessionsForm()">+ Добавить профессию</button>
+            <button class="btn btn-success btn-sm px-3" data-bs-toggle="modal" data-bs-target="#importExcelModal">Импорт Excel</button>
+            <a href="{{ url_for('admin.export_professions') }}" class="btn btn-outline-primary btn-sm px-3 d-flex align-items-center">Экспорт Excel</a>
+        </div>
+    </div>
+
+    <!-- ФОРМА СОЗДАНИЯ / РЕДАКТИРОВАНИЯ -->
+    <div id="professions-form-container" class="news-form-wrapper" style="{% if edit_prof_item %}display: block;{% else %}display: none;{% endif %}">
+        <div class="modern-form-card">
+            <div class="form-header">
+                <h2>{% if edit_prof_item %}Редактирование профессии{% else %}Создание профессии{% endif %}</h2>
+                {% if edit_prof_item %}
+                    <a href="{{ url_for('admin.dashboard', tab='prof_atlas') }}" class="btn-cancel" style="text-decoration:none;">Отмена</a>
+                {% else %}
+                    <button type="button" class="btn-cancel" onclick="toggleProfessionsForm()">Отмена</button>
+                {% endif %}
+            </div>
+
+            <form action="{% if edit_prof_item %}{{ url_for('admin.edit_profession', prof_id=edit_prof_item.id) }}{% else %}/admin/add_profession{% endif %}" method="POST" enctype="multipart/form-data">
+                <div class="form-row">
+                    <div class="form-group span-2">
+                        <label>Название профессии <span class="text-danger">*</span></label>
+                        <input type="text" name="name" required placeholder="Например: Сварщик (ручной и частично механизированной сварки (наплавки)" value="{{ edit_prof_item.name if edit_prof_item else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Код профессии (СПО)</label>
+                        <input type="text" name="code" placeholder="Например: 15.01.05" value="{{ edit_prof_item.code if edit_prof_item else '' }}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group span-2">
+                        <label>Категория (Отрасль / Сфера образования)</label>
+                        <select name="category" style="width: 100%; height: 44px; border-radius: 8px; border: 1px solid #ced4da; padding: 0 12px; font-size: 1rem; color: #495057; background-color: #fff; background-clip: padding-box; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;">
+                            <option value="auto" {% if not edit_prof_item or edit_prof_item.category == 'auto' %}selected{% endif %}>Определить автоматически по коду</option>
+                            {% for cat_val, cat_name in categories_dict.items() %}
+                            <option value="{{ cat_val }}" {% if edit_prof_item and edit_prof_item.category == cat_val %}selected{% endif %}>{{ cat_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea name="description" rows="3" placeholder="Краткое описание профессии...">{{ edit_prof_item.description if edit_prof_item else '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Виды деятельности</label>
+                    <textarea name="activities" rows="3" placeholder="Основные задачи и виды деятельности...">{{ edit_prof_item.activities if edit_prof_item else '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Профессионально важные качества</label>
+                    <textarea name="qualities" rows="3" placeholder="Физические и психологические качества...">{{ edit_prof_item.qualities if edit_prof_item else '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Медицинские показания</label>
+                    <textarea name="medical" rows="3" placeholder="Медицинские показания и противопоказания...">{{ edit_prof_item.medical if edit_prof_item else '' }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="fw-bold mb-2">Учебные заведения СПО (выберите из списка)</label>
+                    <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ced4da; padding: 15px; border-radius: 8px; background: #fff; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
+                        {% for college in colleges_list %}
+                        <div class="form-check" style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 2px;">
+                            <input class="form-check-input" type="checkbox" name="selected_colleges" value="{{ college.name }}" id="col-{{ loop.index }}"
+                                   {% if edit_prof_item and college.name in selected_colleges_list %}checked{% endif %} style="margin-top: 4px; cursor: pointer; flex-shrink: 0;">
+                            <label class="form-check-label" for="col-{{ loop.index }}" style="font-size: 0.95rem; line-height: 1.4; cursor: pointer; user-select: none; color: #333;">
+                                {{ college.name }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Главное фото {% if edit_prof_item and edit_prof_item.image_path %}<span style="color:#0066cc;">(заменит текущее)</span>{% endif %}</label>
+                    <div class="file-upload-box">
+                        <input type="file" name="main_image" accept="image/*">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit-large">
+                    {% if edit_prof_item %}Сохранить изменения{% else %}Создать профессию{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<!-- СЕТКА ПРОФЕССИЙ -->
+<div class="news-grid mt-4">
+    {% for prof in professions_list %}
+    <article class="news-card profession-card">
+        {% if prof.image_path %}
+        <img src="{{ url_for('static', filename=prof.image_path) }}" class="card-main-img" alt="Фото профессии" style="object-fit: cover; height: 180px;">
+        {% else %}
+        <div class="card-no-img" style="height: 180px;">Нет фото</div>
+        {% endif %}
+
+        <div class="card-body-content">
+            <h3 class="card-title">{{ prof.name }}</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                {% if prof.code %}
+                <span class="badge bg-secondary" style="font-size: 0.9rem;">Код: {{ prof.code }}</span>
+                {% else %}
+                <span></span>
+                {% endif %}
+                
+                {% if prof.status == 'published' %}
+                <span class="status-badge bg-published" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 4px;">Опубликован</span>
+                {% else %}
+                <span class="status-badge bg-archived" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 4px;">Черновик</span>
+                {% endif %}
+            </div>
+            
+            {% if prof.category %}
+            <div style="margin-bottom: 10px;">
+                <span style="font-size: 0.8rem; background: #eef2f5; color: #555; padding: 2px 8px; border-radius: 20px; font-weight: 600; display: inline-block;">
+                    {{ categories_dict.get(prof.category, 'Другие сферы') }}
+                </span>
+            </div>
+            {% endif %}
+            <p class="card-teaser text-truncate-3" style="font-size: 0.9rem; line-height: 1.5; height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                {{ prof.description or 'Без описания.' }}
+            </p>
+        </div>
+
+        <div class="card-actions">
+            <form action="{{ url_for('admin.toggle_profession_status', prof_id=prof.id) }}" method="POST" style="flex: 1;">
+                <input type="hidden" name="current_status" value="{{ prof.status }}">
+                {% if prof.status == 'published' %}
+                <button type="submit" class="btn-card btn-archive w-100" style="padding: 5px; font-size: 0.75rem;">В архив</button>
+                {% else %}
+                <button type="submit" class="btn-card btn-publish w-100" style="padding: 5px; font-size: 0.75rem;">Опубликовать</button>
+                {% endif %}
+            </form>
+
+            <form action="/admin/edit_profession/{{ prof.id }}" method="GET" style="flex: 1;">
+                <button type="submit" class="btn-card btn-edit w-100" style="padding: 5px; font-size: 0.75rem;">Изменить</button>
+            </form>
+
+            <form action="{{ url_for('admin.delete_profession', prof_id=prof.id) }}" method="POST" style="flex: 1;" onsubmit="return confirm('Вы уверены, что хотите удалить эту профессию?');">
+                <button type="submit" class="btn-card btn-danger w-100" style="padding: 5px; font-size: 0.75rem;">Удалить</button>
+            </form>
+        </div>
+    </article>
+    {% else %}
+    <div class="w-100 text-center text-muted p-5 bg-white rounded shadow-sm">
+        Атлас профессий пока пуст. Создайте запись вручную или импортируйте Excel-файл.
+    </div>
+    {% endfor %}
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО ИМПОРТА EXCEL -->
+<div class="modal fade" id="importExcelModal" tabindex="-1" aria-labelledby="importExcelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importExcelModalLabel">Импорт профессий из Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <form action="{{ url_for('admin.import_professions') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <p class="text-danger fw-bold">Внимание! При импорте все существующие в базе данных записи профессий будут удалены и заменены новыми из файла.</p>
+                    <p>Структура колонок файла должна соответствовать исходной:</p>
+                    <ul>
+                        <li><code>КОД</code></li>
+                        <li><code>НАЗВАНИЕ</code></li>
+                        <li><code>ОПИСАНИЕ</code> / <code>КРАТКИЙ ОЧЕРК</code></li>
+                        <li><code>ВИДЫ ДЕЯТЕЛЬНОСТИ</code></li>
+                        <li><code>ПРОФЕССИОНАЛЬНОЕ ВАЖНЫЕ КАЧЕСТВА</code></li>
+                        <li><code>МЕДИЦИНСКИЕ ПОКАЗАНИЯ</code></li>
+                        <li><code>УЧЕБНЫЕ ЗАВЕДЕНИЯ СПО</code></li>
+                        <li><code>Подготовить фотографии 'Наименование.png</code></li>
+                    </ul>
+                    <div class="mb-3">
+                        <label class="form-label">Выберите Excel-файл (.xlsx)</label>
+                        <input type="file" name="excel_file" class="form-control" accept=".xlsx" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Начать импорт</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleProfessionsForm() {
+        const form = document.getElementById('professions-form-container');
+        form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+    }
+</script>

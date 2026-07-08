@@ -1,0 +1,49 @@
+<!-- Поиск -->
+<div class="search-wrapper">
+    <input type="text" id="prof-search" class="search-input" placeholder="Введите название или код профессии...">
+    <svg class="search-icon-svg" viewBox="0 0 24 24">
+        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+    </svg>
+</div>
+
+<!-- Фильтры по категориям (Отраслям) -->
+<div class="category-filters-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 3rem; max-width: 1000px; margin-left: auto; margin-right: auto; padding: 0 10px;">
+    <button class="cat-filter-btn active" data-cat="all" onclick="filterProfessionsByCategory('all')">Все сферы</button>
+    <button class="cat-filter-btn" data-cat="it" onclick="filterProfessionsByCategory('it')">IT и связь</button>
+    <button class="cat-filter-btn" data-cat="construction" onclick="filterProfessionsByCategory('construction')">Строительство</button>
+    <button class="cat-filter-btn" data-cat="transport" onclick="filterProfessionsByCategory('transport')">Транспорт</button>
+    <button class="cat-filter-btn" data-cat="service" onclick="filterProfessionsByCategory('service')">Сфера услуг и туризм</button>
+    <button class="cat-filter-btn" data-cat="industry" onclick="filterProfessionsByCategory('industry')">Промышленность</button>
+    <button class="cat-filter-btn" data-cat="agriculture" onclick="filterProfessionsByCategory('agriculture')">Сельское хозяйство</button>
+    <button class="cat-filter-btn" data-cat="medicine" onclick="filterProfessionsByCategory('medicine')">Здравоохранение</button>
+    <button class="cat-filter-btn" data-cat="education" onclick="filterProfessionsByCategory('education')">Образование и культура</button>
+    <button class="cat-filter-btn" data-cat="other" onclick="filterProfessionsByCategory('other')">Другие сферы</button>
+</div>
+
+<!-- Сетка карточек -->
+<div class="prof-grid" id="professions-list">
+    {% for prof in professions %}
+    <div class="prof-card" data-name="{{ prof.name.lower() }}" data-code="{{ (prof.code or '').lower() }}" data-category="{{ prof.category or 'other' }}" id="prof-card-{{ prof.id }}">
+        <div class="prof-img-box">
+            {% if prof.image_path %}
+            <img src="{{ url_for('static', filename=prof.image_path) }}" class="prof-img" alt="{{ prof.name }}">
+            {% else %}
+            <div class="prof-no-img">ЦОПП РК</div>
+            {% endif %}
+        </div>
+        <div class="prof-body">
+            {% if prof.code %}
+            <span class="prof-code">{{ prof.code }}</span>
+            {% endif %}
+            <h3 class="prof-name">{{ prof.name }}</h3>
+            <p class="prof-desc">{{ prof.description or 'Описание готовится.' }}</p>
+            
+            <a href="{{ url_for('main.profession_detail', prof_id=prof.id) }}" class="btn-details" style="text-decoration: none;">Подробнее</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="w-100 text-center text-muted p-5 bg-white rounded shadow-sm" style="grid-column: 1 / -1;">
+        Профессии загружаются или пока не добавлены.
+    </div>
+    {% endfor %}
+</div>
