@@ -1,0 +1,22 @@
+/* =========================================
+   CONTACTS_MOBILE.CSS: Адаптив страницы контактов
+   ========================================= */
+
+.page-container {
+    padding: 2rem 1.5rem !important;
+    margin-bottom: 2rem !important;
+}
+
+.page-title {
+    font-size: 2rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.contacts-wrapper {
+    flex-direction: column !important;
+    gap: 2rem !important;
+}
+
+.contacts-wrapper iframe {
+    height: 280px !important;
+}

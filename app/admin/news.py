@@ -36,7 +36,7 @@ def add_news():
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    main_image_path = ""
+    main_image_path = request.form.get('existing_main_image', '')
     if 'main_image' in request.files:
         file = request.files['main_image']
         if file and file.filename != '':
@@ -44,7 +44,7 @@ def add_news():
             if filename:
                 main_image_path = f"uploads/news/{filename}"
 
-    extra_images_paths = []
+    extra_images_paths = request.form.getlist('existing_extra_images')
     if 'extra_images' in request.files:
         files = request.files.getlist('extra_images')
         for file in files:
@@ -136,40 +136,26 @@ def update_news(news_id):
         
         main_image_path = old_item['main_image']
         extra_images_str = old_item['extra_images']
+        existing_main = request.form.get('existing_main_image')
         
-        # Обновление главного фото и удаление старого
-        if 'main_image' in request.files:
+        if 'main_image' in request.files and request.files['main_image'].filename != '':
             file = request.files['main_image']
-            if file and file.filename != '':
-                # Удаляем старый файл
-                if main_image_path:
-                    old_path = os.path.join('app', 'static', main_image_path)
-                    if os.path.exists(old_path):
-                        os.remove(old_path)
-                        
-                filename = save_image_as_webp(file, UPLOAD_FOLDER)
-                if filename:
-                    main_image_path = f"uploads/news/{filename}"
+            filename = save_image_as_webp(file, UPLOAD_FOLDER)
+            if filename:
+                main_image_path = f"uploads/news/{filename}"
+        elif existing_main:
+            main_image_path = existing_main
                 
-        # Обновление доп. фото и удаление старых
+        # Обновление доп. фото (добавление новых и сохранение выбранных)
+        extra_paths = request.form.getlist('existing_extra_images')
         if 'extra_images' in request.files:
             files = request.files.getlist('extra_images')
-            if files and files[0].filename != '':
-                # Удаляем старые файлы
-                if extra_images_str:
-                    for ext_img in extra_images_str.split(','):
-                        if ext_img:
-                            old_ext_path = os.path.join('app', 'static', ext_img)
-                            if os.path.exists(old_ext_path):
-                                os.remove(old_ext_path)
-
-                extra_paths = []
-                for file in files:
-                    if file and file.filename != '':
-                        filename = save_image_as_webp(file, UPLOAD_FOLDER)
-                        if filename:
-                            extra_paths.append(f"uploads/news/{filename}")
-                extra_images_str = ",".join(extra_paths)
+            for file in files:
+                if file and file.filename != '':
+                    filename = save_image_as_webp(file, UPLOAD_FOLDER)
+                    if filename:
+                        extra_paths.append(f"uploads/news/{filename}")
+        extra_images_str = ",".join(extra_paths)
                 
         if publish_date:
             conn.execute('''

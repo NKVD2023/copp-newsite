@@ -226,7 +226,7 @@ body {
                 <h1 class="news-detail-title">{{ prof.name }}</h1>
                 <div class="news-detail-meta">
                     {% if prof.code %}
-                    <span style="background: var(--copp-blue); color: white; padding: 3px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">Код СПО: {{ prof.code }}</span>
+                    <span style="background: var(--copp-blue); color: white; padding: 3px 12px; border-radius: 0; font-weight: bold; font-size: 0.85rem;">Код СПО: {{ prof.code }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -280,13 +280,13 @@ body {
                     {% if prof.image_path %}
                     <div style="margin-bottom: 2.5rem;">
                         <a data-fancybox="gallery" href="{{ url_for('static', filename=prof.image_path) }}" style="display: block; cursor: zoom-in;">
-                            <img src="{{ url_for('static', filename=prof.image_path) }}" alt="{{ prof.name }}" style="width: 100%; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
+                            <img src="{{ url_for('static', filename=prof.image_path) }}" alt="{{ prof.name }}" style="width: 100%; border-radius: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
                         </a>
                     </div>
                     {% endif %}
 
                     <!-- Где обучают -->
-                    <div style="background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #eef2f5;">
+                    <div style="background: white; padding: 2rem; border-radius: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #eef2f5;">
                         <h3 style="color: var(--copp-blue); font-weight: 800; font-size: 1.3rem; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px; margin-top: 0;">
                             <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" style="flex-shrink:0;"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM5.89 12.55L12 15.88l6.11-3.33v3.18L12 19.06l-6.11-3.33v-3.18z"/></svg>
                             Где обучают (СПО Крыма)

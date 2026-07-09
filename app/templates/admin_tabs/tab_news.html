@@ -102,13 +102,41 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Главная фотография {% if edit_item and edit_item.main_image %}<span style="color:#0066cc;">(Уже загружена. Выберите новый файл, чтобы заменить)</span>{% endif %}</label>
+                    <label>Главная фотография {% if edit_item and edit_item.main_image %}<span style="color:#0066cc;">(Уже загружена)</span>{% endif %}</label>
+                    <div class="input-group mb-2" style="display: flex;">
+                        <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; outline: none;" name="existing_main_image" id="newsMainImageInput" placeholder="Путь к картинке (или выберите из библиотеки)" value="{{ edit_item.main_image if edit_item else '' }}" readonly>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; cursor: pointer;" type="button" onclick="openMediaPicker('newsMainImageInput', 'image')"><i class="fas fa-images"></i> Выбрать из библиотеки</button>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; border-radius: 0 4px 4px 0; cursor: pointer; color: #dc3545;" type="button" onclick="document.getElementById('newsMainImageInput').value=''; document.getElementById('newsMainImageInputPreview').style.display='none';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                    {% if edit_item and edit_item.main_image %}
+                    <img id="newsMainImageInputPreview" src="{{ url_for('static', filename=edit_item.main_image) }}" alt="Preview" style="max-height: 100px; display: block; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% else %}
+                    <img id="newsMainImageInputPreview" src="" alt="Preview" style="max-height: 100px; display: none; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% endif %}
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новый файл с компьютера (старый будет заменен):</label>
                     <div class="file-upload-box">
                         <input type="file" name="main_image" accept="image/*">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Дополнительные фотографии {% if edit_item and edit_item.extra_images %}<span style="color:#0066cc;">(Загрузка новых фото удалит старые)</span>{% endif %}</label>
+                    <label>Дополнительные фотографии</label>
+                    <div id="newsExtraImagesContainer" style="margin-bottom: 10px; min-height: 20px;">
+                        {% if edit_item and edit_item.extra_images %}
+                            {% for ext_img in edit_item.extra_images.split(',') %}
+                                {% if ext_img %}
+                                    <script>
+                                        document.addEventListener("DOMContentLoaded", function() {
+                                            addMediaToGallery('newsExtraImagesContainer', '{{ ext_img }}');
+                                        });
+                                    </script>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openMediaPicker(function(path){ addMediaToGallery('newsExtraImagesContainer', path); }, 'image', true)"><i class="fas fa-plus"></i> Добавить из библиотеки</button>
+                    </div>
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новые файлы (старые останутся):</label>
                     <div class="file-upload-box">
                         <input type="file" name="extra_images" accept="image/*" multiple>
                     </div>

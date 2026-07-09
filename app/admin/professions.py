@@ -104,7 +104,7 @@ def add_profession():
     
     os.makedirs(UPLOAD_PROFESSIONS_FOLDER, exist_ok=True)
     
-    image_path = None
+    image_path = request.form.get('existing_main_image') or None
     if 'main_image' in request.files:
         file = request.files['main_image']
         if file and allowed_file(file.filename):
@@ -164,19 +164,15 @@ def edit_profession(prof_id):
         status = prof['status'] or 'published'
         
         image_path = prof['image_path']
-        if 'main_image' in request.files:
+        existing_main = request.form.get('existing_main_image')
+        if 'main_image' in request.files and request.files['main_image'].filename != '':
             file = request.files['main_image']
             if file and allowed_file(file.filename):
-                # Удаляем старое изображение
-                if image_path:
-                    try:
-                        os.remove(os.path.join('app', 'static', image_path))
-                    except:
-                        pass
-                
                 filename = save_image_as_webp(file, UPLOAD_PROFESSIONS_FOLDER, add_uuid=True)
                 if filename:
                     image_path = f"uploads/professions/{filename}"
+        elif existing_main:
+            image_path = existing_main
                     
         try:
             conn.execute('''

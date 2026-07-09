@@ -1,0 +1,188 @@
+<!-- Модальное окно Медиабиблиотеки -->
+<div class="modal fade" id="mediaPickerModal" tabindex="-1" aria-labelledby="mediaPickerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold text-dark" id="mediaPickerModalLabel"><i class="fas fa-images text-primary me-2"></i> Выбор файла из библиотеки</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body p-4" style="background-color: #f8f9fa;">
+        
+        <!-- Вкладки (Изображения / Документы) -->
+        <ul class="nav nav-pills mb-3" id="mediaPickerTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold" id="pills-images-tab" data-bs-toggle="pill" data-bs-target="#pills-images" type="button" role="tab" aria-controls="pills-images" aria-selected="true"><i class="fas fa-image me-1"></i> Изображения</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold" id="pills-docs-tab" data-bs-toggle="pill" data-bs-target="#pills-docs" type="button" role="tab" aria-controls="pills-docs" aria-selected="false"><i class="fas fa-file-alt me-1"></i> Документы</button>
+          </li>
+        </ul>
+
+        <div class="tab-content" id="mediaPickerTabsContent">
+          <!-- Вкладка Изображений -->
+          <div class="tab-pane fade show active" id="pills-images" role="tabpanel" aria-labelledby="pills-images-tab">
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
+              {% for file in all_media_files if file.is_image %}
+              <div class="col">
+                <div class="card h-100 border-0 shadow-sm media-picker-item" onclick="selectMediaFile('uploads/{{ file.folder }}/{{ file.filename }}')" style="cursor: pointer; transition: transform 0.2s;">
+                  <img src="{{ url_for('static', filename=file.filepath) }}" class="card-img-top object-fit-cover" alt="{{ file.filename }}" style="height: 120px;" loading="lazy">
+                  <div class="card-body p-2 text-center">
+                    <p class="card-text small text-truncate fw-bold mb-0" title="{{ file.filename }}">{{ file.filename }}</p>
+                    <small class="text-muted" style="font-size: 0.65rem;">{{ file.size_kb }} KB</small>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          
+          <!-- Вкладка Документов -->
+          <div class="tab-pane fade" id="pills-docs" role="tabpanel" aria-labelledby="pills-docs-tab">
+            <div class="list-group">
+              {% for file in all_media_files if not file.is_image %}
+              <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="selectMediaFile('uploads/{{ file.folder }}/{{ file.filename }}')">
+                <div>
+                  <i class="fas fa-file me-2 text-secondary"></i>
+                  <span class="fw-bold">{{ file.filename }}</span>
+                  <div class="small text-muted mt-1"><i class="fas fa-folder text-warning"></i> {{ file.folder }}</div>
+                </div>
+                <span class="badge bg-light text-dark rounded-pill">{{ file.size_kb }} KB</span>
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.media-picker-item:hover {
+    transform: scale(1.05);
+    border: 2px solid var(--bs-primary) !important;
+}
+</style>
+
+<script>
+let currentMediaTargetInputId = null;
+let currentMediaCallback = null;
+
+function openMediaPicker(target, type = 'any', isCallback = false) {
+    if (isCallback) {
+        currentMediaCallback = target;
+        currentMediaTargetInputId = null;
+    } else {
+        currentMediaTargetInputId = target;
+        currentMediaCallback = null;
+    }
+    
+    // Переключаем активную вкладку в зависимости от типа
+    if (type === 'image') {
+        const tab = new bootstrap.Tab(document.getElementById('pills-images-tab'));
+        tab.show();
+    } else if (type === 'document') {
+        const tab = new bootstrap.Tab(document.getElementById('pills-docs-tab'));
+        tab.show();
+    }
+    
+    // Открываем модальное окно
+    const myModal = new bootstrap.Modal(document.getElementById('mediaPickerModal'));
+    myModal.show();
+}
+
+function selectMediaFile(filepath) {
+    if (currentMediaCallback) {
+        currentMediaCallback(filepath);
+    } else if (currentMediaTargetInputId) {
+        const input = document.getElementById(currentMediaTargetInputId);
+        if (input) {
+            input.value = filepath;
+            
+            // Если есть элемент предпросмотра с ID = targetId + 'Preview', обновляем его
+            const previewImg = document.getElementById(currentMediaTargetInputId + 'Preview');
+            if (previewImg && filepath.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+                previewImg.src = '/static/' + filepath;
+                previewImg.style.display = 'block';
+            }
+        }
+    }
+    
+    // Закрываем модалку
+    const modalEl = document.getElementById('mediaPickerModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if(modalInstance) modalInstance.hide();
+}
+
+function addMediaToGallery(containerId, filepath, inputName = 'existing_extra_images') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Создаем элемент превью
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'inline-block';
+    wrapper.style.position = 'relative';
+    wrapper.style.margin = '5px';
+    
+    // Скрытый инпут для отправки на сервер
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = inputName;
+    input.value = filepath;
+    wrapper.appendChild(input);
+    
+    // Иконка или изображение
+    if (filepath.match(/\.(jpeg|jpg|gif|png|webp)$/i)) {
+        const img = document.createElement('img');
+        img.src = '/static/' + filepath;
+        img.style.width = '80px';
+        img.style.height = '80px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '4px';
+        img.style.border = '1px solid #ccc';
+        wrapper.appendChild(img);
+    } else {
+        const docPreview = document.createElement('div');
+        docPreview.style.width = '80px';
+        docPreview.style.height = '80px';
+        docPreview.style.borderRadius = '4px';
+        docPreview.style.border = '1px solid #ccc';
+        docPreview.style.display = 'flex';
+        docPreview.style.alignItems = 'center';
+        docPreview.style.justifyContent = 'center';
+        docPreview.style.flexDirection = 'column';
+        docPreview.style.background = '#f8f9fa';
+        docPreview.style.fontSize = '10px';
+        docPreview.style.textAlign = 'center';
+        docPreview.style.wordBreak = 'break-all';
+        docPreview.style.padding = '5px';
+        docPreview.innerHTML = '<i class="fas fa-file fa-2x mb-1 text-secondary"></i>' + filepath.split('/').pop();
+        wrapper.appendChild(docPreview);
+    }
+    
+    // Кнопка удаления
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.innerHTML = '<i class="fas fa-times"></i>';
+    delBtn.style.position = 'absolute';
+    delBtn.style.top = '-5px';
+    delBtn.style.right = '-5px';
+    delBtn.style.background = '#dc3545';
+    delBtn.style.color = '#fff';
+    delBtn.style.border = 'none';
+    delBtn.style.borderRadius = '50%';
+    delBtn.style.width = '20px';
+    delBtn.style.height = '20px';
+    delBtn.style.fontSize = '12px';
+    delBtn.style.lineHeight = '20px';
+    delBtn.style.padding = '0';
+    delBtn.style.cursor = 'pointer';
+    delBtn.onclick = function() {
+        wrapper.remove();
+    };
+    wrapper.appendChild(delBtn);
+    
+    container.appendChild(wrapper);
+}
+</script>

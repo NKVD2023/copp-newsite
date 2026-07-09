@@ -54,22 +54,24 @@
 
             <div class="form-group">
                 <label>Прикрепленные файлы (документы)</label>
+                <div id="pageAttachedFilesContainer" style="margin-bottom: 10px; min-height: 20px;">
+                    {% if edit_page_item and attached_files_list %}
+                        {% for file_path in attached_files_list %}
+                            <script>
+                                document.addEventListener("DOMContentLoaded", function() {
+                                    addMediaToGallery('pageAttachedFilesContainer', '{{ file_path }}', 'existing_attached_files');
+                                });
+                            </script>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <div class="mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openMediaPicker(function(path){ addMediaToGallery('pageAttachedFilesContainer', path, 'existing_attached_files'); }, 'any', true)"><i class="fas fa-plus"></i> Добавить из библиотеки</button>
+                </div>
+                <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новые файлы (старые останутся):</label>
                 <div class="file-upload-box">
                     <input type="file" name="attached_files" multiple>
                 </div>
-                {% if edit_page_item and attached_files_list %}
-                <div style="margin-top: 10px;">
-                    <strong>Уже загруженные файлы:</strong><br>
-                    <div style="display:flex; flex-direction:column; gap: 5px; margin-top:5px;">
-                        {% for file_path in attached_files_list %}
-                        <label>
-                            <input type="checkbox" name="delete_files" value="{{ file_path }}">
-                            Удалить {{ file_path.split('/')[-1] }}
-                        </label>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
             </div>
 
             <button type="submit" class="btn-submit-large">

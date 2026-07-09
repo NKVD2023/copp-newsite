@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page.title }} - ЦОПП РК{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/contacts_mobile.css', v=2) }}" media="screen and (max-width: 768px)">
+<style>
+.page-container {
+    background: white;
+    padding: 3rem 4rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    margin-bottom: 4rem;
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        padding: 2rem 1.5rem;
+    }
+}
+
+.page-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eef2f5;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--copp-blue);
+    margin-bottom: 1rem;
+    line-height: 1.3;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem 0;">
+    <div class="page-container">
+        <div class="page-header">
+            <h1 class="page-title">{{ page.title }}</h1>
+        </div>
+        
+        <div class="contacts-wrapper" style="display: flex; gap: 40px; flex-wrap: wrap; margin-top: 2rem;">
+            <div style="flex: 1; min-width: 300px;">
+                <h3 style="color: var(--copp-blue); font-weight: 800; font-size: 1.8rem; margin-top: 0; margin-bottom: 1.5rem;">
+                    {{ contact_settings.org_name if contact_settings else 'ЦОПП Республики Крым' }}
+                </h3>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 1.5rem; align-items: flex-start;">
+                    <svg style="width: 28px; height: 28px; fill: var(--copp-blue); flex-shrink: 0;" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                    <div>
+                        <strong style="display: block; font-size: 1rem; color: #888; text-transform: uppercase; margin-bottom: 4px;">Телефоны</strong>
+                        <div style="color: #333; font-size: 1.2rem; font-weight: bold; line-height: 1.6; white-space: pre-line;">
+                            {{ contact_settings.phones if contact_settings else '8 (3652) 51-04-40\n7 (978) 391-46-44' }}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-bottom: 1.5rem; align-items: flex-start;">
+                    <svg style="width: 28px; height: 28px; fill: var(--copp-blue); flex-shrink: 0;" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    <div>
+                        <strong style="display: block; font-size: 1rem; color: #888; text-transform: uppercase; margin-bottom: 4px;">Электронная почта</strong>
+                        <div style="color: #333; font-size: 1.2rem; font-weight: bold;">
+                            {% if contact_settings and contact_settings.email %}
+                                {% set emails = contact_settings.email.replace(',', ' ').split() %}
+                                {% for email_item in emails %}
+                                    <div style="margin-bottom: 8px;">
+                                        <a href="mailto:{{ email_item }}" style="color: var(--copp-blue); text-decoration: none; border-bottom: 1px dashed rgba(0, 51, 78, 0.3);">{{ email_item }}</a>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <a href="mailto:office@copp82.ru" style="color: var(--copp-blue); text-decoration: none; border-bottom: 1px dashed rgba(0, 51, 78, 0.3);">office@copp82.ru</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-bottom: 1.5rem; align-items: flex-start;">
+                    <svg style="width: 28px; height: 28px; fill: var(--copp-blue); flex-shrink: 0; margin-top: 2px;" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    <div>
+                        <strong style="display: block; font-size: 1rem; color: #888; text-transform: uppercase; margin-bottom: 4px;">Адрес</strong>
+                        <div style="color: #333; font-size: 1.2rem; font-weight: bold; line-height: 1.5;">
+                            {{ contact_settings.address if contact_settings else '295051 Респ. Крым, г. Симферополь, ул. Металлистов, д. 13' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="flex: 1.2; min-width: 350px;">
+                <strong style="display: block; font-size: 1rem; color: #888; text-transform: uppercase; margin-bottom: 10px;">Расположение на карте</strong>
+                <div style="position: relative; overflow: hidden; border: 1px solid #eef2f5;">
+                    <iframe src="https://yandex.ru/map-widget/v1/?ll=34.095034%2C44.960244&z=16&mode=search&ol=biz&oid=104928014524" width="100%" height="350" frameborder="0" allowfullscreen="true" style="position:relative; border: 0;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

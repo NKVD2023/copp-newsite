@@ -31,7 +31,7 @@ def add_project():
     
     os.makedirs(UPLOAD_PROJECTS_FOLDER, exist_ok=True)
     
-    main_image_path = None
+    main_image_path = request.form.get('existing_main_image') or None
     if 'main_image' in request.files:
         file = request.files['main_image']
         if file and allowed_file(file.filename):
@@ -39,7 +39,7 @@ def add_project():
             if filename:
                 main_image_path = f"uploads/projects/{filename}"
             
-    extra_images_paths = []
+    extra_images_paths = request.form.getlist('existing_extra_images')
     if 'extra_images' in request.files:
         files = request.files.getlist('extra_images')
         for file in files:
@@ -93,34 +93,18 @@ def edit_project(project_id):
         project_color = request.form.get('project_color', '#0066ff')
         
         main_image_path = project['main_image']
-        if 'main_image' in request.files:
+        existing_main = request.form.get('existing_main_image')
+        if 'main_image' in request.files and request.files['main_image'].filename != '':
             file = request.files['main_image']
             if file and allowed_file(file.filename):
-                if main_image_path:
-                    try:
-                        os.remove(os.path.join('app', 'static', main_image_path))
-                    except:
-                        pass
-                
                 filename = save_image_as_webp(file, UPLOAD_PROJECTS_FOLDER, add_uuid=True)
                 if filename:
                     main_image_path = f"uploads/projects/{filename}"
+        elif existing_main:
+            main_image_path = existing_main
                 
-        # Parse existing extra images
-        try:
-            extra_images_paths = json.loads(project['extra_images']) if project['extra_images'] else []
-        except:
-            extra_images_paths = []
-            
-        # Handle deletion of existing images
-        images_to_delete = request.form.getlist('delete_images')
-        for img_path in images_to_delete:
-            if img_path in extra_images_paths:
-                extra_images_paths.remove(img_path)
-                try:
-                    os.remove(os.path.join('app', 'static', img_path))
-                except:
-                    pass
+        # Parse existing extra images (passed from UI via hidden inputs)
+        extra_images_paths = request.form.getlist('existing_extra_images')
 
         # Handle new extra images upload
         if 'extra_images' in request.files:

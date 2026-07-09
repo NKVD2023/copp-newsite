@@ -235,11 +235,11 @@ def profession_detail(prof_id):
         
     return render_template('profession_detail.html', prof=prof, colleges=colleges_with_links)
 
+from flask import redirect, url_for, abort
+
 @bp.route('/contacts')
 def contacts():
-    return render_template('contacts.html')
-
-from flask import abort
+    return redirect(url_for('main.dynamic_page', slug='contacts'))
 
 @bp.route('/page/<slug>')
 def dynamic_page(slug):
@@ -249,11 +249,17 @@ def dynamic_page(slug):
     """
     conn = get_db_connection()
     page = conn.execute('SELECT * FROM pages WHERE slug = ?', (slug,)).fetchone()
-    conn.close()
     
     if page is None:
+        conn.close()
         abort(404)
         
+    if slug == 'contacts':
+        contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
+        conn.close()
+        return render_template('contacts.html', page=page, contact_settings=contact_settings)
+        
+    conn.close()
     return render_template('page.html', page=page)
 
 @bp.route('/project/<slug>')

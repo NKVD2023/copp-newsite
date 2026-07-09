@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Админ-панель</title>
     <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
 
@@ -83,15 +84,18 @@
                 {% include 'admin_tabs/tab_statistics.html' %}
             </div>
 
-            <div class="tab-pane fade {% if active_tab == 'contacts' %}show active{% endif %}" id="contactsTab" role="tabpanel">
+            <!-- <div class="tab-pane fade {% if active_tab == 'contacts' %}show active{% endif %}" id="contactsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_contacts.html' %}
-            </div>
+            </div> -->
 
             <div class="tab-pane fade {% if active_tab == 'socials' %}show active{% endif %}" id="socialsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_socials.html' %}
             </div>
         </div>
     </div>
+
+    <!-- Глобальное модальное окно Медиабиблиотеки -->
+    {% include 'admin_tabs/media_picker_modal.html' %}
 
     <!-- Подключение Bootstrap и TinyMCE -->
     <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
@@ -103,8 +107,8 @@
       let currentEditor = null;
       tinymce.init({
         selector: '#pageContent, #projectContent, #newsContent',
-        plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
-        toolbar: 'styles | insertdoc | undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+        plugins: 'anchor autolink charmap codesample image link lists media searchreplace table visualblocks wordcount',
+        toolbar: 'styles | insertdoc | undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | charmap | removeformat',
         style_formats: [
             { title: 'Обычный текст', selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table', classes: '' },
             { title: 'Кнопка (Акцентная)', selector: 'a', classes: 'btn-project-custom' },
@@ -182,7 +186,7 @@
 <script>
 function insertDocToEditor(url, name) {
     if(currentEditor) {
-        currentEditor.insertContent(`<p><a href="${url}" class="btn-download" target="_blank" style="display:inline-block; padding:10px 20px; background:#00334e; color:#fff; text-decoration:none; border-radius:8px;">📄 Скачать: ${name}</a></p>`);
+        currentEditor.insertContent(`<p><a href="${url}" class="btn-download" target="_blank" style="display:inline-block; padding:10px 20px; background:#00334e; color:#fff; text-decoration:none; border-radius:8px;">Скачать: ${name}</a></p>`);
     }
     const modalEl = document.getElementById('tinymceFileModal');
     const modalInstance = bootstrap.Modal.getInstance(modalEl);
@@ -221,6 +225,102 @@ async function uploadAndInsertDoc() {
         btn.textContent = 'Загрузить и вставить';
     }
 }
+</script>
+<!-- ========================================== -->
+<!-- ОБЩАЯ ЛОГИКА DRAG & DROP ДЛЯ ФАЙЛОВ -->
+<!-- ========================================== -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const uploadBoxes = document.querySelectorAll('.file-upload-box');
+    uploadBoxes.forEach(box => {
+        const fileInput = box.querySelector('input[type="file"]');
+        if (!fileInput) return;
+
+        // Делаем область кликабельной, если клик был не по самому инпуту
+        box.style.cursor = 'pointer';
+        box.addEventListener('click', function(e) {
+            if (e.target !== fileInput) {
+                fileInput.click();
+            }
+        });
+
+        // Визуальные эффекты при наведении
+        box.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            box.style.backgroundColor = 'rgba(0, 102, 255, 0.05)';
+            box.style.borderColor = '#0066ff';
+            box.style.borderStyle = 'dashed';
+        });
+
+        box.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            box.style.backgroundColor = '';
+            box.style.borderColor = '';
+            box.style.borderStyle = '';
+        });
+
+        box.addEventListener('drop', (e) => {
+            e.preventDefault();
+            box.style.backgroundColor = '';
+            box.style.borderColor = '';
+            box.style.borderStyle = '';
+            
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                
+                // Триггерим событие change, чтобы отработали другие скрипты (например, предпросмотр)
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
+                
+                // Добавляем визуальную индикацию выбранных файлов, если её нет
+                let fileListDisplay = box.querySelector('.dnd-file-list');
+                if (!fileListDisplay) {
+                    fileListDisplay = document.createElement('div');
+                    fileListDisplay.className = 'dnd-file-list small text-success mt-2 fw-bold';
+                    box.appendChild(fileListDisplay);
+                }
+                
+                if (fileInput.files.length === 1) {
+                    fileListDisplay.innerHTML = 'Выбран файл: ' + fileInput.files[0].name + ' <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" style="text-decoration: none;" onclick="event.stopPropagation(); const ev = new Event(\'clear_files\'); this.dispatchEvent(ev);">✖ Очистить</button>';
+                } else {
+                    fileListDisplay.innerHTML = 'Выбрано файлов: ' + fileInput.files.length + ' <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" style="text-decoration: none;" onclick="event.stopPropagation(); const ev = new Event(\'clear_files\'); this.dispatchEvent(ev);">✖ Очистить</button>';
+                }
+                
+                const clearBtn = fileListDisplay.querySelector('button');
+                if (clearBtn) {
+                    clearBtn.addEventListener('clear_files', () => {
+                        fileInput.value = '';
+                        fileListDisplay.innerHTML = '';
+                    });
+                }
+            }
+        });
+        
+        fileInput.addEventListener('change', () => {
+            let fileListDisplay = box.querySelector('.dnd-file-list');
+            if (!fileListDisplay) {
+                fileListDisplay = document.createElement('div');
+                fileListDisplay.className = 'dnd-file-list small text-success mt-2 fw-bold';
+                box.appendChild(fileListDisplay);
+            }
+            if (fileInput.files.length === 1) {
+                fileListDisplay.innerHTML = 'Выбран файл: ' + fileInput.files[0].name + ' <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" style="text-decoration: none;" onclick="event.stopPropagation(); const ev = new Event(\'clear_files\'); this.dispatchEvent(ev);">✖ Очистить</button>';
+            } else if (fileInput.files.length > 1) {
+                fileListDisplay.innerHTML = 'Выбрано файлов: ' + fileInput.files.length + ' <button type="button" class="btn btn-sm btn-link text-danger p-0 ms-2" style="text-decoration: none;" onclick="event.stopPropagation(); const ev = new Event(\'clear_files\'); this.dispatchEvent(ev);">✖ Очистить</button>';
+            } else {
+                fileListDisplay.innerHTML = '';
+            }
+            
+            const clearBtn = fileListDisplay.querySelector('button');
+            if (clearBtn) {
+                clearBtn.addEventListener('clear_files', () => {
+                    fileInput.value = '';
+                    fileListDisplay.innerHTML = '';
+                });
+            }
+        });
+    });
+});
 </script>
 
 </body>

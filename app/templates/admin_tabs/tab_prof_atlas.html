@@ -1,3 +1,32 @@
+<!-- <style>
+.profession-card {
+    border-radius: 0 !important;
+}
+.profession-card .card-main-img {
+    border-radius: 0 !important;
+}
+.profession-card .card-no-img {
+    border-radius: 0 !important;
+}
+.profession-card .btn-card {
+    border-radius: 0 !important;
+}
+.profession-card .btn-submit-large {
+    border-radius: 0 !important;
+}
+.modern-form-card {
+    border-radius: 0 !important;
+}
+.news-form-wrapper input, .news-form-wrapper textarea, .news-form-wrapper select {
+    border-radius: 0 !important;
+}
+.btn-create-news {
+    border-radius: 0 !important;
+}
+.btn-cancel {
+    border-radius: 0 !important;
+}
+</style> -->
 <div class="news-module">
 
     <div class="news-header-panel d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -39,7 +68,7 @@
                 <div class="form-row">
                     <div class="form-group span-2">
                         <label>Категория (Отрасль / Сфера образования)</label>
-                        <select name="category" style="width: 100%; height: 44px; border-radius: 8px; border: 1px solid #ced4da; padding: 0 12px; font-size: 1rem; color: #495057; background-color: #fff; background-clip: padding-box; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;">
+                        <select name="category" style="width: 100%; height: 44px; border-radius: 0; border: 1px solid #ced4da; padding: 0 12px; font-size: 1rem; color: #495057; background-color: #fff; background-clip: padding-box; transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;">
                             <option value="auto" {% if not edit_prof_item or edit_prof_item.category == 'auto' %}selected{% endif %}>Определить автоматически по коду</option>
                             {% for cat_val, cat_name in categories_dict.items() %}
                             <option value="{{ cat_val }}" {% if edit_prof_item and edit_prof_item.category == cat_val %}selected{% endif %}>{{ cat_name }}</option>
@@ -70,7 +99,7 @@
 
                 <div class="form-group">
                     <label class="fw-bold mb-2">Учебные заведения СПО (выберите из списка)</label>
-                    <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ced4da; padding: 15px; border-radius: 8px; background: #fff; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ced4da; padding: 15px; border-radius: 0; background: #fff; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);">
                         {% for college in colleges_list %}
                         <div class="form-check" style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 2px;">
                             <input class="form-check-input" type="checkbox" name="selected_colleges" value="{{ college.name }}" id="col-{{ loop.index }}"
@@ -84,7 +113,18 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Главное фото {% if edit_prof_item and edit_prof_item.image_path %}<span style="color:#0066cc;">(заменит текущее)</span>{% endif %}</label>
+                    <label>Главное фото {% if edit_prof_item and edit_prof_item.image_path %}<span style="color:#0066cc;">(Уже загружено)</span>{% endif %}</label>
+                    <div class="input-group mb-2" style="display: flex;">
+                        <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; outline: none;" name="existing_main_image" id="profMainImageInput" placeholder="Путь к картинке (или выберите из библиотеки)" value="{{ edit_prof_item.image_path if edit_prof_item else '' }}" readonly>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; cursor: pointer;" type="button" onclick="openMediaPicker('profMainImageInput', 'image')"><i class="fas fa-images"></i> Выбрать из библиотеки</button>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; border-radius: 0 4px 4px 0; cursor: pointer; color: #dc3545;" type="button" onclick="document.getElementById('profMainImageInput').value=''; document.getElementById('profMainImageInputPreview').style.display='none';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                    {% if edit_prof_item and edit_prof_item.image_path %}
+                    <img id="profMainImageInputPreview" src="{{ url_for('static', filename=edit_prof_item.image_path) }}" alt="Preview" style="max-height: 100px; display: block; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% else %}
+                    <img id="profMainImageInputPreview" src="" alt="Preview" style="max-height: 100px; display: none; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% endif %}
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новый файл с компьютера (старый будет заменен):</label>
                     <div class="file-upload-box">
                         <input type="file" name="main_image" accept="image/*">
                     </div>
@@ -119,15 +159,15 @@
                 {% endif %}
                 
                 {% if prof.status == 'published' %}
-                <span class="status-badge bg-published" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 4px;">Опубликован</span>
+                <span class="status-badge bg-published" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 0;">Опубликован</span>
                 {% else %}
-                <span class="status-badge bg-archived" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 4px;">Черновик</span>
+                <span class="status-badge bg-archived" style="padding: 2px 8px; font-size: 0.75rem; border-radius: 0;">Черновик</span>
                 {% endif %}
             </div>
             
             {% if prof.category %}
             <div style="margin-bottom: 10px;">
-                <span style="font-size: 0.8rem; background: #eef2f5; color: #555; padding: 2px 8px; border-radius: 20px; font-weight: 600; display: inline-block;">
+                <span style="font-size: 0.8rem; background: #eef2f5; color: #555; padding: 2px 8px; border-radius: 0; font-weight: 600; display: inline-block;">
                     {{ categories_dict.get(prof.category, 'Другие сферы') }}
                 </span>
             </div>

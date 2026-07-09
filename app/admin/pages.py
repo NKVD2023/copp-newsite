@@ -28,7 +28,7 @@ def add_page():
     is_in_navbar = 1 if request.form.get('is_in_navbar') else 0
     menu_group = request.form.get('menu_group', '').strip()
     
-    attached_files_paths = []
+    attached_files_paths = request.form.getlist('existing_attached_files')
     os.makedirs(UPLOAD_PAGES_FILES_FOLDER, exist_ok=True)
     if 'attached_files' in request.files:
         files = request.files.getlist('attached_files')
@@ -108,22 +108,7 @@ def update_page(page_id):
     is_in_navbar = 1 if request.form.get('is_in_navbar') else 0
     menu_group = request.form.get('menu_group', '').strip()
     
-    with get_db_connection() as conn:
-        page = conn.execute('SELECT attached_files FROM pages WHERE id = ?', (page_id,)).fetchone()
-        
-    try:
-        attached_files_paths = json.loads(page['attached_files']) if page['attached_files'] else []
-    except:
-        attached_files_paths = []
-        
-    images_to_delete = request.form.getlist('delete_files')
-    for file_path in images_to_delete:
-        if file_path in attached_files_paths:
-            attached_files_paths.remove(file_path)
-            try:
-                os.remove(os.path.join('app', 'static', file_path))
-            except:
-                pass
+    attached_files_paths = request.form.getlist('existing_attached_files')
 
     os.makedirs(UPLOAD_PAGES_FILES_FOLDER, exist_ok=True)
     if 'attached_files' in request.files:

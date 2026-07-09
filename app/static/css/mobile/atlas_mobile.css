@@ -1,0 +1,103 @@
+/* =========================================
+   ATLAS_MOBILE.CSS: Адаптив Атласа профессий
+   ========================================= */
+
+/* Вкладки Атласа */
+.atlas-tabs {
+    flex-direction: column !important;
+    gap: 8px !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 2rem !important;
+}
+
+.atlas-tab-btn {
+    width: 100% !important;
+    padding: 10px 15px !important;
+    font-size: 1.05rem !important;
+    text-align: center !important;
+}
+
+/* Форма поиска */
+.search-wrapper {
+    margin-bottom: 2rem !important;
+}
+
+.search-input {
+    font-size: 1rem !important;
+    padding: 0.9rem 1rem 0.9rem 3rem !important;
+}
+
+.search-icon-svg {
+    left: 1rem !important;
+    width: 1.1rem !important;
+    height: 1.1rem !important;
+}
+
+/* Фильтры категорий */
+.cat-filters {
+    gap: 8px !important;
+    margin-bottom: 2rem !important;
+    justify-content: center !important;
+}
+
+.cat-filter-btn {
+    padding: 6px 12px !important;
+    font-size: 0.85rem !important;
+}
+
+/* Сетки */
+.prof-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+}
+
+.college-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+}
+
+/* Карточки профессий */
+.prof-card {
+    border-radius: var(--radius-lg) !important;
+}
+
+.prof-img-box {
+    height: 180px !important;
+}
+
+.prof-card-body {
+    padding: 1.2rem !important;
+}
+
+.prof-title {
+    font-size: 1.15rem !important;
+    height: auto !important;
+    -webkit-line-clamp: none !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.prof-desc {
+    font-size: 0.9rem !important;
+    height: auto !important;
+    -webkit-line-clamp: none !important;
+    margin-bottom: 1.2rem !important;
+}
+
+.btn-details {
+    width: 100% !important; /* Кнопка подробностей на весь экран карточки */
+    padding: 0.8rem 1.5rem !important;
+}
+
+/* Карточки колледжей */
+.college-card {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 1.2rem !important;
+    gap: 12px !important;
+}
+
+.college-num {
+    margin: 0 auto !important;
+}

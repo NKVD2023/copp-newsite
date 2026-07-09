@@ -1,0 +1,32 @@
+<div class="media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; max-height: 600px; overflow-y: auto; padding-right: 5px; align-content: start;">
+    {% set imgs_exist = false %}
+    {% for file in all_media_files if file.is_image %}
+    {% set imgs_exist = true %}
+    <div class="media-card media-item-searchable" style="background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #eee;">
+        <div class="media-preview position-relative" style="height: 120px; background: #f8f9fa;">
+            <img src="{{ url_for('static', filename=file.filepath) }}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{ file.filename }}" loading="lazy">
+        </div>
+        
+        <div class="media-info p-2" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="search-text fw-bold text-truncate" style="font-size: 0.8rem; color: #333;" title="{{ file.filename }}">{{ file.filename }}</div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                <div style="font-size: 0.7rem; color: #777;" title="Папка"><i class="fas fa-folder text-secondary"></i> {{ file.folder }}</div>
+                <div style="font-size: 0.7rem; color: #777;">{{ file.size_kb }} KB</div>
+            </div>
+            
+            <div class="mt-2 pt-2 border-top d-flex gap-1">
+                <button type="button" class="btn btn-sm btn-light border flex-fill py-0" style="font-size: 0.75rem; padding: 4px; color: #555;" onclick="copyLink('{{ url_for('static', filename=file.filepath) }}')" title="Копировать"><i class="fas fa-copy"></i> Копировать</button>
+                <form action="{{ url_for('admin.delete_media') }}" method="POST" class="m-0 p-0" style="flex: 0 0 auto;" onsubmit="return confirm('Удалить изображение?');">
+                    <input type="hidden" name="filepath" value="{{ file.filepath }}">
+                    <button type="submit" class="btn btn-sm btn-light border w-100 py-0" style="font-size: 0.75rem; padding: 4px; color: #555;" title="Удалить"><i class="fas fa-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% if not imgs_exist %}
+    <div class="text-center text-muted py-4 w-100" style="grid-column: 1 / -1;">
+        Нет загруженных изображений
+    </div>
+    {% endif %}
+</div>

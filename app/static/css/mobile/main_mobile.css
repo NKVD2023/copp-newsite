@@ -1,0 +1,119 @@
+/* =========================================
+   MAIN_MOBILE.CSS: Глобальный адаптив сайта
+   ========================================= */
+
+/* Шапка и меню навигации */
+header nav {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 10px 0 !important;
+    width: 100% !important;
+}
+
+header nav > a, 
+.dropbtn {
+    width: 100% !important;
+    text-align: center !important;
+    justify-content: center !important;
+    padding: 10px 15px !important;
+}
+
+.dropdown {
+    width: 100% !important;
+    justify-content: center !important;
+}
+
+.dropdown-content {
+    position: static !important;
+    width: 100% !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: none !important;
+    display: none !important; /* Скрыто по умолчанию на мобильных */
+    box-shadow: none !important;
+    border: none !important;
+    background: rgba(0, 51, 78, 0.04) !important;
+    border-top: 1px solid rgba(0, 51, 78, 0.1) !important;
+    border-bottom: 1px solid rgba(0, 51, 78, 0.1) !important;
+    padding: 5px 0 !important;
+    margin: 5px 0 !important;
+}
+
+.dropdown-content a {
+    text-align: center !important;
+    padding: 12px 15px !important;
+}
+
+/* Открываем только по клику (класс .open через JS) */
+.dropdown.open .dropdown-content {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.dropdown.open .arrow {
+    transform: rotate(180deg) !important;
+    display: inline-block;
+}
+
+/* Контейнеры и разметка */
+.container {
+    padding: 0 15px !important;
+    margin: 15px auto !important;
+}
+
+/* Плавающие кнопки обратной связи и BVI */
+.bvi-fixed-btn, 
+.feedback-fixed-btn {
+    bottom: 20px !important;
+    padding: 14px !important;
+    border-radius: var(--radius-md) !important;
+}
+
+.bvi-fixed-btn span, 
+.feedback-fixed-btn span {
+    display: none !important; /* Скрываем текст, оставляем только иконки на смартфонах */
+}
+
+.bvi-fixed-btn {
+    right: 20px !important;
+}
+
+.feedback-fixed-btn {
+    left: 20px !important;
+}
+
+/* Модальное окно обратной связи */
+.feedback-modal-overlay {
+    padding: 10px !important;
+}
+
+.feedback-modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1.5rem !important;
+}
+
+.feedback-modal-content h2 {
+    font-size: 1.6rem !important;
+}
+
+.feedback-modal-close {
+    top: 15px !important;
+    right: 15px !important;
+    font-size: 1.8rem !important;
+}
+
+/* Минимизированный футер */
+.minimal-footer {
+    padding: 1.5rem 0 !important;
+}
+
+.minimal-footer-container {
+    padding: 0 15px !important;
+    gap: 1rem !important;
+}
+
+.minimal-footer-copyright {
+    font-size: 0.9rem !important;
+}

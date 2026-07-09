@@ -11,12 +11,12 @@ ALLOWED_EXTENSIONS = {'png', 'svg', 'jpg', 'jpeg', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def handle_icon_upload(file):
+def handle_icon_upload(file, existing_icon_file=None):
     if file and file.filename != '' and allowed_file(file.filename):
         filename = save_image_as_webp(file, UPLOAD_SOCIALS_FOLDER, add_uuid=True)
         if filename:
             return f"uploads/socials/{filename}"
-    return None
+    return existing_icon_file
 
 @bp.route('/socials/add', methods=['POST'])
 def add_social():
@@ -33,7 +33,8 @@ def add_social():
     display_order = request.form.get('display_order', 0)
     
     icon_file = request.files.get('icon_file')
-    image_path = handle_icon_upload(icon_file)
+    existing_icon_file = request.form.get('existing_icon_file')
+    image_path = handle_icon_upload(icon_file, existing_icon_file)
     
     conn = get_db_connection()
     conn.execute('''
@@ -61,22 +62,16 @@ def edit_social(id):
     is_active = 1 if request.form.get('is_active') else 0
     
     icon_file = request.files.get('icon_file')
-    image_path = handle_icon_upload(icon_file)
+    existing_icon_file = request.form.get('existing_icon_file')
+    image_path = handle_icon_upload(icon_file, existing_icon_file)
     
     conn = get_db_connection()
     
-    if image_path:
-        conn.execute('''
-            UPDATE social_networks
-            SET name = ?, url = ?, icon_svg = ?, display_order = ?, is_active = ?, image_path = ?
-            WHERE id = ?
-        ''', (name, url, icon_svg, display_order, is_active, image_path, id))
-    else:
-        conn.execute('''
-            UPDATE social_networks
-            SET name = ?, url = ?, icon_svg = ?, display_order = ?, is_active = ?
-            WHERE id = ?
-        ''', (name, url, icon_svg, display_order, is_active, id))
+    conn.execute('''
+        UPDATE social_networks
+        SET name = ?, url = ?, icon_svg = ?, display_order = ?, is_active = ?, image_path = ?
+        WHERE id = ?
+    ''', (name, url, icon_svg, display_order, is_active, image_path, id))
     conn.commit()
     conn.close()
     

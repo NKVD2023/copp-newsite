@@ -88,7 +88,15 @@
                     <label class="form-check-label" for="isActive{{ social.id }}">Показывать на сайте</label>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Иконка (Загрузить файл)</label>
+                    <label class="form-label">Иконка (Файл из библиотеки)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="existing_icon_file" id="socialIconInput{{ social.id }}" value="{{ social.icon_file if social.icon_file else '' }}" readonly>
+                        <button class="btn btn-outline-secondary bg-light" type="button" onclick="openMediaPicker('socialIconInput{{ social.id }}', 'image')"><i class="fas fa-images"></i> Выбрать</button>
+                        <button class="btn btn-outline-danger bg-light" type="button" onclick="document.getElementById('socialIconInput{{ social.id }}').value='';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Или загрузите новый файл с ПК</label>
                     <input type="file" class="form-control" name="icon_file" accept=".png,.jpg,.jpeg,.svg,.webp">
                     <div class="form-text text-muted">Загрузите PNG или SVG файл. Это заменит текущую иконку.</div>
                 </div>
@@ -132,7 +140,15 @@
                     <input type="number" class="form-control" name="display_order" value="0">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Иконка (Загрузить файл)</label>
+                    <label class="form-label">Иконка (Файл из библиотеки)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="existing_icon_file" id="newSocialIconInput" readonly>
+                        <button class="btn btn-outline-secondary bg-light" type="button" onclick="openMediaPicker('newSocialIconInput', 'image')"><i class="fas fa-images"></i> Выбрать</button>
+                        <button class="btn btn-outline-danger bg-light" type="button" onclick="document.getElementById('newSocialIconInput').value='';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Или загрузите новый файл с ПК</label>
                     <input type="file" class="form-control" name="icon_file" accept=".png,.jpg,.jpeg,.svg,.webp">
                     <div class="form-text text-muted">Рекомендуется формат PNG или SVG.</div>
                 </div>

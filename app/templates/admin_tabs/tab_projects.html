@@ -46,13 +46,39 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Главное фото / Логотип {% if edit_project_item and edit_project_item.main_image %}<span style="color:#0066cc;">(заменит текущее)</span>{% endif %}</label>
+                    <label>Главное фото / Логотип {% if edit_project_item and edit_project_item.main_image %}<span style="color:#0066cc;">(Уже загружено)</span>{% endif %}</label>
+                    <div class="input-group mb-2" style="display: flex;">
+                        <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; outline: none;" name="existing_main_image" id="projectMainImageInput" placeholder="Путь к картинке (или выберите из библиотеки)" value="{{ edit_project_item.main_image if edit_project_item else '' }}" readonly>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; cursor: pointer;" type="button" onclick="openMediaPicker('projectMainImageInput', 'image')"><i class="fas fa-images"></i> Выбрать из библиотеки</button>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; border-radius: 0 4px 4px 0; cursor: pointer; color: #dc3545;" type="button" onclick="document.getElementById('projectMainImageInput').value=''; document.getElementById('projectMainImageInputPreview').style.display='none';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                    {% if edit_project_item and edit_project_item.main_image %}
+                    <img id="projectMainImageInputPreview" src="{{ url_for('static', filename=edit_project_item.main_image) }}" alt="Preview" style="max-height: 100px; display: block; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% else %}
+                    <img id="projectMainImageInputPreview" src="" alt="Preview" style="max-height: 100px; display: none; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% endif %}
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новый файл с компьютера (старый будет заменен):</label>
                     <div class="file-upload-box">
                         <input type="file" name="main_image" accept="image/*">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Дополнительные фото (галерея)</label>
+                    <div id="projectExtraImagesContainer" style="margin-bottom: 10px; min-height: 20px;">
+                        {% if edit_project_item and extra_images_list %}
+                            {% for ext_img in extra_images_list %}
+                                <script>
+                                    document.addEventListener("DOMContentLoaded", function() {
+                                        addMediaToGallery('projectExtraImagesContainer', '{{ ext_img }}');
+                                    });
+                                </script>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="mb-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openMediaPicker(function(path){ addMediaToGallery('projectExtraImagesContainer', path); }, 'image', true)"><i class="fas fa-plus"></i> Добавить из библиотеки</button>
+                    </div>
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новые файлы (старые останутся):</label>
                     <div class="file-upload-box">
                         <input type="file" name="extra_images" accept="image/*" multiple>
                     </div>
@@ -74,19 +100,7 @@
                 </div>
             </div>
 
-            {% if edit_project_item and extra_images_list %}
-            <div class="form-group">
-                <label>Существующие дополнительные фото (выберите для удаления):</label>
-                <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:5px;">
-                    {% for ext_img in extra_images_list %}
-                        <label>
-                            <input type="checkbox" name="delete_images" value="{{ ext_img }}">
-                            <img src="{{ url_for('static', filename=ext_img) }}" style="width: 50px; height: 50px; object-fit: cover;">
-                        </label>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
+
 
             <button type="submit" class="btn-submit-large">
                 {% if edit_project_item %}Сохранить изменения{% else %}Создать проект{% endif %}

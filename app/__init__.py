@@ -58,7 +58,9 @@ def create_app(config_class=Config):
             conn.close()
             
         # Эти переменные теперь можно использовать в любом месте, например {{ contact_settings.phone }}
-        return dict(single_pages=single_pages, grouped_pages=grouped_pages, dynamic_projects=dynamic_projects, contact_settings=contact_settings, social_networks=social_networks)
+        from datetime import datetime
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        return dict(single_pages=single_pages, grouped_pages=grouped_pages, dynamic_projects=dynamic_projects, contact_settings=contact_settings, social_networks=social_networks, now_str=now_str)
 
     import json
     @app.template_filter('from_json')

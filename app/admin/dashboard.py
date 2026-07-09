@@ -70,6 +70,7 @@ def dashboard():
         contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
         menu_groups_list = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
         tables_list = conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall()
+        contact_requests = conn.execute('SELECT * FROM contact_requests ORDER BY id DESC').fetchall()
         
         try:
             prof_uploads = conn.execute('SELECT * FROM dashboard_uploads ORDER BY upload_date DESC').fetchall()
@@ -108,4 +109,5 @@ def dashboard():
                            professions_list=professions_list,
                            colleges_list=colleges_list,
                            categories_dict=CATEGORIES_RU,
+                           contact_requests=contact_requests,
                            now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

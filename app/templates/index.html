@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css', v=2) }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/index_mobile.css', v=2) }}" media="screen and (max-width: 768px)">
 <style>
 .parallax-hero {
     position: relative;
@@ -31,18 +32,26 @@
 
 .ph-text {
     flex: 1;
-    max-width: 600px;
+    max-width: 650px;
+}
+
+.ph-text h1, .ph-text h3 {
+    font-size: 3rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    line-height: 1.1;
+    margin: 0;
 }
 
 .ph-text h1 {
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: #1a1a1a;
-    margin-bottom: 1.5rem;
-    line-height: 1.1;
+    margin-bottom: 0.2rem;
 }
 
-.ph-text h1 span {
+.ph-text h3 {
+    margin-bottom: 1.5rem;
+}
+
+.ph-text h1 span, .ph-text h3 span {
     color: var(--copp-blue);
 }
 
@@ -64,7 +73,7 @@
     background: var(--copp-blue);
     color: white;
     padding: 14px 30px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-weight: bold;
     text-decoration: none;
     box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
@@ -82,7 +91,7 @@
     background: white;
     color: var(--copp-blue);
     padding: 14px 30px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-weight: bold;
     text-decoration: none;
     border: 1px solid #ddd;
@@ -108,7 +117,7 @@
 
 .ph-img {
     position: absolute;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 20px 40px rgba(0,0,0,0.15);
     object-fit: cover;
     transition: transform 0.1s ease-out;
@@ -134,7 +143,6 @@
     bottom: 50px;
     left: 0;
     z-index: 3;
-    border: 5px solid white;
 }
 
 .ph-shape {
@@ -183,7 +191,7 @@
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     transform-style: preserve-3d;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
 }
 
 .flip-card:hover .flip-card-inner {
@@ -196,7 +204,7 @@
     height: 100%;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -267,7 +275,7 @@
 
 .stats-container {
     background: linear-gradient(135deg, var(--copp-blue) 0%, #004d99 100%);
-    border-radius: 24px;
+    border-radius: var(--radius-xl);
     box-shadow: 0 20px 40px rgba(0, 51, 78, 0.12);
     display: flex;
     justify-content: space-between;
@@ -373,13 +381,14 @@
     <div class="parallax-hero" id="parallaxHero">
         <div class="ph-content">
             <div class="ph-text" data-speed="2">
-                <h1>Что такое <span>ЦОПП</span>?</h1>
+                <h1>Что такое <span>ЦОПП</span></h1>
+                <h3>Республики Крым?</h3>
                 <p>
                     Центр опережающей профессиональной подготовки Республики Крым — это агрегатор и оператор ресурсов региона. Мы координируем развитие системы образования для профориентации, ускоренного профессионального обучения и переподготовки всех категорий граждан.
                 </p>
                 <div class="ph-buttons">
-                    <a href="{{ url_for('main.dynamic_page', slug='about') }}" class="btn-ph-primary">О центре</a>
-                    <a href="#latest-news" class="btn-ph-secondary" onclick="document.querySelector('.latest-news-section').scrollIntoView({behavior: 'smooth'})">Новости и события</a>
+                    <!-- <a href="{{ url_for('main.dynamic_page', slug='about') }}" class="btn-ph-primary">О центре</a> -->
+                    <a href="#latest-news" class="btn-ph-secondary" onclick="document.querySelector('.latest-news-section').scrollIntoView({behavior: 'smooth'})">Новости и мероприятия</a>
                 </div>
             </div>
 
@@ -472,7 +481,7 @@
         <div class="news-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px;">
             {% for news in latest_news %}
             <a href="{{ url_for('main.news_detail', news_id=news.id) }}" style="text-decoration: none; color: inherit; display: block;">
-                <article class="news-card" style="background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%;">
+                <article class="news-card" style="background: white; border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%;">
                     <div class="news-img-wrapper" style="width: 100%; height: 200px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #eee; color: #aaa;">
                         {% if news.main_image %}
                         <img src="{{ url_for('static', filename=news.main_image) }}" alt="{{ news.title }}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -484,7 +493,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <span style="color: #888; font-size: 0.9rem;">{{ news.human_date }}</span>
                             {% if news.is_event %}
-                                <span style="background: #0d6efd; color: white; padding: 2px 8px; border-radius: 12px; font-size:0.7rem; font-weight: bold;">Мероприятие</span>
+                                <span style="background: #0d6efd; color: white; padding: 2px 8px; border-radius: var(--radius-sm); font-size:0.7rem; font-weight: bold;">Мероприятие</span>
                             {% endif %}
                         </div>
                         <h3 style="font-size: 1.25rem; font-weight: bold; color: #333; margin-bottom: 10px; line-height: 1.4;">{{ news.title }}</h3>
@@ -497,8 +506,8 @@
             {% endfor %}
         </div>
         <div style="text-align: center; margin-top: 3rem;">
-            <a href="{{ url_for('main.news') }}" style="display: inline-block; text-decoration: none; padding: 12px 25px; border-radius: 50px; background: var(--copp-blue); color: white; font-weight: bold; transition: opacity 0.2s; box-shadow: 0 4px 10px rgba(0,102,204,0.3);">Все новости</a>
-            <a href="{{ url_for('main.events') }}" style="display: inline-block; text-decoration: none; padding: 12px 25px; border-radius: 50px; background: #198754; color: white; font-weight: bold; margin-left: 15px; transition: opacity 0.2s; box-shadow: 0 4px 10px rgba(25,135,84,0.3);">Все мероприятия</a>
+            <a href="{{ url_for('main.news') }}" style="display: inline-block; text-decoration: none; padding: 12px 25px; border-radius: var(--radius-md); background: var(--copp-blue); color: white; font-weight: bold; transition: opacity 0.2s; box-shadow: 0 4px 10px rgba(0,102,204,0.3);">Все новости</a>
+            <a href="{{ url_for('main.events') }}" style="display: inline-block; text-decoration: none; padding: 12px 25px; border-radius: var(--radius-md); background: #198754; color: white; font-weight: bold; margin-left: 15px; transition: opacity 0.2s; box-shadow: 0 4px 10px rgba(25,135,84,0.3);">Все мероприятия</a>
         </div>
     </div>
     </div>

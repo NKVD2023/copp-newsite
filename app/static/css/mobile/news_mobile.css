@@ -1,0 +1,55 @@
+/* =========================================
+   NEWS_MOBILE.CSS: Адаптив новостей
+   ========================================= */
+
+/* Поиск по новостям */
+.news-search-box {
+    max-width: 100% !important;
+    padding: 10px 15px !important;
+}
+
+/* Сетка новостей */
+.news-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+}
+
+/* Карточки новостей */
+.news-card {
+    border-radius: var(--radius-lg) !important;
+}
+
+.card-main-img {
+    height: 180px !important;
+}
+
+.card-title {
+    font-size: 1.15rem !important;
+}
+
+/* Детальная страница новости */
+.news-layout {
+    flex-direction: column !important;
+    gap: 25px !important;
+}
+
+.news-gallery-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+}
+
+.news-text-content {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+}
+
+.news-detail-title {
+    font-size: 1.8rem !important;
+    line-height: 1.2 !important;
+}
+
+.news-detail-meta {
+    gap: 10px !important;
+    margin-bottom: 1.5rem !important;
+}
