@@ -24,7 +24,17 @@ def add_project():
     title = request.form['title']
     slug = request.form['slug']
     teaser = request.form.get('teaser', '')
-    content = request.form['content']
+    tabs_json = request.form.get('tabs_json', '')
+    
+    # Фолбэк для content
+    content = ''
+    if tabs_json:
+        try:
+            tabs_data = json.loads(tabs_json)
+            if tabs_data and len(tabs_data) > 0:
+                content = tabs_data[0].get('content', '')
+        except json.JSONDecodeError:
+            pass
     button_text = request.form.get('button_text', '')
     button_url = request.form.get('button_url', '')
     project_color = request.form.get('project_color', '#0066ff')
@@ -53,9 +63,9 @@ def add_project():
     conn = get_db_connection()
     try:
         conn.execute('''
-            INSERT INTO projects (title, slug, teaser, content, main_image, extra_images, button_text, button_url, project_color)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (title, slug, teaser, content, main_image_path, extra_images_json, button_text, button_url, project_color))
+            INSERT INTO projects (title, slug, teaser, content, main_image, extra_images, button_text, button_url, project_color, tabs_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (title, slug, teaser, content, main_image_path, extra_images_json, button_text, button_url, project_color, tabs_json))
         conn.commit()
         flash('Проект успешно создан!', 'success')
     except Exception as e:
@@ -87,7 +97,17 @@ def edit_project(project_id):
         title = request.form['title']
         slug = request.form['slug']
         teaser = request.form.get('teaser', '')
-        content = request.form['content']
+        tabs_json = request.form.get('tabs_json', '')
+        
+        # Фолбэк для content
+        content = ''
+        if tabs_json:
+            try:
+                tabs_data = json.loads(tabs_json)
+                if tabs_data and len(tabs_data) > 0:
+                    content = tabs_data[0].get('content', '')
+            except json.JSONDecodeError:
+                pass
         button_text = request.form.get('button_text', '')
         button_url = request.form.get('button_url', '')
         project_color = request.form.get('project_color', '#0066ff')
@@ -120,9 +140,9 @@ def edit_project(project_id):
         try:
             conn.execute('''
                 UPDATE projects 
-                SET title = ?, slug = ?, teaser = ?, content = ?, main_image = ?, extra_images = ?, button_text = ?, button_url = ?, project_color = ?
+                SET title = ?, slug = ?, teaser = ?, content = ?, main_image = ?, extra_images = ?, button_text = ?, button_url = ?, project_color = ?, tabs_data = ?
                 WHERE id = ?
-            ''', (title, slug, teaser, content, main_image_path, extra_images_json, button_text, button_url, project_color, project_id))
+            ''', (title, slug, teaser, content, main_image_path, extra_images_json, button_text, button_url, project_color, tabs_json, project_id))
             conn.commit()
             flash('Проект успешно обновлен!', 'success')
         except Exception as e:

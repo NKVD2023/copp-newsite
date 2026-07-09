@@ -1,0 +1,24 @@
+    <!-- Фоновые кляксы -->
+    <div class="blob blob-1" data-speed="1.5"></div>
+    <div class="blob blob-2" data-speed="-2"></div>
+    <div class="blob blob-3" data-speed="2.5"></div>
+
+    {% set shapes = ['shape-stripes', 'shape-dots', 'shape-grid', 'shape-diagonal-grid', 'shape-waves', 'shape-checkers'] %}
+    {% set s1 = shapes[project.id % 6] %}
+    {% set s2 = shapes[(project.id + 2) % 6] %}
+    {% set s3 = shapes[(project.id + 4) % 6] %}
+    {% set s4 = shapes[(project.id + 5) % 6] %}
+    
+    {% set p1_top = (project.id * 7 % 40) + 15 %}
+    {% set p1_left = (project.id * 11 % 40) + 20 %}
+    {% set p2_top = (project.id * 13 % 40) + 30 %}
+    {% set p2_left = (project.id * 17 % 40) + 40 %}
+    {% set p3_top = (project.id * 19 % 40) + 20 %}
+    {% set p3_left = (project.id * 23 % 30) + 50 %}
+    {% set p4_top = (project.id * 29 % 30) + 50 %}
+    {% set p4_left = (project.id * 31 % 30) + 15 %}
+    
+    <div class="shape-pattern {{ s1 }}" data-speed="4" style="top: {{ p1_top }}%; left: {{ p1_left }}%;"></div>
+    <div class="shape-pattern {{ s2 }}" data-speed="-2.5" style="top: {{ p2_top }}%; left: {{ p2_left }}%;"></div>
+    <div class="shape-pattern {{ s3 }}" data-speed="3" style="top: {{ p3_top }}%; left: {{ p3_left }}%;"></div>
+    <div class="shape-pattern {{ s4 }}" data-speed="-1.5" style="top: {{ p4_top }}%; left: {{ p4_left }}%;"></div>

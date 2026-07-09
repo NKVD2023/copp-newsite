@@ -21,7 +21,7 @@
             {% endif %}
         </div>
 
-        <form action="{% if edit_project_item %}{{ url_for('admin.edit_project', project_id=edit_project_item.id) }}{% else %}/admin/add_project{% endif %}" method="POST" enctype="multipart/form-data">
+        <form action="{% if edit_project_item %}{{ url_for('admin.edit_project', project_id=edit_project_item.id) }}{% else %}/admin/add_project{% endif %}" method="POST" enctype="multipart/form-data" onsubmit="prepareProjectTabsData(event)">
             
             <div class="form-row">
                 <div class="form-group span-2">
@@ -39,16 +39,28 @@
                 <textarea name="teaser" rows="2">{{ edit_project_item.teaser if edit_project_item else '' }}</textarea>
             </div>
 
-            <div class="form-group">
-                <label>Полное описание проекта</label>
-                <textarea id="projectContent" name="content" rows="8">{{ edit_project_item.content if edit_project_item else '' }}</textarea>
+            <div class="form-group mb-4">
+                <label class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Содержимое проекта (Вкладки)</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProjectTab()">+ Добавить вкладку</button>
+                </label>
+                
+                <input type="hidden" name="tabs_json" id="projectTabsJson" value="">
+                
+                <ul class="nav nav-tabs" id="projectTabsNav" role="tablist" style="margin-bottom: 0; border-bottom: none; gap: 2px;">
+                    <!-- Вкладки будут добавлены сюда через JS -->
+                </ul>
+                
+                <div class="tab-content border p-3 bg-white" id="projectTabsContent" style="border-radius: 0 4px 4px 4px; border-color: #dee2e6 !important;">
+                    <!-- Редакторы будут добавлены сюда через JS -->
+                </div>
             </div>
 
             <div class="form-row">
-                <div class="form-group">
+                <div class="form-group" style="flex: 1;">
                     <label>Главное фото / Логотип {% if edit_project_item and edit_project_item.main_image %}<span style="color:#0066cc;">(Уже загружено)</span>{% endif %}</label>
                     <div class="input-group mb-2" style="display: flex;">
-                        <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; outline: none;" name="existing_main_image" id="projectMainImageInput" placeholder="Путь к картинке (или выберите из библиотеки)" value="{{ edit_project_item.main_image if edit_project_item else '' }}" readonly>
+                        <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; outline: none;" name="existing_main_image" id="projectMainImageInput" placeholder="Путь к картинке (или выберите из библиотеки)" value="{{ edit_project_item.main_image if edit_project_item and edit_project_item.main_image else '' }}" readonly>
                         <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; cursor: pointer;" type="button" onclick="openMediaPicker('projectMainImageInput', 'image')"><i class="fas fa-images"></i> Выбрать из библиотеки</button>
                         <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; border-radius: 0 4px 4px 0; cursor: pointer; color: #dc3545;" type="button" onclick="document.getElementById('projectMainImageInput').value=''; document.getElementById('projectMainImageInputPreview').style.display='none';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
                     </div>
@@ -62,41 +74,20 @@
                         <input type="file" name="main_image" accept="image/*">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Дополнительные фото (галерея)</label>
-                    <div id="projectExtraImagesContainer" style="margin-bottom: 10px; min-height: 20px;">
-                        {% if edit_project_item and extra_images_list %}
-                            {% for ext_img in extra_images_list %}
-                                <script>
-                                    document.addEventListener("DOMContentLoaded", function() {
-                                        addMediaToGallery('projectExtraImagesContainer', '{{ ext_img }}');
-                                    });
-                                </script>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                    <div class="mb-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openMediaPicker(function(path){ addMediaToGallery('projectExtraImagesContainer', path); }, 'image', true)"><i class="fas fa-plus"></i> Добавить из библиотеки</button>
-                    </div>
-                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новые файлы (старые останутся):</label>
-                    <div class="file-upload-box">
-                        <input type="file" name="extra_images" accept="image/*" multiple>
-                    </div>
-                </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group span-2">
+            <div class="form-row" style="display: flex; gap: 20px; align-items: flex-start;">
+                <div class="form-group" style="flex: 2;">
                     <label>Текст на кнопке участия (оставьте пустым, чтобы скрыть)</label>
                     <input type="text" name="button_text" placeholder="Например: Подать заявку" value="{{ edit_project_item.button_text if edit_project_item else '' }}">
                 </div>
-                <div class="form-group span-2">
+                <div class="form-group" style="flex: 2;">
                     <label>Ссылка для кнопки (URL)</label>
                     <input type="text" name="button_url" placeholder="https://..." value="{{ edit_project_item.button_url if edit_project_item else '' }}">
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="flex: 1;">
                     <label>Цвет проекта</label>
-                    <input type="color" name="project_color" value="{{ edit_project_item.project_color if edit_project_item and edit_project_item.project_color else '#0066ff' }}" style="height: 45px; padding: 5px; cursor: pointer;">
+                    <input type="color" name="project_color" value="{{ edit_project_item.project_color if edit_project_item and edit_project_item.project_color else '#0066ff' }}" style="height: 45px; padding: 5px; cursor: pointer; width: 100%;">
                 </div>
             </div>
 
@@ -108,6 +99,192 @@
         </form>
     </div>
 </div>
+
+<script>
+    // Project Tabs Logic
+    let projectTabsCount = 0;
+    
+    function initProjectTabs() {
+        const rawData = `{{ edit_project_item.tabs_data | safe if edit_project_item and edit_project_item.tabs_data else '' }}`;
+        let existingTabs = [];
+        if (rawData) {
+            try { existingTabs = JSON.parse(rawData); } catch(e) { console.error("Error parsing tabs_data", e); }
+        } else {
+            // Фолбэк на старый content, если tabs_data пустой, но content есть
+            const fallbackContent = `{{ edit_project_item.content | safe if edit_project_item and not edit_project_item.tabs_data else '' }}`;
+            if (fallbackContent.trim()) {
+                existingTabs = [{ id: "tab1", title: "Описание", content: fallbackContent }];
+            }
+        }
+        
+        if (existingTabs.length === 0) {
+            // Создаем пустой дефолтный таб
+            addProjectTab("О проекте", "");
+        } else {
+            existingTabs.forEach(tab => {
+                addProjectTab(tab.title, tab.content);
+            });
+        }
+        
+        // Активируем первый таб
+        setTimeout(() => {
+            const firstTabEl = document.querySelector('#projectTabsNav button');
+            if (firstTabEl) {
+                const tab = new bootstrap.Tab(firstTabEl);
+                tab.show();
+            }
+        }, 100);
+    }
+    
+    function addProjectTab(title = "", content = "") {
+        projectTabsCount++;
+        const tabId = 'project-tab-' + projectTabsCount;
+        
+        if (!title) {
+            title = prompt("Введите название вкладки:", "Новая вкладка");
+            if (!title) return; // отмена
+        }
+        
+        // Создаем кнопку-таб
+        const navItem = document.createElement('li');
+        navItem.className = 'nav-item d-flex align-items-center';
+        navItem.style.position = 'relative';
+        
+        navItem.innerHTML = `
+            <button class="nav-link" id="${tabId}-btn" data-bs-toggle="tab" data-bs-target="#${tabId}-pane" type="button" role="tab" style="padding-right: 35px; border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;">
+                <span class="tab-title-text" onclick="renameProjectTab('${tabId}')" title="Кликните чтобы переименовать" style="cursor: pointer;">${title}</span>
+            </button>
+            <button type="button" class="btn-close btn-close-sm" aria-label="Close" style="position: absolute; right: 10px; font-size: 0.6em; z-index: 5;" onclick="removeProjectTab('${tabId}')"></button>
+        `;
+        document.getElementById('projectTabsNav').appendChild(navItem);
+        
+        // Создаем контент-pane
+        const paneItem = document.createElement('div');
+        paneItem.className = 'tab-pane fade';
+        paneItem.id = `${tabId}-pane`;
+        paneItem.setAttribute('role', 'tabpanel');
+        
+        paneItem.innerHTML = `
+            <input type="hidden" class="tab-title-input" value="${title}">
+            <textarea id="${tabId}-editor" class="project-tab-editor" rows="12">${content}</textarea>
+        `;
+        document.getElementById('projectTabsContent').appendChild(paneItem);
+        
+        // Инициализируем TinyMCE для нового textarea (копируем настройки из admin_dashboard)
+        setTimeout(() => {
+            tinymce.init({
+                selector: `#${tabId}-editor`,
+                plugins: 'anchor autolink charmap codesample image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'styles | insertdoc | undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | charmap | removeformat',
+                style_formats: [
+                    { title: 'Обычный текст', selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table', classes: '' },
+                    { title: 'Кнопка (Акцентная)', selector: 'a', classes: 'btn-project-custom' },
+                    { title: 'Цитата (Выделенная)', block: 'blockquote', classes: 'custom-blockquote' }
+                ],
+                setup: function (editor) {
+                    editor.ui.registry.addButton('insertdoc', {
+                        text: 'Вставить файл',
+                        icon: 'document-properties',
+                        tooltip: 'Вставить ссылку на документ для скачивания',
+                        onAction: function (_) {
+                            currentEditor = editor;
+                            const modal = new bootstrap.Modal(document.getElementById('tinymceFileModal'));
+                            modal.show();
+                        }
+                    });
+                },
+                images_upload_url: '{{ url_for("admin.upload_image") }}',
+                automatic_uploads: true,
+                file_picker_types: 'image',
+                image_advtab: true,
+                language: 'ru',
+                promotion: false
+            });
+            
+            // Если это был первый таб (только что созданный), активируем его
+            if (projectTabsCount === 1) {
+                const tab = new bootstrap.Tab(document.getElementById(`${tabId}-btn`));
+                tab.show();
+            } else if (!content) {
+                // Если добавили вручную, сразу активируем
+                const tab = new bootstrap.Tab(document.getElementById(`${tabId}-btn`));
+                tab.show();
+            }
+        }, 50);
+    }
+    
+    function renameProjectTab(tabId) {
+        const btn = document.getElementById(`${tabId}-btn`);
+        const titleSpan = btn.querySelector('.tab-title-text');
+        const input = document.querySelector(`#${tabId}-pane .tab-title-input`);
+        
+        const newTitle = prompt("Введите новое название вкладки:", titleSpan.textContent);
+        if (newTitle && newTitle.trim() !== "") {
+            titleSpan.textContent = newTitle.trim();
+            input.value = newTitle.trim();
+        }
+    }
+    
+    function removeProjectTab(tabId) {
+        if (confirm("Вы уверены, что хотите удалить эту вкладку?")) {
+            // Уничтожаем инстанс TinyMCE
+            tinymce.get(`${tabId}-editor`).remove();
+            
+            // Удаляем кнопку навигации
+            const btn = document.getElementById(`${tabId}-btn`);
+            btn.parentElement.remove();
+            
+            // Удаляем pane
+            document.getElementById(`${tabId}-pane`).remove();
+            
+            // Активируем первый доступный таб, если есть
+            const firstTabEl = document.querySelector('#projectTabsNav button');
+            if (firstTabEl) {
+                const tab = new bootstrap.Tab(firstTabEl);
+                tab.show();
+            }
+        }
+    }
+    
+    function prepareProjectTabsData(event) {
+        const panes = document.querySelectorAll('#projectTabsContent .tab-pane');
+        const tabsData = [];
+        
+        panes.forEach((pane, index) => {
+            const title = pane.querySelector('.tab-title-input').value;
+            const editorId = pane.querySelector('.project-tab-editor').id;
+            const content = tinymce.get(editorId).getContent();
+            
+            tabsData.push({
+                id: 'tab' + (index + 1),
+                title: title,
+                content: content
+            });
+        });
+        
+        document.getElementById('projectTabsJson').value = JSON.stringify(tabsData);
+    }
+    
+    // Инициализация при загрузке формы, если она открыта
+    document.addEventListener("DOMContentLoaded", function() {
+        if (document.getElementById('projects-form-container').style.display === 'block') {
+            initProjectTabs();
+        }
+    });
+    
+    // Также инициализируем при клике на "+ Создать проект"
+    const originalToggleProjectsForm = window.toggleProjectsForm;
+    window.toggleProjectsForm = function() {
+        if (typeof originalToggleProjectsForm === 'function') {
+            originalToggleProjectsForm();
+        }
+        const container = document.getElementById('projects-form-container');
+        if (container.style.display === 'block' && projectTabsCount === 0) {
+            initProjectTabs();
+        }
+    };
+</script>
+
 </div>
 
 <div class="news-grid">

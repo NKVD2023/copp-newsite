@@ -1,0 +1,24 @@
+            <div class="news-detail-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; flex-wrap: wrap;">
+                <div class="header-text-content" style="flex: 1; min-width: 300px;">
+                    <h1 class="news-detail-title" style="color: {{ theme_color }};">{{ project.title }}</h1>
+                    {% if project.teaser %}
+                    <p style="font-size: 1.25rem; color: #666; max-width: 800px; margin-bottom: 2rem; line-height: 1.6;">
+                        {{ project.teaser }}
+                    </p>
+                    {% endif %}
+                    <div class="news-detail-meta">
+                        <span>Добавлено: {{ project.created_at[:10] if project.created_at else '' }}</span>
+                        {% if project.status == 'published' %}
+                        <span style="background: #198754; color: white; padding: 3px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">Опубликован</span>
+                        {% else %}
+                        <span style="background: #6c757d; color: white; padding: 3px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;">В архиве</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if project.main_image %}
+                <div class="header-logo" style="flex: 0 0 300px;">
+                    <img src="{{ url_for('static', filename=project.main_image) }}" alt="Логотип проекта" style="width: 100%; object-fit: contain; max-height: 250px;">
+                </div>
+                {% endif %}
+            </div>
