@@ -38,8 +38,12 @@
                     type="button">Статистика</button></li>
             <li class="nav-item"><button class="nav-link {% if active_tab == 'contacts' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#contactsTab"
                     type="button">Обратная связь</button></li>
+            <li class="nav-item"><button class="nav-link {% if active_tab == 'forms_data' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#formsDataTab"
+                    type="button">Данные форм / Сбор</button></li>
             <li class="nav-item"><button class="nav-link {% if active_tab == 'socials' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#socialsTab"
                     type="button">Соц. сети</button></li>
+            <li class="nav-item"><button class="nav-link {% if active_tab == 'team' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#teamTab"
+                    type="button">Команда</button></li>
             <li class="nav-item"><button class="nav-link {% if active_tab == 'database' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#databaseTab"
                     type="button"><i class="fas fa-database"></i> База Данных</button></li>
         </ul>
@@ -72,6 +76,10 @@
                 {% include 'admin_tabs/tab_contacts.html' %}
             </div>
 
+            <div class="tab-pane fade {% if active_tab == 'forms_data' %}show active{% endif %}" id="formsDataTab" role="tabpanel">
+                {% include 'admin_tabs/tab_forms_data.html' %}
+            </div>
+
             <div class="tab-pane fade {% if active_tab == 'pages' %}show active{% endif %}" id="pagesTab" role="tabpanel">
                 {% include 'admin_tabs/tab_pages.html' %}
             </div>
@@ -84,12 +92,12 @@
                 {% include 'admin_tabs/tab_statistics.html' %}
             </div>
 
-            <!-- <div class="tab-pane fade {% if active_tab == 'contacts' %}show active{% endif %}" id="contactsTab" role="tabpanel">
-                {% include 'admin_tabs/tab_contacts.html' %}
-            </div> -->
-
             <div class="tab-pane fade {% if active_tab == 'socials' %}show active{% endif %}" id="socialsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_socials.html' %}
+            </div>
+
+            <div class="tab-pane fade {% if active_tab == 'team' %}show active{% endif %}" id="teamTab" role="tabpanel">
+                {% include 'admin_tabs/tab_team.html' %}
             </div>
         </div>
     </div>

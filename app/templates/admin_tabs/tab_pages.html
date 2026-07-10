@@ -51,19 +51,20 @@
                 <div class="form-group">
                     <label>Стиль страницы</label>
                     <select name="page_style" class="form-control" onchange="toggleModernFields(this.value)">
-                        <option value="default" {% if edit_page_item and edit_page_item.page_style == 'default' %}selected{% endif %}>Обычная страница (Широкая карточка)</option>
-                        <option value="modern" {% if edit_page_item and edit_page_item.page_style == 'modern' %}selected{% endif %}>Современный стиль (Проекты/Новости)</option>
+                        <option value="default" {% if edit_page_item and edit_page_item.page_style == 'default' %}selected{% endif %}>Обычная страница (Узкая по центру)</option>
+                        <option value="modern" {% if edit_page_item and edit_page_item.page_style == 'modern' %}selected{% endif %}>Современный стиль (Обычная ширина)</option>
+                        <option value="fullwidth" {% if edit_page_item and edit_page_item.page_style == 'fullwidth' %}selected{% endif %}>Широкая страница (На всю ширину экрана)</option>
                     </select>
                 </div>
                 <div class="form-group modern-only" style="display: none;">
                     <label>Цвет страницы</label>
-                    <input type="color" name="page_color" value="{{ edit_page_item.page_color if edit_page_item and edit_page_item.page_color else '#0066ff' }}" style="height: 45px; padding: 5px; cursor: pointer; width: 100%;">
+                    <input type="color" name="page_color" value="{{ edit_page_item.page_color if edit_page_item and edit_page_item.page_color else '#00334e' }}" style="height: 45px; padding: 5px; cursor: pointer; width: 100%;">
                 </div>
             </div>
 
-            <div class="form-group modern-only" style="display: none;">
+            <div class="form-group modern-only" style="display: none; width: 100%;">
                 <label>Краткое описание (анонс)</label>
-                <textarea name="teaser" rows="2">{{ edit_page_item.teaser if edit_page_item else '' }}</textarea>
+                <textarea name="teaser" rows="2" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; box-sizing: border-box;">{{ edit_page_item.teaser if edit_page_item else '' }}</textarea>
             </div>
 
             <div class="form-row modern-only" style="display: none;">
@@ -102,6 +103,50 @@
                     <!-- Редакторы будут добавлены сюда через JS -->
                 </div>
             </div>
+
+            <!-- БЛОК ДИНАМИЧЕСКИХ ФОРМ -->
+            <div class="form-group mb-4">
+                <hr>
+                <label class="d-flex justify-content-between align-items-center mb-2">
+                    <span style="font-size:1.1em; font-weight:bold;">Конструктор формы (опросы, сбор данных, заявки)</span>
+                    <label style="font-weight:normal; cursor:pointer;">
+                        <input type="checkbox" name="enable_dynamic_form" id="enable_dynamic_form" value="1" onchange="toggleDynamicForm()" {% if page_form and page_form.status == 'active' %}checked{% endif %}>
+                        Включить форму на странице
+                    </label>
+                </label>
+                
+                <input type="hidden" name="delete_dynamic_form" id="delete_dynamic_form" value="0">
+                
+                <div id="dynamic_form_container" style="display:{% if page_form and page_form.status == 'active' %}block{% else %}none{% endif %}; border:1px solid #dee2e6; padding:15px; border-radius:4px; background:#f8f9fa;">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label>Название формы (опроса, сбора данных)</label>
+                            <input type="text" name="dynamic_form_title" id="dynamic_form_title" class="form-control" placeholder="Например: Регистрация на курс" value="{{ page_form.title if page_form else '' }}">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Год / Период</label>
+                            <input type="text" name="dynamic_form_year" id="dynamic_form_year" class="form-control" placeholder="Например: 2024 или Осень 2024" value="{{ page_form.year if page_form else '' }}">
+                        </div>
+                    </div>
+                    
+                    <label class="mb-2 d-block">Поля формы:</label>
+                    <div id="dynamic_form_fields_list" style="margin-bottom:10px; display:flex; flex-direction:column; gap:10px;">
+                        <!-- Поля добавляются через JS -->
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addDynamicField()">+ Добавить поле</button>
+                    <p class="small text-muted mt-2 mb-0">Галочка "Согласие на обработку персональных данных" добавляется автоматически и всегда обязательна.</p>
+                    
+                    <input type="hidden" name="dynamic_form_fields" id="dynamic_form_fields" value="{{ page_form.fields_config if page_form else '[]' }}">
+                    
+                    <hr>
+                    <div style="text-align: right;">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="archiveDynamicForm()">🗑️ Удалить форму со страницы (в архив)</button>
+                    </div>
+                </div>
+                <hr>
+            </div>
+            <!-- КОНЕЦ БЛОКА -->
 
             <div class="form-group">
                 <label>Прикрепленные файлы (документы)</label>
@@ -179,7 +224,7 @@
 
     function toggleModernFields(style) {
         document.querySelectorAll('.modern-only').forEach(el => {
-            el.style.display = (style === 'modern') ? 'block' : 'none';
+            el.style.display = (style === 'modern' || style === 'fullwidth') ? 'block' : 'none';
         });
     }
 
@@ -373,6 +418,100 @@
         if (document.getElementById('pages-form-container').style.display === 'block') {
             initPageTabs();
             toggleModernFields(document.querySelector('select[name="page_style"]').value);
+            initDynamicForms();
         }
     });
+
+    // --- Dynamic Forms Logic ---
+    function toggleDynamicForm() {
+        const checkbox = document.getElementById('enable_dynamic_form');
+        const container = document.getElementById('dynamic_form_container');
+        container.style.display = checkbox.checked ? 'block' : 'none';
+        
+        // Сбрасываем флаг удаления, если пользователь снова включает форму
+        if (checkbox.checked) {
+            document.getElementById('delete_dynamic_form').value = '0';
+        }
+    }
+    
+    function archiveDynamicForm() {
+        if (confirm("Вы уверены, что хотите удалить форму с этой страницы? Все собранные заявки останутся в архиве во вкладке 'Данные форм'. Страница останется без формы, и вы сможете создать новую.")) {
+            document.getElementById('delete_dynamic_form').value = '1';
+            document.getElementById('enable_dynamic_form').checked = false;
+            toggleDynamicForm();
+            alert("Форма будет удалена со страницы после сохранения изменений.");
+        }
+    }
+
+    function initDynamicForms() {
+        const fieldsInput = document.getElementById('dynamic_form_fields');
+        let fields = [];
+        try {
+            if (fieldsInput.value.trim()) {
+                fields = JSON.parse(fieldsInput.value);
+            }
+        } catch(e) { console.error('Error parsing dynamic_form_fields', e); }
+        
+        const listEl = document.getElementById('dynamic_form_fields_list');
+        listEl.innerHTML = '';
+        
+        fields.forEach((field, index) => {
+            listEl.appendChild(createFieldElement(field, index));
+        });
+    }
+
+    function createFieldElement(field, index) {
+        const div = document.createElement('div');
+        div.className = 'd-flex align-items-center gap-2 p-2 border bg-white';
+        div.style.borderRadius = '4px';
+        div.dataset.index = index;
+        
+        div.innerHTML = `
+            <input type="text" class="form-control form-control-sm field-name" placeholder="Название (например: ФИО)" value="${field.name || ''}" style="flex:2;" onchange="updateDynamicFieldsJson()">
+            <select class="form-select form-select-sm field-type" style="flex:1;" onchange="updateDynamicFieldsJson()">
+                <option value="text" ${field.type === 'text' ? 'selected' : ''}>Текст</option>
+                <option value="number" ${field.type === 'number' ? 'selected' : ''}>Число</option>
+                <option value="date" ${field.type === 'date' ? 'selected' : ''}>Дата</option>
+            </select>
+            <label class="d-flex align-items-center gap-1 mb-0" style="flex:1; font-size:13px; cursor:pointer;">
+                <input type="checkbox" class="field-required" ${field.required ? 'checked' : ''} onchange="updateDynamicFieldsJson()"> Обязательно
+            </label>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeDynamicField(this)">✕</button>
+        `;
+        return div;
+    }
+
+    function addDynamicField() {
+        const listEl = document.getElementById('dynamic_form_fields_list');
+        const index = listEl.children.length;
+        listEl.appendChild(createFieldElement({name: '', type: 'text', required: true}, index));
+        updateDynamicFieldsJson();
+    }
+
+    function removeDynamicField(btn) {
+        btn.parentElement.remove();
+        updateDynamicFieldsJson();
+    }
+
+    function updateDynamicFieldsJson() {
+        const listEl = document.getElementById('dynamic_form_fields_list');
+        const fields = [];
+        Array.from(listEl.children).forEach(div => {
+            fields.push({
+                name: div.querySelector('.field-name').value,
+                type: div.querySelector('.field-type').value,
+                required: div.querySelector('.field-required').checked
+            });
+        });
+        document.getElementById('dynamic_form_fields').value = JSON.stringify(fields);
+    }
+    
+    // Перехватываем onsubmit чтобы перед сохранением обновить JSON динамических форм тоже
+    const originalPreparePageTabsData = preparePageTabsData;
+    preparePageTabsData = function(event) {
+        if (document.getElementById('enable_dynamic_form').checked) {
+            updateDynamicFieldsJson();
+        }
+        originalPreparePageTabsData(event);
+    };
 </script>

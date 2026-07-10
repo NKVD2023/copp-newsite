@@ -78,4 +78,4 @@ def inject_admin_context():
 # Импортируем модули маршрутов админки. 
 # Они должны быть строго внизу, чтобы избежать циклических импортов, 
 # так как внутри этих файлов импортируется переменная `bp` из этого файла.
-from app.admin import auth, dashboard, news, contacts, documents, pages, projects, socials, statistics, database, prof_stats, professions
+from app.admin import auth, dashboard, news, contacts, documents, pages, projects, socials, statistics, database, prof_stats, professions, team

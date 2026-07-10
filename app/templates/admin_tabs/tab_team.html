@@ -1,0 +1,154 @@
+<div class="admin-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5>Наша команда</h5>
+        <div class="d-flex gap-2 w-50 justify-content-end">
+            <input type="text" class="form-control generic-search-input w-50" data-target=".team-row" placeholder="Поиск по имени...">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTeamModal">Добавить сотрудника</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Фото</th>
+                    <th>ФИО</th>
+                    <th>Должность</th>
+                    <th>Email</th>
+                    <th>Сортировка</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in team_members %}
+                <tr class="team-row">
+                    <td>{{ member.id }}</td>
+                    <td>
+                        <div style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #e9ecef;">
+                            {% if member.image_path %}
+                            <img src="{{ url_for('static', filename=member.image_path) }}" alt="{{ member.full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                            <i class="fas fa-user text-secondary"></i>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td><strong>{{ member.full_name }}</strong></td>
+                    <td>{{ member.position }}</td>
+                    <td>{{ member.email if member.email else '<span class="text-muted">Нет</span>'|safe }}</td>
+                    <td>{{ member.display_order }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editTeamModal{{ member.id }}">Изменить</button>
+                        <form action="{{ url_for('admin.delete_team_member', id=member.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Вы уверены, что хотите удалить этого сотрудника?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not team_members %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">Сотрудники пока не добавлены</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальные окна редактирования сотрудника -->
+{% for member in team_members %}
+<div class="modal fade" id="editTeamModal{{ member.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('admin.edit_team_member', id=member.id) }}" method="POST" enctype="multipart/form-data" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать сотрудника</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">ФИО <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="full_name" value="{{ member.full_name }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Должность <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="position" value="{{ member.position }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email (необязательно)</label>
+                    <input type="email" class="form-control" name="email" value="{{ member.email if member.email else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Порядок отображения</label>
+                    <input type="number" class="form-control" name="display_order" value="{{ member.display_order }}">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Фотография (Файл из библиотеки)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="existing_image_file" id="teamImageInput{{ member.id }}" value="{{ member.image_path if member.image_path else '' }}" readonly>
+                        <button class="btn btn-outline-secondary bg-light" type="button" onclick="openMediaPicker('teamImageInput{{ member.id }}', 'image')"><i class="fas fa-images"></i> Выбрать</button>
+                        <button class="btn btn-outline-danger bg-light" type="button" onclick="document.getElementById('teamImageInput{{ member.id }}').value='';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Или загрузите новый файл с ПК</label>
+                    <input type="file" class="form-control" name="image_file" accept=".png,.jpg,.jpeg,.webp">
+                    <div class="form-text text-muted">Рекомендуется квадратное изображение. Это заменит текущее фото.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Модальное окно добавления сотрудника -->
+<div class="modal fade" id="addTeamModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="{{ url_for('admin.add_team_member') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Добавить сотрудника</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">ФИО <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="full_name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Должность <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="position" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email (необязательно)</label>
+                    <input type="email" class="form-control" name="email">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Порядок отображения</label>
+                    <input type="number" class="form-control" name="display_order" value="0">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Фотография (Файл из библиотеки)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="existing_image_file" id="newTeamImageInput" readonly>
+                        <button class="btn btn-outline-secondary bg-light" type="button" onclick="openMediaPicker('newTeamImageInput', 'image')"><i class="fas fa-images"></i> Выбрать</button>
+                        <button class="btn btn-outline-danger bg-light" type="button" onclick="document.getElementById('newTeamImageInput').value='';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Или загрузите новый файл с ПК</label>
+                    <input type="file" class="form-control" name="image_file" accept=".png,.jpg,.jpeg,.webp">
+                    <div class="form-text text-muted">Рекомендуется квадратное изображение.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </div>
+        </form>
+    </div>
+</div>

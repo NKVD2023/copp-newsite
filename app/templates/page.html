@@ -2,10 +2,10 @@
 
 {% block title %}{{ page.title }} - ЦОПП РК{% endblock %}
 
-{% set theme_color = page.page_color if page.page_color else '#0066ff' %}
+{% set theme_color = page.page_color if page.page_color else '#00334e' %}
 
 {% block extra_css %}
-{% if page.page_style == 'modern' %}
+{% if page.page_style == 'modern' or page.page_style == 'fullwidth' %}
     {% include 'page/styles.html' %}
 {% else %}
 <style>
@@ -79,6 +79,8 @@
 {% block content %}
     {% if page.page_style == 'modern' %}
         {% include 'page/modern_style.html' %}
+    {% elif page.page_style == 'fullwidth' %}
+        {% include 'page/fullwidth_style.html' %}
     {% else %}
         {% include 'page/default_style.html' %}
     {% endif %}

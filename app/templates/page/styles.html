@@ -7,5 +7,19 @@
       --theme-color-44: {{ theme_color }}44;
       --theme-color-66: {{ theme_color }}66;
   }
+  
+  /* Стили для таблиц в современных шаблонах */
+  .news-text-content table, .project-tab-pane table {
+      width: 100% !important;
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+  }
+  
+  .news-text-content table td, .news-text-content table th,
+  .project-tab-pane table td, .project-tab-pane table th {
+      border: 1px solid #ddd;
+      padding: 10px 15px;
+      vertical-align: top;
+  }
 </style>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/project.css', v=6) }}">

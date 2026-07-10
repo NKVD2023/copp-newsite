@@ -73,6 +73,17 @@ def dashboard():
         contact_requests = conn.execute('SELECT * FROM contact_requests ORDER BY id DESC').fetchall()
         
         try:
+            forms_list = conn.execute('SELECT * FROM page_forms ORDER BY id DESC').fetchall()
+            submissions_list = conn.execute('''
+                SELECT s.*, f.title as form_title, f.year 
+                FROM form_submissions s 
+                JOIN page_forms f ON s.form_id = f.id 
+                ORDER BY s.id DESC
+            ''').fetchall()
+        except:
+            forms_list = []
+            submissions_list = []
+        try:
             prof_uploads = conn.execute('SELECT * FROM dashboard_uploads ORDER BY upload_date DESC').fetchall()
         except:
             prof_uploads = []
@@ -81,6 +92,11 @@ def dashboard():
             professions_list = conn.execute('SELECT * FROM professions ORDER BY id DESC').fetchall()
         except:
             professions_list = []
+            
+        try:
+            team_members = conn.execute('SELECT * FROM team_members ORDER BY display_order ASC, id DESC').fetchall()
+        except:
+            team_members = []
             
     # Загружаем список учебных заведений для чекбоксов
     import json
@@ -110,4 +126,7 @@ def dashboard():
                            colleges_list=colleges_list,
                            categories_dict=CATEGORIES_RU,
                            contact_requests=contact_requests,
+                           forms_list=forms_list,
+                           submissions_list=submissions_list,
+                           team_members=team_members,
                            now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))

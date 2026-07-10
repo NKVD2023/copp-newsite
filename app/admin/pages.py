@@ -56,10 +56,26 @@ def add_page():
     
     with get_db_connection() as conn:
         try:
-            conn.execute('''
+            cursor = conn.cursor()
+            cursor.execute('''
                 INSERT INTO pages (title, slug, content, is_in_navbar, menu_group, attached_files, page_style, teaser, page_color, tabs_data, main_image)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (title, slug, content, is_in_navbar, menu_group, attached_files_json, page_style, teaser, page_color, tabs_data, main_image))
+            
+            page_id = cursor.lastrowid
+            
+            # Обработка конфигурации формы
+            form_enabled = request.form.get('enable_dynamic_form')
+            form_title = request.form.get('dynamic_form_title', '').strip()
+            form_fields_json = request.form.get('dynamic_form_fields', '[]')
+            
+            if form_enabled == '1' and form_title:
+                form_year = request.form.get('dynamic_form_year', '').strip()
+                cursor.execute('''
+                    INSERT INTO page_forms (page_id, title, year, fields_config, status) 
+                    VALUES (?, ?, ?, ?, 'active')
+                ''', (page_id, form_title, form_year, form_fields_json))
+                
             conn.commit()
             flash("Страница успешно создана!", "success")
         except Exception as e:
@@ -88,6 +104,9 @@ def edit_page(page_id):
         contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
         edit_page_item = conn.execute('SELECT * FROM pages WHERE id = ?', (page_id,)).fetchone()
         menu_groups_list = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
+        
+        # Получаем привязанную форму (не архивированную)
+        page_form = conn.execute("SELECT * FROM page_forms WHERE page_id = ? AND status != 'archived'", (page_id,)).fetchone()
     
     attached_files_list = []
     if edit_page_item and edit_page_item['attached_files']:
@@ -107,7 +126,8 @@ def edit_page(page_id):
                            edit_page_item=edit_page_item, 
                            attached_files_list=attached_files_list, 
                            active_tab='pages', 
-                           menu_groups_list=menu_groups_list)
+                           menu_groups_list=menu_groups_list,
+                           page_form=page_form)
 
 @bp.route('/update_page/<int:page_id>', methods=['POST'])
 def update_page(page_id):
@@ -159,6 +179,35 @@ def update_page(page_id):
                     page_style = ?, teaser = ?, page_color = ?, tabs_data = ?, main_image = ?
                 WHERE id = ?
             ''', (title, slug, content, is_in_navbar, menu_group, attached_files_json, page_style, teaser, page_color, tabs_data, main_image, page_id))
+            
+            # Обработка конфигурации формы
+            form_enabled = request.form.get('enable_dynamic_form')
+            delete_form = request.form.get('delete_dynamic_form')
+            form_title = request.form.get('dynamic_form_title', '').strip()
+            form_fields_json = request.form.get('dynamic_form_fields', '[]')
+            
+            if delete_form == '1':
+                conn.execute("UPDATE page_forms SET status = 'archived' WHERE page_id = ? AND status != 'archived'", (page_id,))
+            else:
+                existing_form = conn.execute("SELECT id FROM page_forms WHERE page_id = ? AND status != 'archived'", (page_id,)).fetchone()
+                
+                if form_enabled == '1' and form_title:
+                    form_year = request.form.get('dynamic_form_year', '').strip()
+                    
+                    if existing_form:
+                        conn.execute('''
+                            UPDATE page_forms SET title = ?, year = ?, fields_config = ?, status = 'active' WHERE id = ?
+                        ''', (form_title, form_year, form_fields_json, existing_form['id']))
+                    else:
+                        conn.execute('''
+                            INSERT INTO page_forms (page_id, title, year, fields_config, status) 
+                            VALUES (?, ?, ?, ?, 'active')
+                        ''', (page_id, form_title, form_year, form_fields_json))
+                else:
+                    # Если форма отключена (скрыта), просто меняем статус
+                    if existing_form:
+                        conn.execute("UPDATE page_forms SET status = 'hidden' WHERE id = ?", (existing_form['id'],))
+                
             conn.commit()
             flash("Страница успешно обновлена!", "success")
         except Exception as e:

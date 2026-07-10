@@ -1,0 +1,147 @@
+{% if page_form %}
+<div class="dynamic-form-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #eaeaea; margin-bottom: 2rem;">
+    <div style="text-align: center;">
+        <h3 style="color: var(--copp-blue); margin-bottom: 1rem;">{{ page_form.title }}</h3>
+        <button type="button" style="padding: 12px 30px; font-size: 1.1rem; border-radius: 30px; background-color: {{ theme_color }}; color: white; border: none; cursor: pointer; font-weight: bold; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'" onclick="openDynamicFormModal()">Подать заявку</button>
+    </div>
+</div>
+
+<!-- Custom Modal -->
+<div class="feedback-modal-overlay" id="dynamicFormModal" style="display: none;">
+    <div class="feedback-modal-content" style="max-width: 600px;">
+        <button type="button" class="feedback-modal-close" id="dynamicFormCloseBtn" onclick="closeDynamicFormModal()">&times;</button>
+        
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 style="font-weight: 800; font-size: 1.8rem; color: var(--copp-blue); margin-bottom: 0.5rem; margin-top: 0;">{{ page_form.title }}</h2>
+            <div style="width: 60px; height: 3px; background: {{ theme_color }}; margin: 0 auto;"></div>
+        </div>
+        
+        <form id="dynamicFormElement" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="hidden" id="dynamicFormId" value="{{ page_form.id }}">
+            
+            {% set fields = page_form.fields_config|from_json %}
+            {% for field in fields %}
+            <div>
+                <label style="display: block; font-size: 0.9rem; color: var(--copp-text); font-weight: 600; margin-bottom: 5px; opacity: 0.8;">
+                    {{ field.name }} {% if field.required %}<span style="color: #ff4d4f;">*</span>{% endif %}
+                </label>
+                {% if field.type == 'text' %}
+                    <input type="text" class="contact-glass-input df-field" data-name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                {% elif field.type == 'number' %}
+                    <input type="number" class="contact-glass-input df-field" data-name="{{ field.name }}" {% if field.required %}required{% endif %}>
+                {% elif field.type == 'date' %}
+                    <input type="date" class="contact-glass-input df-field" data-name="{{ field.name }}" {% if field.required %}required{% endif %} style="font-family: inherit;">
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 10px;">
+                <input type="checkbox" id="dfConsent" required style="margin-top: 4px;">
+                <label style="color: var(--copp-text); font-size: 0.85rem; line-height: 1.4; margin: 0; cursor: pointer; opacity: 0.7;" for="dfConsent">
+                    Я даю согласие на обработку моих персональных данных <span style="color: #ff4d4f;">*</span>
+                </label>
+            </div>
+            
+            <div id="dfMessage" style="display: none; border-radius: 4px; padding: 10px; font-size: 0.95rem;"></div>
+            
+            <div style="text-align: center; margin-top: 10px;">
+                <button type="submit" id="dfSubmitBtn" style="background-color: {{ theme_color }}; color: white; border: none; padding: 12px 35px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: all 0.3s ease; width: 100%; border-radius: 4px;">ОТПРАВИТЬ ЗАЯВКУ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openDynamicFormModal() {
+    const modal = document.getElementById('dynamicFormModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeDynamicFormModal() {
+    const modal = document.getElementById('dynamicFormModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('dynamicFormModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeDynamicFormModal();
+            }
+        });
+    }
+
+    const form = document.getElementById('dynamicFormElement');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('dfSubmitBtn');
+            const msgBox = document.getElementById('dfMessage');
+            
+            // Сбор данных
+            const submissionData = {};
+            const fields = form.querySelectorAll('.df-field');
+            fields.forEach(f => {
+                submissionData[f.dataset.name] = f.value;
+            });
+            
+            const formId = document.getElementById('dynamicFormId').value;
+            
+            btn.disabled = true;
+            btn.innerText = 'Отправка...';
+            msgBox.style.display = 'none';
+            
+            fetch('/submit_dynamic_form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    form_id: formId,
+                    submission_data: submissionData
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                msgBox.style.display = 'block';
+                if (data.success) {
+                    msgBox.style.backgroundColor = '#d4edda';
+                    msgBox.style.color = '#155724';
+                    msgBox.style.border = '1px solid #c3e6cb';
+                    msgBox.textContent = data.message;
+                    form.reset();
+                    setTimeout(() => {
+                        closeDynamicFormModal();
+                        msgBox.style.display = 'none';
+                    }, 2500);
+                } else {
+                    msgBox.style.backgroundColor = '#f8d7da';
+                    msgBox.style.color = '#721c24';
+                    msgBox.style.border = '1px solid #f5c6cb';
+                    msgBox.textContent = data.message || 'Ошибка отправки';
+                }
+            })
+            .catch(err => {
+                msgBox.style.display = 'block';
+                msgBox.style.backgroundColor = '#f8d7da';
+                msgBox.style.color = '#721c24';
+                msgBox.style.border = '1px solid #f5c6cb';
+                msgBox.textContent = 'Произошла ошибка соединения.';
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerText = 'ОТПРАВИТЬ ЗАЯВКУ';
+            });
+        });
+    }
+});
+</script>
+{% endif %}

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Наша команда - ЦОПП РК{% endblock %}
+
+{% block extra_css %}
+<style>
+    .team-header {
+        text-align: center;
+        margin: 3rem 0;
+    }
+
+    .team-header h1 {
+        font-weight: 800;
+        font-size: 2.5rem;
+        color: var(--copp-blue);
+        margin-bottom: 1rem;
+    }
+
+    .team-header .underline {
+        width: 80px;
+        height: 4px;
+        background: var(--copp-lochamara);
+        margin: 0 auto;
+        border-radius: 2px;
+    }
+
+    .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        padding: 1rem;
+        margin-bottom: 4rem;
+    }
+
+    .team-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 20px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .team-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0, 102, 255, 0.03) 0%, rgba(0, 102, 255, 0) 100%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .team-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 102, 255, 0.12);
+        border-color: rgba(0, 102, 255, 0.2);
+    }
+
+    .team-card:hover::before {
+        opacity: 1;
+    }
+
+    .team-photo {
+        width: calc(100% + 3rem);
+        height: 260px;
+        margin: -2.5rem -1.5rem 1.5rem -1.5rem;
+        border-radius: 20px 20px 0 0;
+        padding: 0;
+        background: #f0f4f8;
+        position: relative;
+        z-index: 1;
+        transition: transform 0.4s ease;
+    }
+
+    .team-card:hover .team-photo {
+        transform: scale(1.03);
+    }
+
+    .team-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 20px 20px 0 0;
+        border: none;
+    }
+    
+    .team-photo-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 20px 20px 0 0;
+        border: none;
+        background: #f0f4f8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #ccd5df;
+    }
+
+    .team-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--copp-blue);
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .team-position {
+        font-size: 0.95rem;
+        color: #6c757d;
+        font-weight: 500;
+        line-height: 1.4;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .team-email {
+        display: inline-block;
+        font-size: 0.9rem;
+        color: var(--copp-lochamara);
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        background: rgba(0, 102, 255, 0.05);
+        border-radius: 20px;
+        transition: all 0.2s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .team-email:hover {
+        background: var(--copp-lochamara);
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="team-header">
+    <h1>Наша команда</h1>
+    <div class="underline"></div>
+</div>
+
+<div class="team-grid">
+    {% for member in team_members %}
+    <div class="team-card">
+        <div class="team-photo">
+            {% if member.image_path %}
+            <img src="{{ url_for('static', filename=member.image_path) }}" alt="{{ member.full_name }}">
+            {% else %}
+            <div class="team-photo-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            {% endif %}
+        </div>
+        <div class="team-name">{{ member.full_name }}</div>
+        <div class="team-position">{{ member.position }}</div>
+        {% if member.email %}
+        <a href="mailto:{{ member.email }}" class="team-email">
+            <i class="fas fa-envelope"></i> {{ member.email }}
+        </a>
+        {% endif %}
+    </div>
+    {% endfor %}
+    
+    {% if not team_members %}
+    <div style="grid-column: 1 / -1; text-align: center; color: #6c757d; padding: 3rem;">
+        <h3>Сотрудники пока не добавлены</h3>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

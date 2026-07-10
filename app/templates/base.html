@@ -70,9 +70,14 @@
             </a>
 
             <nav>
-                <a href="{{ url_for('main.index') }}">Главная</a>
-                <a href="{{ url_for('main.news') }}">Новости</a>
-                <a href="{{ url_for('main.events') }}">Мероприятия</a>
+                <!-- <a href="{{ url_for('main.index') }}">Главная</a> -->
+                <div class="dropdown">
+                    <button class="dropbtn" onclick="if(window.innerWidth > 768) window.location.href='{{ url_for('main.news') }}'">Новости <span class="arrow">&#9662;</span></button>
+                    <div class="dropdown-content">
+                        <a href="{{ url_for('main.news') }}">Все новости</a>
+                        <a href="{{ url_for('main.events') }}">Мероприятия</a>
+                    </div>
+                </div>
                 <a href="{{ url_for('main.atlas') }}">Атлас профессий</a>
                 <a href="{{ url_for('main.dashboard') }}">Востребованные професии</a>
                 <a href="cp.copp82.ru">Цифровая платформа</a>
@@ -104,6 +109,9 @@
                             {% for page in pages %}
                                 <a href="{{ url_for('main.dynamic_page', slug=page['slug']) }}">{{ page['title'] }}</a>
                             {% endfor %}
+                            {% if group_name == 'О центре' %}
+                                <a href="{{ url_for('main.team') }}">Наша команда</a>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}

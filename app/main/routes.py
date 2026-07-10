@@ -254,13 +254,45 @@ def dynamic_page(slug):
         conn.close()
         abort(404)
         
+    page_form = conn.execute("SELECT * FROM page_forms WHERE page_id = ? AND status = 'active'", (page['id'],)).fetchone()
+        
     if slug == 'contacts':
         contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
         conn.close()
-        return render_template('contacts.html', page=page, contact_settings=contact_settings)
+        return render_template('contacts.html', page=page, contact_settings=contact_settings, page_form=page_form)
         
     conn.close()
-    return render_template('page.html', page=page)
+    return render_template('page.html', page=page, page_form=page_form)
+
+@bp.route('/submit_dynamic_form', methods=['POST'])
+def submit_dynamic_form():
+    """
+    Обработчик отправки динамических форм со страниц.
+    Принимает ID формы и данные JSON, сохраняет в form_submissions.
+    """
+    try:
+        data = request.json
+        form_id = data.get('form_id')
+        submission_data = data.get('submission_data')
+        
+        if not form_id or not submission_data:
+            return jsonify({'success': False, 'message': 'Некорректные данные.'}), 400
+            
+        import json
+        json_data = json.dumps(submission_data, ensure_ascii=False)
+        
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO form_submissions (form_id, submission_data)
+            VALUES (?, ?)
+        ''', (form_id, json_data))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Ваша заявка успешно отправлена!'})
+    except Exception as e:
+        print("Dynamic form submit error:", e)
+        return jsonify({'success': False, 'message': 'Произошла ошибка при отправке.'}), 500
 
 @bp.route('/project/<slug>')
 def project(slug):
@@ -305,3 +337,14 @@ def api_dashboard():
         data.append(dict(r))
         
     return jsonify({"success": True, "data": data})
+
+@bp.route('/team')
+def team():
+    """
+    Страница "Наша команда" со списком сотрудников.
+    """
+    conn = get_db_connection()
+    team_members = conn.execute('SELECT * FROM team_members ORDER BY display_order ASC, id DESC').fetchall()
+    conn.close()
+    
+    return render_template('team.html', team_members=team_members)

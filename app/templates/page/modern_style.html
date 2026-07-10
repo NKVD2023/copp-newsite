@@ -1,4 +1,4 @@
-{% set theme_color = page.page_color if page.page_color else '#0066ff' %}
+{% set theme_color = page.page_color if page.page_color else '#00334e' %}
 
 <div class="news-bg-wrapper" id="parallaxNewsWrapper" style="padding-top: 2rem;">
     <!-- Фоновые кляксы -->
@@ -13,6 +13,8 @@
             <div class="news-layout">
                 <div class="news-text-content">
                     {% include 'page/tabs.html' %}
+                    
+                    {% include 'page/dynamic_form.html' %}
                 </div>
             </div>
         </div>
