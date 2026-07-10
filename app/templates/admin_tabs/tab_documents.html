@@ -22,8 +22,8 @@
             
             <div class="form-group mb-0">
                 <i class="fas fa-cloud-upload-alt fa-3x text-secondary mb-3"></i>
-                <h5 class="mb-2">Нажмите или перетащите файл сюда</h5>
-                <input type="file" name="document" id="fileInputDrop" class="d-none" required>
+                <h5 class="mb-2">Нажмите или перетащите файлы сюда</h5>
+                <input type="file" name="document" id="fileInputDrop" class="d-none" multiple required>
                 <div id="fileNameDisplay" class="mt-2 text-success fw-bold"></div>
                 <small class="text-muted d-block mt-2">Разрешены: pdf, doc, docx, xls, xlsx, zip, rar, txt, rtf, png, jpg, jpeg, webp</small>
             </div>
@@ -86,7 +86,11 @@
     const submitBtn = document.getElementById('submitDropBtn');
 
     if (dropZone && fileInput) {
-        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', (e) => {
+            if (!e.target.closest('button')) {
+                fileInput.click();
+            }
+        });
         
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -114,7 +118,11 @@
 
         function updateFileInfo() {
             if (fileInput.files.length > 0) {
-                fileNameDisplay.innerHTML = '<i class="fas fa-check-circle"></i> Выбран файл: ' + fileInput.files[0].name;
+                if (fileInput.files.length === 1) {
+                    fileNameDisplay.innerHTML = '<i class="fas fa-check-circle"></i> Выбран файл: ' + fileInput.files[0].name;
+                } else {
+                    fileNameDisplay.innerHTML = '<i class="fas fa-check-circle"></i> Выбрано файлов: ' + fileInput.files.length;
+                }
                 submitBtn.classList.remove('d-none');
             } else {
                 fileNameDisplay.innerHTML = '';

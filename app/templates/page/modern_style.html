@@ -1,0 +1,20 @@
+{% set theme_color = page.page_color if page.page_color else '#0066ff' %}
+
+<div class="news-bg-wrapper" id="parallaxNewsWrapper" style="padding-top: 2rem;">
+    <!-- Фоновые кляксы -->
+    {% include 'page/background_shapes.html' %}
+
+    <div class="news-content-layer" style="max-width: 1200px; padding: 0 20px;">
+        <a href="/" class="back-link" style="margin-bottom: 1rem;">&larr; На главную</a>
+
+        <div class="news-container" style="padding: 0;">
+            {% include 'page/header.html' %}
+
+            <div class="news-layout">
+                <div class="news-text-content">
+                    {% include 'page/tabs.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

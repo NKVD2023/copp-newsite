@@ -23,42 +23,51 @@ def upload_document():
         flash('Нет файла для загрузки', 'danger')
         return redirect(url_for('admin.dashboard'))
         
-    file = request.files['document']
-    if file.filename == '':
-        flash('Файл не выбран', 'danger')
+    files = request.files.getlist('document')
+    if not files or files[0].filename == '':
+        flash('Файлы не выбраны', 'danger')
         return redirect(url_for('admin.dashboard'))
         
-    if file and allowed_file(file.filename):
-        os.makedirs(UPLOAD_DOCS_FOLDER, exist_ok=True)
-        filename = secure_filename(file.filename)
-        # Avoid overwriting existing files with the same name
-        base, extension = os.path.splitext(filename)
-        counter = 1
-        filepath = os.path.join(UPLOAD_DOCS_FOLDER, filename)
-        while os.path.exists(filepath):
-            filename = f"{base}_{counter}{extension}"
-            filepath = os.path.join(UPLOAD_DOCS_FOLDER, filename)
-            counter += 1
-            
-        file.save(filepath)
+    os.makedirs(UPLOAD_DOCS_FOLDER, exist_ok=True)
+    uploaded_count = 0
+    errors = []
+    
+    with get_db_connection() as conn:
+        for file in files:
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                base, extension = os.path.splitext(filename)
+                counter = 1
+                filepath = os.path.join(UPLOAD_DOCS_FOLDER, filename)
+                while os.path.exists(filepath):
+                    filename = f"{base}_{counter}{extension}"
+                    filepath = os.path.join(UPLOAD_DOCS_FOLDER, filename)
+                    counter += 1
+                    
+                file.save(filepath)
+                db_filepath = f"uploads/documents/{filename}"
+                
+                conn.execute('''
+                    INSERT INTO documents (original_name, filepath)
+                    VALUES (?, ?)
+                ''', (file.filename, db_filepath))
+                uploaded_count += 1
+                
+                # Если ajax запрос - возвращаем после первого файла (для TinyMCE)
+                if request.form.get('ajax'):
+                    conn.commit()
+                    return {'success': True, 'filepath': url_for('static', filename=db_filepath)}
+            else:
+                errors.append(file.filename)
+                if request.form.get('ajax'):
+                    return {'success': False, 'error': f"Недопустимый формат файла. Разрешены: {', '.join(ALLOWED_EXTENSIONS)}"}
+                    
+        conn.commit()
         
-        db_filepath = f"uploads/documents/{filename}"
-        
-        with get_db_connection() as conn:
-            conn.execute('''
-                INSERT INTO documents (original_name, filepath)
-                VALUES (?, ?)
-            ''', (file.filename, db_filepath))
-            conn.commit()
-            
-        if request.form.get('ajax'):
-            return {'success': True, 'filepath': url_for('static', filename=db_filepath)}
-            
-        flash("Документ успешно загружен!", "success")
-    else:
-        if request.form.get('ajax'):
-            return {'success': False, 'error': f"Недопустимый формат файла. Разрешены: {', '.join(ALLOWED_EXTENSIONS)}"}
-        flash(f"Недопустимый формат файла. Разрешены: {', '.join(ALLOWED_EXTENSIONS)}", "danger")
+    if uploaded_count > 0:
+        flash(f"Успешно загружено файлов: {uploaded_count}", "success")
+    if errors:
+        flash(f"Ошибки формата для файлов: {', '.join(errors)}. Разрешены: {', '.join(ALLOWED_EXTENSIONS)}", "danger")
         
     return redirect(url_for('admin.dashboard', tab='documents'))
 

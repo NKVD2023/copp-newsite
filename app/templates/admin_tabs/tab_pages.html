@@ -21,7 +21,7 @@
             {% endif %}
         </div>
 
-        <form action="{% if edit_page_item %}{{ url_for('admin.update_page', page_id=edit_page_item.id) }}{% else %}/admin/add_page{% endif %}" method="POST" enctype="multipart/form-data">
+        <form action="{% if edit_page_item %}{{ url_for('admin.update_page', page_id=edit_page_item.id) }}{% else %}{{ url_for('admin.add_page') }}{% endif %}" method="POST" enctype="multipart/form-data" onsubmit="preparePageTabsData(event)">
             
             <div class="form-row">
                 <div class="form-group span-2">
@@ -47,9 +47,60 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Содержимое страницы</label>
-                <textarea id="pageContent" name="content" rows="12">{{ edit_page_item.content if edit_page_item else '' }}</textarea>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Стиль страницы</label>
+                    <select name="page_style" class="form-control" onchange="toggleModernFields(this.value)">
+                        <option value="default" {% if edit_page_item and edit_page_item.page_style == 'default' %}selected{% endif %}>Обычная страница (Широкая карточка)</option>
+                        <option value="modern" {% if edit_page_item and edit_page_item.page_style == 'modern' %}selected{% endif %}>Современный стиль (Проекты/Новости)</option>
+                    </select>
+                </div>
+                <div class="form-group modern-only" style="display: none;">
+                    <label>Цвет страницы</label>
+                    <input type="color" name="page_color" value="{{ edit_page_item.page_color if edit_page_item and edit_page_item.page_color else '#0066ff' }}" style="height: 45px; padding: 5px; cursor: pointer; width: 100%;">
+                </div>
+            </div>
+
+            <div class="form-group modern-only" style="display: none;">
+                <label>Краткое описание (анонс)</label>
+                <textarea name="teaser" rows="2">{{ edit_page_item.teaser if edit_page_item else '' }}</textarea>
+            </div>
+
+            <div class="form-row modern-only" style="display: none;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Логотип / Изображение в шапке {% if edit_page_item and edit_page_item.main_image %}<span style="color:#0066cc;">(Уже загружено)</span>{% endif %}</label>
+                    <div class="input-group mb-2" style="display: flex;">
+                        <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; outline: none;" name="existing_main_image" id="pageMainImageInput" placeholder="Путь к картинке (или выберите из библиотеки)" value="{{ edit_page_item.main_image if edit_page_item and edit_page_item.main_image else '' }}" readonly>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; cursor: pointer;" type="button" onclick="openMediaPicker('pageMainImageInput', 'image')"><i class="fas fa-images"></i> Выбрать</button>
+                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; border-radius: 0 4px 4px 0; cursor: pointer; color: #dc3545;" type="button" onclick="document.getElementById('pageMainImageInput').value=''; document.getElementById('pageMainImageInputPreview').style.display='none';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+                    </div>
+                    {% if edit_page_item and edit_page_item.main_image %}
+                    <img id="pageMainImageInputPreview" src="{{ url_for('static', filename=edit_page_item.main_image) }}" alt="Preview" style="max-height: 100px; display: block; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% else %}
+                    <img id="pageMainImageInputPreview" src="" alt="Preview" style="max-height: 100px; display: none; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    {% endif %}
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новый файл с компьютера (старый будет заменен):</label>
+                    <div class="file-upload-box">
+                        <input type="file" name="main_image" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mb-4">
+                <label class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Содержимое страницы (Вкладки)</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPageTab()">+ Добавить вкладку</button>
+                </label>
+                
+                <input type="hidden" name="tabs_data" id="pageTabsJson" value="">
+                
+                <ul class="nav nav-tabs" id="pageTabsNav" role="tablist" style="margin-bottom: 0; border-bottom: none; gap: 2px;">
+                    <!-- Вкладки будут добавлены сюда через JS -->
+                </ul>
+                
+                <div class="tab-content border p-3 bg-white" id="pageTabsContent" style="border-radius: 0 4px 4px 4px; border-color: #dee2e6 !important;">
+                    <!-- Редакторы будут добавлены сюда через JS -->
+                </div>
             </div>
 
             <div class="form-group">
@@ -113,9 +164,215 @@
     {% endfor %}
 </div>
 
+<textarea id="pageTabsDataStorage" style="display:none;">{{ edit_page_item.tabs_data | safe if edit_page_item else '' }}</textarea>
+<textarea id="pageFallbackContent" style="display:none;">{{ edit_page_item.content | safe if edit_page_item and not edit_page_item.tabs_data else '' }}</textarea>
+
 <script>
     function togglePagesForm() {
         const form = document.getElementById('pages-form-container');
         form.style.display = form.style.display === 'none' || form.style.display === '' ? 'block' : 'none';
+        if (form.style.display === 'block' && pageTabsCount === 0) {
+            initPageTabs();
+            toggleModernFields(document.querySelector('select[name="page_style"]').value);
+        }
     }
+
+    function toggleModernFields(style) {
+        document.querySelectorAll('.modern-only').forEach(el => {
+            el.style.display = (style === 'modern') ? 'block' : 'none';
+        });
+    }
+
+    // Page Tabs Logic
+    let pageTabsCount = 0;
+    
+    function initPageTabs() {
+        const rawData = document.getElementById('pageTabsDataStorage').value;
+        let existingTabs = [];
+        if (rawData.trim()) {
+            try { existingTabs = JSON.parse(rawData); } catch(e) { console.error("Error parsing tabs_data", e); }
+        } else {
+            // Фолбэк на старый content, если tabs_data пустой, но content есть
+            const fallbackContent = document.getElementById('pageFallbackContent').value;
+            if (fallbackContent.trim()) {
+                existingTabs = [{ id: "tab1", title: "Содержимое", content: fallbackContent }];
+            }
+        }
+        
+        if (existingTabs.length === 0) {
+            // Создаем пустой дефолтный таб
+            addPageTab("Содержимое", "");
+        } else {
+            existingTabs.forEach(tab => {
+                addPageTab(tab.title, tab.content);
+            });
+        }
+        
+        // Активируем первый таб
+        setTimeout(() => {
+            const firstTabEl = document.querySelector('#pageTabsNav button');
+            if (firstTabEl) {
+                const tab = new bootstrap.Tab(firstTabEl);
+                tab.show();
+            }
+        }, 100);
+    }
+    
+    function addPageTab(title = "", content = "") {
+        pageTabsCount++;
+        const tabId = 'page-tab-' + pageTabsCount;
+        
+        if (!title) {
+            title = prompt("Введите название вкладки:", "Новая вкладка");
+            if (!title) return; // отмена
+        }
+        
+        // Создаем кнопку-таб
+        const navItem = document.createElement('li');
+        navItem.className = 'nav-item d-flex align-items-center';
+        navItem.style.position = 'relative';
+        
+        navItem.innerHTML = `
+            <button class="nav-link" id="${tabId}-btn" data-bs-toggle="tab" data-bs-target="#${tabId}-pane" type="button" role="tab" style="padding-right: 35px; border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;">
+                <span class="tab-title-text" ondblclick="renamePageTab('${tabId}')" title="Кликните дважды чтобы переименовать" style="cursor: pointer;">${title}</span>
+            </button>
+            <button type="button" class="btn-close btn-close-sm" aria-label="Close" style="position: absolute; right: 10px; font-size: 0.6em; z-index: 5;" onclick="removePageTab('${tabId}')"></button>
+        `;
+        document.getElementById('pageTabsNav').appendChild(navItem);
+        
+        // Создаем контент-pane
+        const paneItem = document.createElement('div');
+        paneItem.className = 'tab-pane fade';
+        paneItem.id = `${tabId}-pane`;
+        paneItem.setAttribute('role', 'tabpanel');
+        
+        paneItem.innerHTML = `
+            <input type="hidden" class="tab-title-input" value="${title}">
+            <textarea id="${tabId}-editor" class="page-tab-editor" rows="12">${content}</textarea>
+        `;
+        document.getElementById('pageTabsContent').appendChild(paneItem);
+        
+        // Инициализируем TinyMCE для нового textarea (копируем настройки из admin_dashboard)
+        setTimeout(() => {
+            tinymce.init({
+                selector: `#${tabId}-editor`,
+                plugins: 'anchor autolink charmap codesample image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'styles | insertdoc | undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | charmap | removeformat',
+                style_formats: [
+                    { title: 'Обычный текст', selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table', classes: '' },
+                    { title: 'Кнопка (Акцентная)', selector: 'a', classes: 'btn-project-custom' },
+                    { title: 'Цитата (Выделенная)', block: 'blockquote', classes: 'custom-blockquote' }
+                ],
+                setup: function (editor) {
+                    editor.ui.registry.addButton('insertdoc', {
+                        text: 'Вставить файл',
+                        icon: 'document-properties',
+                        tooltip: 'Вставить ссылку на документ для скачивания',
+                        onAction: function (_) {
+                            currentEditor = editor;
+                            const modal = new bootstrap.Modal(document.getElementById('tinymceFileModal'));
+                            modal.show();
+                        }
+                    });
+                },
+                images_upload_url: '{{ url_for("admin.upload_image") }}',
+                automatic_uploads: true,
+                file_picker_types: 'image',
+                image_advtab: true,
+                language: 'ru',
+                promotion: false
+            });
+            
+            // Если это был первый таб (только что созданный), активируем его
+            if (pageTabsCount === 1) {
+                const tab = new bootstrap.Tab(document.getElementById(`${tabId}-btn`));
+                tab.show();
+            } else if (!content) {
+                // Если добавили вручную, сразу активируем
+                const tab = new bootstrap.Tab(document.getElementById(`${tabId}-btn`));
+                tab.show();
+            }
+        }, 50);
+    }
+    
+    function renamePageTab(tabId) {
+        const btn = document.getElementById(`${tabId}-btn`);
+        const titleSpan = btn.querySelector('.tab-title-text');
+        const input = document.querySelector(`#${tabId}-pane .tab-title-input`);
+        
+        const newTitle = prompt("Введите новое название вкладки:", titleSpan.textContent);
+        if (newTitle && newTitle.trim() !== "") {
+            titleSpan.textContent = newTitle.trim();
+            input.value = newTitle.trim();
+        }
+    }
+    
+    function removePageTab(tabId) {
+        if (confirm("Вы уверены, что хотите удалить эту вкладку?")) {
+            // Уничтожаем инстанс TinyMCE
+            tinymce.get(`${tabId}-editor`).remove();
+            
+            // Удаляем кнопку навигации
+            const btn = document.getElementById(`${tabId}-btn`);
+            btn.parentElement.remove();
+            
+            // Удаляем pane
+            document.getElementById(`${tabId}-pane`).remove();
+            
+            // Активируем первый доступный таб, если есть
+            const firstTabEl = document.querySelector('#pageTabsNav button');
+            if (firstTabEl) {
+                const tab = new bootstrap.Tab(firstTabEl);
+                tab.show();
+            }
+        }
+    }
+    
+    function preparePageTabsData(event) {
+        try {
+            const panes = document.querySelectorAll('#pageTabsContent .tab-pane');
+            const tabsData = [];
+            let combinedContent = "";
+            
+            panes.forEach((pane, index) => {
+                const title = pane.querySelector('.tab-title-input').value;
+                const editorId = pane.querySelector('.page-tab-editor').id;
+                const editor = tinymce.get(editorId);
+                const content = editor ? editor.getContent() : pane.querySelector('.page-tab-editor').value;
+                
+                tabsData.push({
+                    id: 'tab' + (index + 1),
+                    title: title,
+                    content: content
+                });
+                // Сохраняем объединенный контент в поле content для совместимости (если понадобится)
+                combinedContent += content;
+            });
+            
+            document.getElementById('pageTabsJson').value = JSON.stringify(tabsData);
+            
+            // Создаем невидимое поле content для обратной совместимости, если его нет
+            if (!document.getElementById('hiddenPageContent')) {
+                const hiddenContent = document.createElement('input');
+                hiddenContent.type = 'hidden';
+                hiddenContent.name = 'content';
+                hiddenContent.id = 'hiddenPageContent';
+                event.target.appendChild(hiddenContent);
+            }
+            document.getElementById('hiddenPageContent').value = combinedContent;
+        } catch (error) {
+            console.error("Error preparing tabs data:", error);
+            // Если произошла ошибка, чтобы не стереть данные, предотвращаем отправку формы
+            event.preventDefault();
+            alert("Произошла ошибка при сохранении данных вкладок. Пожалуйста, проверьте консоль разработчика.");
+        }
+    }
+    
+    // Инициализация при загрузке формы, если она открыта
+    document.addEventListener("DOMContentLoaded", function() {
+        if (document.getElementById('pages-form-container').style.display === 'block') {
+            initPageTabs();
+            toggleModernFields(document.querySelector('select[name="page_style"]').value);
+        }
+    });
 </script>

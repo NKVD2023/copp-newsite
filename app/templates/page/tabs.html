@@ -1,0 +1,28 @@
+                    {% set tabs_parsed = [] %}
+                    {% if page.tabs_data %}
+                        {% set tabs_parsed = page.tabs_data|from_json %}
+                    {% endif %}
+                    
+                    {% if tabs_parsed %}
+                        <!-- Динамические табы -->
+                        <ul class="project-tabs-nav">
+                            {% for tab in tabs_parsed %}
+                                <li>
+                                    <button class="nav-link {% if loop.index == 1 %}active{% endif %}" onclick="showPageTab('{{ tab.id }}', this)">
+                                        {{ tab.title }}
+                                    </button>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        
+                        <div class="project-tabs-content">
+                            {% for tab in tabs_parsed %}
+                                <div id="{{ tab.id }}" class="project-tab-pane {% if loop.index == 1 %}active{% endif %}">
+                                    {{ tab.content|safe }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- Старый контент без табов -->
+                        {{ page.content|safe }}
+                    {% endif %}

@@ -74,6 +74,27 @@
                         <input type="file" name="main_image" accept="image/*">
                     </div>
                 </div>
+                
+                <div class="form-group" style="flex: 1;">
+                    <label>Дополнительные фото (Галерея) {% if extra_images_list %}<span style="color:#0066cc;">(Загружено: {{ extra_images_list|length }})</span>{% endif %}</label>
+                    {% if extra_images_list %}
+                    <div class="mb-2" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        {% for img_path in extra_images_list %}
+                        <div style="position: relative; display: inline-block;">
+                            <img src="{{ url_for('static', filename=img_path) }}" style="max-height: 60px; border-radius: 4px; object-fit: cover;">
+                            <input type="hidden" name="existing_extra_images" value="{{ img_path }}">
+                            <button type="button" class="btn btn-sm btn-danger" style="position: absolute; top: -5px; right: -5px; padding: 0 5px; font-size: 10px; border-radius: 50%;" onclick="this.parentElement.remove();" title="Удалить это фото">×</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Добавить ещё фото (можно выбрать сразу несколько):</label>
+                    {% else %}
+                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Загрузите фотографии с компьютера (можно выбрать сразу несколько):</label>
+                    {% endif %}
+                    <div class="file-upload-box" style="height: 100%;">
+                        <input type="file" name="extra_images" accept="image/*" multiple>
+                    </div>
+                </div>
             </div>
 
             <div class="form-row" style="display: flex; gap: 20px; align-items: flex-start;">
@@ -100,18 +121,21 @@
     </div>
 </div>
 
+<textarea id="projectTabsDataStorage" style="display:none;">{{ edit_project_item.tabs_data | safe if edit_project_item else '' }}</textarea>
+<textarea id="projectFallbackContent" style="display:none;">{{ edit_project_item.content | safe if edit_project_item and not edit_project_item.tabs_data else '' }}</textarea>
+
 <script>
     // Project Tabs Logic
     let projectTabsCount = 0;
     
     function initProjectTabs() {
-        const rawData = `{{ edit_project_item.tabs_data | safe if edit_project_item and edit_project_item.tabs_data else '' }}`;
+        const rawData = document.getElementById('projectTabsDataStorage').value;
         let existingTabs = [];
-        if (rawData) {
+        if (rawData.trim()) {
             try { existingTabs = JSON.parse(rawData); } catch(e) { console.error("Error parsing tabs_data", e); }
         } else {
             // Фолбэк на старый content, если tabs_data пустой, но content есть
-            const fallbackContent = `{{ edit_project_item.content | safe if edit_project_item and not edit_project_item.tabs_data else '' }}`;
+            const fallbackContent = document.getElementById('projectFallbackContent').value;
             if (fallbackContent.trim()) {
                 existingTabs = [{ id: "tab1", title: "Описание", content: fallbackContent }];
             }
@@ -152,7 +176,7 @@
         
         navItem.innerHTML = `
             <button class="nav-link" id="${tabId}-btn" data-bs-toggle="tab" data-bs-target="#${tabId}-pane" type="button" role="tab" style="padding-right: 35px; border: 1px solid #dee2e6; border-bottom: none; background: #f8f9fa;">
-                <span class="tab-title-text" onclick="renameProjectTab('${tabId}')" title="Кликните чтобы переименовать" style="cursor: pointer;">${title}</span>
+                <span class="tab-title-text" ondblclick="renameProjectTab('${tabId}')" title="Кликните дважды чтобы переименовать" style="cursor: pointer;">${title}</span>
             </button>
             <button type="button" class="btn-close btn-close-sm" aria-label="Close" style="position: absolute; right: 10px; font-size: 0.6em; z-index: 5;" onclick="removeProjectTab('${tabId}')"></button>
         `;
@@ -247,22 +271,38 @@
     }
     
     function prepareProjectTabsData(event) {
-        const panes = document.querySelectorAll('#projectTabsContent .tab-pane');
-        const tabsData = [];
-        
-        panes.forEach((pane, index) => {
-            const title = pane.querySelector('.tab-title-input').value;
-            const editorId = pane.querySelector('.project-tab-editor').id;
-            const content = tinymce.get(editorId).getContent();
+        try {
+            const panes = document.querySelectorAll('#projectTabsContent .tab-pane');
+            const tabsData = [];
             
-            tabsData.push({
-                id: 'tab' + (index + 1),
-                title: title,
-                content: content
+            panes.forEach((pane, index) => {
+                const titleInput = pane.querySelector('.tab-title-input');
+                const editorTextarea = pane.querySelector('.project-tab-editor');
+                
+                if (!titleInput || !editorTextarea) return;
+                
+                const title = titleInput.value;
+                const editorId = editorTextarea.id;
+                
+                let content = "";
+                const editor = tinymce.get(editorId);
+                if (editor && editor.initialized) {
+                    content = editor.getContent();
+                } else {
+                    content = editorTextarea.value;
+                }
+                
+                tabsData.push({
+                    id: 'tab' + (index + 1),
+                    title: title,
+                    content: content
+                });
             });
-        });
-        
-        document.getElementById('projectTabsJson').value = JSON.stringify(tabsData);
+            
+            document.getElementById('projectTabsJson').value = JSON.stringify(tabsData);
+        } catch (e) {
+            console.error("Error preparing project tabs data:", e);
+        }
     }
     
     // Инициализация при загрузке формы, если она открыта
@@ -305,7 +345,7 @@
                 {% if project.status == 'published' %}
                 <span class="status-badge bg-published">Опубликован</span>
                 {% else %}
-                <span class="status-badge bg-archived">В архиве</span>
+                <span class="status-badge bg-archived" style="background: #ffc107; color: #000;">Черновик</span>
                 {% endif %}
             </div>
         </div>
@@ -314,7 +354,7 @@
             <form action="{{ url_for('admin.toggle_project_status', project_id=project.id) }}" method="POST" style="flex: 1;">
                 <input type="hidden" name="current_status" value="{{ project.status }}">
                 {% if project.status == 'published' %}
-                <button type="submit" class="btn-card btn-archive w-100">В архив</button>
+                <button type="submit" class="btn-card btn-archive w-100" style="background: #ffc107; color: #000;">В черновик</button>
                 {% else %}
                 <button type="submit" class="btn-card btn-publish w-100">Опубликовать</button>
                 {% endif %}

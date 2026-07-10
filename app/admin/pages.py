@@ -24,12 +24,26 @@ def add_page():
         
     title = request.form.get('title')
     slug = request.form.get('slug')
-    content = request.form.get('content')
+    content = request.form.get('content', '')
     is_in_navbar = 1 if request.form.get('is_in_navbar') else 0
     menu_group = request.form.get('menu_group', '').strip()
     
+    page_style = request.form.get('page_style', 'default')
+    teaser = request.form.get('teaser')
+    page_color = request.form.get('page_color')
+    tabs_data = request.form.get('tabs_data')
+    main_image = None
+    
     attached_files_paths = request.form.getlist('existing_attached_files')
     os.makedirs(UPLOAD_PAGES_FILES_FOLDER, exist_ok=True)
+    
+    if 'main_image' in request.files:
+        file = request.files['main_image']
+        if file and allowed_file(file.filename):
+            filename = save_image_as_webp(file, UPLOAD_PAGES_FILES_FOLDER, add_uuid=True)
+            if filename:
+                main_image = f"uploads/page_files/{filename}"
+
     if 'attached_files' in request.files:
         files = request.files.getlist('attached_files')
         for file in files:
@@ -43,12 +57,14 @@ def add_page():
     with get_db_connection() as conn:
         try:
             conn.execute('''
-                INSERT INTO pages (title, slug, content, is_in_navbar, menu_group, attached_files)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (title, slug, content, is_in_navbar, menu_group, attached_files_json))
+                INSERT INTO pages (title, slug, content, is_in_navbar, menu_group, attached_files, page_style, teaser, page_color, tabs_data, main_image)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (title, slug, content, is_in_navbar, menu_group, attached_files_json, page_style, teaser, page_color, tabs_data, main_image))
             conn.commit()
             flash("Страница успешно создана!", "success")
         except Exception as e:
+            with open('error_log.txt', 'a') as f:
+                f.write(f"Add Page Error: {e}\\n")
             flash(f"Ошибка при создании (возможно такой URL уже существует): {e}", "danger")
             
     return redirect(url_for('admin.dashboard', tab='pages'))
@@ -104,13 +120,27 @@ def update_page(page_id):
         
     title = request.form.get('title')
     slug = request.form.get('slug')
-    content = request.form.get('content')
+    content = request.form.get('content', '')
     is_in_navbar = 1 if request.form.get('is_in_navbar') else 0
     menu_group = request.form.get('menu_group', '').strip()
     
+    page_style = request.form.get('page_style', 'default')
+    teaser = request.form.get('teaser')
+    page_color = request.form.get('page_color')
+    tabs_data = request.form.get('tabs_data')
+    
+    main_image = request.form.get('existing_main_image')
     attached_files_paths = request.form.getlist('existing_attached_files')
 
     os.makedirs(UPLOAD_PAGES_FILES_FOLDER, exist_ok=True)
+    
+    if 'main_image' in request.files:
+        file = request.files['main_image']
+        if file and allowed_file(file.filename):
+            filename = save_image_as_webp(file, UPLOAD_PAGES_FILES_FOLDER, add_uuid=True)
+            if filename:
+                main_image = f"uploads/page_files/{filename}"
+
     if 'attached_files' in request.files:
         files = request.files.getlist('attached_files')
         for file in files:
@@ -125,12 +155,15 @@ def update_page(page_id):
         try:
             conn.execute('''
                 UPDATE pages 
-                SET title = ?, slug = ?, content = ?, is_in_navbar = ?, menu_group = ?, attached_files = ?
+                SET title = ?, slug = ?, content = ?, is_in_navbar = ?, menu_group = ?, attached_files = ?,
+                    page_style = ?, teaser = ?, page_color = ?, tabs_data = ?, main_image = ?
                 WHERE id = ?
-            ''', (title, slug, content, is_in_navbar, menu_group, attached_files_json, page_id))
+            ''', (title, slug, content, is_in_navbar, menu_group, attached_files_json, page_style, teaser, page_color, tabs_data, main_image, page_id))
             conn.commit()
             flash("Страница успешно обновлена!", "success")
         except Exception as e:
+            with open('error_log.txt', 'a') as f:
+                f.write(f"Update Page Error: {e}\\n")
             flash(f"Ошибка при обновлении: {e}", "danger")
             
     return redirect(url_for('admin.dashboard', tab='pages'))

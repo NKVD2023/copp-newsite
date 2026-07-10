@@ -2,7 +2,12 @@
 
 {% block title %}{{ page.title }} - ЦОПП РК{% endblock %}
 
+{% set theme_color = page.page_color if page.page_color else '#0066ff' %}
+
 {% block extra_css %}
+{% if page.page_style == 'modern' %}
+    {% include 'page/styles.html' %}
+{% else %}
 <style>
 .page-container {
     background: white;
@@ -21,7 +26,6 @@
 .page-header {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #eef2f5;
 }
 
 .page-title {
@@ -67,18 +71,19 @@
     margin-bottom: 1.5rem;
 }
 </style>
+<!-- Подключаем project.css для дефолтных страниц на случай, если добавлены табы -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/project.css', v=6) }}">
+{% endif %}
 {% endblock %}
 
 {% block content %}
-<div style="padding: 2rem 0;">
-    <div class="page-container">
-        <div class="page-header">
-            <h1 class="page-title">{{ page.title }}</h1>
-        </div>
-        
-        <div class="page-content">
-            {{ page.content | safe }}
-        </div>
-    </div>
-</div>
+    {% if page.page_style == 'modern' %}
+        {% include 'page/modern_style.html' %}
+    {% else %}
+        {% include 'page/default_style.html' %}
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% include 'page/scripts.html' %}
 {% endblock %}

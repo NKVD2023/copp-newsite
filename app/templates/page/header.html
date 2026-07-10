@@ -1,0 +1,16 @@
+            <div class="news-detail-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; flex-wrap: wrap;">
+                <div class="header-text-content" style="flex: 1; min-width: 300px;">
+                    <h1 class="news-detail-title" style="color: {{ theme_color }};">{{ page.title }}</h1>
+                    {% if page.teaser %}
+                    <p style="font-size: 1.25rem; color: #666; max-width: 800px; margin-bottom: 2rem; line-height: 1.6;">
+                        {{ page.teaser }}
+                    </p>
+                    {% endif %}
+                </div>
+                
+                {% if page.main_image %}
+                <div class="header-logo" style="flex: 0 0 300px;">
+                    <img src="{{ url_for('static', filename=page.main_image) }}" alt="Изображение страницы" style="width: 100%; object-fit: contain; max-height: 250px;">
+                </div>
+                {% endif %}
+            </div>
