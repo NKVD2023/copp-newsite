@@ -5,7 +5,7 @@
 from datetime import datetime
 from flask import render_template, redirect, url_for, session, request
 from app.admin import bp
-from app.admin.auth import login_required
+from app.admin.core.auth import login_required
 from app.db import get_db_connection
 from app.utils.media_utils import scan_uploads_dir
 
@@ -25,7 +25,7 @@ def dashboard():
 
     import json
     import os
-    from app.admin.professions import CATEGORIES_RU
+    from app.admin.directory.professions import CATEGORIES_RU
 
     with get_db_connection() as conn:
         news_list       = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()

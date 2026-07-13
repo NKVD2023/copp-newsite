@@ -13,9 +13,9 @@
         <hr>
         <div style="display:flex; flex-direction: column; gap:10px;">
             <a href="{{ url_for('admin.db_export_sqlite') }}" class="btn" style="background:#28a745; color:white; text-align:center; font-size: 14px;"><i class="fas fa-download"></i> Полный Бэкап (SQL)</a>
-            <button onclick="promptForPassword('import')" class="btn" style="background:#dc3545; color:white; font-size: 14px;"><i class="fas fa-upload"></i> Восстановить БД</button>
+            <button onclick="document.getElementById('importSqliteFile').click();" class="btn" style="background:#dc3545; color:white; font-size: 14px;"><i class="fas fa-upload"></i> Восстановить БД</button>
             <form id="formImportSqlite" action="{{ url_for('admin.db_import_sqlite') }}" method="post" enctype="multipart/form-data" style="display:none;">
-                <input type="hidden" name="admin_password" id="importAdminPassword">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="file" name="sqlite_file" id="importSqliteFile" accept=".sqlite,.db" onchange="if(confirm('ВНИМАНИЕ! Это полностью перезапишет текущую базу данных. Вы уверены?')) document.getElementById('formImportSqlite').submit();">
             </form>
         </div>
@@ -24,7 +24,7 @@
     <div class="db-main" style="flex-grow: 1; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative;">
         
         <div id="saveChangesBtn" style="display: none; position: absolute; top: 10px; right: 20px; z-index: 100;">
-            <button class="btn btn-warning shadow" onclick="promptForPassword('save')">
+            <button class="btn btn-warning shadow" onclick="if(confirm('ВНИМАНИЕ! Вы собираетесь напрямую изменить данные в таблице. Вы уверены?')) submitPendingChanges();">
                 <i class="fas fa-save"></i> Сохранить изменения (<span id="changesCount">0</span>)
             </button>
         </div>
@@ -34,8 +34,9 @@
         </div>
         
         <div id="sqlRunner" style="display:none; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 5px; border: 1px solid #ddd;">
-            <form id="formExecuteSql" action="{{ url_for('admin.db_execute_sql') }}" method="post" onsubmit="event.preventDefault(); promptForPassword('sql');">
-                <input type="hidden" name="admin_password" id="sqlAdminPassword">
+            <form id="formExecuteSql" action="{{ url_for('admin.db_execute_sql') }}" method="post" onsubmit="return confirm('ВНИМАНИЕ! Выполнение произвольных SQL-запросов может нарушить работу сайта или удалить данные. Вы уверены?');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
                 <div class="form-group">
                     <label>Произвольный SQL запрос (ВНИМАНИЕ! Выполняйте, только если понимаете, что делаете)</label>
                     <textarea name="sql_query" class="form-control" rows="4" placeholder="SELECT * FROM news..."></textarea>
@@ -53,61 +54,10 @@
     </div>
 </div>
 
-<!-- Password Prompt Modal -->
-<div class="modal fade" id="dbPasswordModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title"><i class="fas fa-lock"></i> Подтверждение действия</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-      </div>
-      <div class="modal-body">
-        <p>Для выполнения данного действия требуется пароль администратора.</p>
-        <input type="password" id="dbPasswordInput" class="form-control" placeholder="Введите пароль">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-        <button type="button" class="btn btn-danger" onclick="submitPassword()">Подтвердить</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
-let currentDbAction = null;
 let pendingDbChanges = [];
 
-function promptForPassword(action) {
-    currentDbAction = action;
-    document.getElementById('dbPasswordInput').value = '';
-    var myModal = new bootstrap.Modal(document.getElementById('dbPasswordModal'));
-    myModal.show();
-}
-
-function submitPassword() {
-    const pwd = document.getElementById('dbPasswordInput').value;
-    if(!pwd) {
-        alert("Пожалуйста, введите пароль");
-        return;
-    }
-    
-    // Close modal
-    var myModalEl = document.getElementById('dbPasswordModal');
-    var modal = bootstrap.Modal.getInstance(myModalEl);
-    modal.hide();
-    
-    if(currentDbAction === 'import') {
-        document.getElementById('importAdminPassword').value = pwd;
-        document.getElementById('importSqliteFile').click();
-    } else if (currentDbAction === 'sql') {
-        document.getElementById('sqlAdminPassword').value = pwd;
-        document.getElementById('formExecuteSql').submit();
-    } else if (currentDbAction === 'save') {
-        submitPendingChanges(pwd);
-    }
-}
-
-function submitPendingChanges(pwd) {
+function submitPendingChanges() {
     if(pendingDbChanges.length === 0) return;
     
     const table_name = document.getElementById('currentTableName').value;
@@ -116,13 +66,13 @@ function submitPendingChanges(pwd) {
     fetch('{{ url_for("admin.db_update_cells") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
             table: table_name,
             pk_col: pk_col,
-            changes: pendingDbChanges,
-            admin_password: pwd
+            changes: pendingDbChanges
         })
     })
     .then(r => r.json())

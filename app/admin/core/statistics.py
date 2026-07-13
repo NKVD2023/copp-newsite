@@ -1,7 +1,7 @@
 from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
-from app.admin.auth import login_required
+from app.admin.core.auth import login_required
 
 @bp.route('/statistics', methods=['POST'])
 @login_required

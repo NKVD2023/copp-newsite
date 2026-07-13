@@ -17,6 +17,7 @@
             <div class="mt-2 pt-2 border-top d-flex gap-1">
                 <button type="button" class="btn btn-sm btn-light border flex-fill py-0" style="font-size: 0.75rem; padding: 4px; color: #555;" onclick="copyLink('{{ url_for('static', filename=file.filepath) }}')" title="Копировать"><i class="fas fa-copy"></i> Копировать</button>
                 <form action="{{ url_for('admin.delete_media') }}" method="POST" class="m-0 p-0" style="flex: 0 0 auto;" onsubmit="return confirm('Удалить изображение?');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <input type="hidden" name="filepath" value="{{ file.filepath }}">
                     <button type="submit" class="btn btn-sm btn-light border w-100 py-0" style="font-size: 0.75rem; padding: 4px; color: #555;" title="Удалить"><i class="fas fa-trash"></i></button>
                 </form>

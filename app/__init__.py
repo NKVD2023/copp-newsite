@@ -9,9 +9,14 @@ import os
 from flask import Flask
 from flask_caching import Cache
 from config import Config
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Глобальный объект кэша (инициализируется в create_app)
 cache = Cache()
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address)
 
 
 def create_app(config_class=Config):
@@ -30,6 +35,12 @@ def create_app(config_class=Config):
     app.config.setdefault('CACHE_TYPE', 'SimpleCache')
     app.config.setdefault('CACHE_DEFAULT_TIMEOUT', 60)  # TTL по умолчанию 60 секунд
     cache.init_app(app)
+    csrf.init_app(app)
+    limiter.init_app(app)
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return {"success": False, "error": "Вы слишком часто отправляете запросы. Пожалуйста, подождите."}, 429
 
     # ==========================================
     # КЭШИРОВАНИЕ colleges.json В ПАМЯТИ ПРИЛОЖЕНИЯ

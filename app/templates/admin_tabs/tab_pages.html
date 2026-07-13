@@ -1,12 +1,16 @@
-<div class="news-module">
-
-    <div class="news-header-panel">
-        <div class="news-search-box">
-            <span class="search-icon"></span>
-            <input type="text" class="generic-search-input" data-target=".page-card" placeholder="Поиск по названию или ссылке...">
+<div class="a-panel" style="margin-bottom:14px;">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div class="a-search-box" style="flex:1; min-width:220px; max-width:400px;">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" class="a-search-input generic-search-input" data-target=".page-card" placeholder="Поиск по названию или ссылке...">
         </div>
-        <button class="btn-create-news" onclick="togglePagesForm()">+ Создать страницу</button>
+        <div style="margin-left:auto;">
+            <button class="a-btn a-btn-accent" onclick="togglePagesForm()">
+                <i class="fas fa-plus"></i> Создать страницу
+            </button>
+        </div>
     </div>
+</div>
 
 <div id="pages-form-container" class="news-form-wrapper" style="{% if edit_page_item %}display: block;{% else %}display: none;{% endif %}">
     <div class="modern-form-card">
@@ -22,6 +26,7 @@
         </div>
 
         <form action="{% if edit_page_item %}{{ url_for('admin.update_page', page_id=edit_page_item.id) }}{% else %}{{ url_for('admin.add_page') }}{% endif %}" method="POST" enctype="multipart/form-data" onsubmit="preparePageTabsData(event)">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             
             <div class="form-row">
                 <div class="form-group span-2">
@@ -176,7 +181,6 @@
         </form>
     </div>
 </div>
-</div>
 
 <div class="news-grid">
     {% for page in pages_list %}
@@ -189,6 +193,7 @@
 
         <div class="card-actions">
             <form action="{{ url_for('admin.toggle_page_navbar', page_id=page.id) }}" method="POST" style="flex: 1;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="current_status" value="{{ page.is_in_navbar }}">
                 {% if page.is_in_navbar %}
                 <button type="submit" class="btn-card btn-archive w-100">Скрыть из меню</button>
@@ -202,6 +207,7 @@
             </form>
 
             <form action="{{ url_for('admin.delete_page', page_id=page.id) }}" method="POST" style="flex: 1;" onsubmit="return confirm('Удалить страницу?');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn-card btn-danger w-100">Удалить</button>
             </form>
         </div>

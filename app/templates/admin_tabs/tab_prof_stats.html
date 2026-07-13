@@ -1,18 +1,22 @@
-<div class="admin-card">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h5>Статистика профессий (Дашборд)</h5>
-        <a href="{{ url_for('main.dashboard') }}" target="_blank" class="btn btn-outline-primary btn-sm">Перейти на дашборд</a>
-    </div>
-    
-    <div class="alert alert-info">
-        Загружайте сюда файлы Excel (.xlsx) с актуальными данными. При загрузке система автоматически обработает данные и обновит дашборд.
+<div class="a-panel">
+    <div class="a-panel-toolbar">
+        <h6 class="a-panel-title mb-0" style="border:none;padding:0;"><i class="fas fa-chart-bar"></i> Статистика профессий (Дашборд)</h6>
+        <a href="{{ url_for('main.dashboard') }}" target="_blank" class="a-btn a-btn-outline a-btn-sm">
+            <i class="fas fa-arrow-up-right-from-square"></i> Перейти на дашборд
+        </a>
     </div>
 
-    <form action="{{ url_for('admin.upload_prof_stats') }}" method="POST" enctype="multipart/form-data" class="mb-4">
-        <div class="row align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">Категория данных</label>
-                <select name="category" class="form-select" required>
+    <div style="background:#f0f6ff; border:1px solid #c8ddff; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#2255a8; display:flex; align-items:center; gap:8px;">
+        <i class="fas fa-circle-info"></i>
+        Загружайте файлы Excel (.xlsx) с актуальными данными. Система автоматически обработает и обновит дашборд.
+    </div>
+
+    <form action="{{ url_for('admin.upload_prof_stats') }}" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="a-form-grid" style="grid-template-columns: 1fr 2fr auto; align-items:end; gap:10px;">
+            <div class="a-form-group">
+                <label class="a-label">Категория данных</label>
+                <select name="category" class="a-select" required>
                     <option value="Свод по региону">Свод по региону</option>
                     <option value="Полный список">Полный список</option>
                     <option value="Иностранцы">Иностранцы</option>
@@ -22,20 +26,21 @@
                     <option value="Трудовая мобильность">Трудовая мобильность</option>
                 </select>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Excel Файл (.xlsx)</label>
-                <input type="file" name="excel_file" class="form-control" accept=".xlsx" required>
+            <div class="a-form-group">
+                <label class="a-label">Excel Файл (.xlsx)</label>
+                <input type="file" name="excel_file" class="a-input" accept=".xlsx" required>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Загрузить</button>
-            </div>
+            <button type="submit" class="a-btn a-btn-accent" style="align-self:end;">
+                <i class="fas fa-upload"></i> Загрузить
+            </button>
         </div>
     </form>
-    
-    <hr>
-    <h6>История загрузок</h6>
-    <div class="table-responsive">
-        <table class="table table-striped align-middle">
+</div>
+
+<div class="a-panel">
+    <h6 class="a-panel-title"><i class="fas fa-clock-rotate-left"></i> История загрузок</h6>
+    <div class="a-table-responsive">
+        <table class="a-table">
             <thead>
                 <tr>
                     <th>Категория</th>
@@ -46,13 +51,13 @@
             <tbody>
                 {% for upload in prof_uploads %}
                 <tr>
-                    <td><span class="badge bg-secondary">{{ upload.category }}</span></td>
-                    <td>{{ upload.filename }}</td>
-                    <td>{{ upload.upload_date }}</td>
+                    <td><span class="a-badge a-badge-blue">{{ upload.category }}</span></td>
+                    <td style="font-size:0.82rem; color:#6b7a8d;">{{ upload.filename }}</td>
+                    <td style="font-size:0.82rem; color:#8a9ab0; white-space:nowrap;">{{ upload.upload_date }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="3" class="text-center text-muted">Загрузок еще не было</td>
+                    <td colspan="3" class="a-empty"><i class="fas fa-file-arrow-up"></i><p>Загрузок ещё не было</p></td>
                 </tr>
                 {% endfor %}
             </tbody>

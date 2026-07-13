@@ -23,7 +23,7 @@ def inject_admin_context():
     import os
     import json
     from app.db import get_db_connection
-    from app.admin.professions import CATEGORIES_RU
+    from app.admin.directory.professions import CATEGORIES_RU
     from app.utils.media_utils import scan_uploads_dir  # утилита вместо дублированного os.walk
 
     context = {}
@@ -66,11 +66,6 @@ def inject_admin_context():
     return context
 
 
-# Импортируем модули маршрутов админки.
-# Они должны быть строго внизу, чтобы избежать циклических импортов,
-# так как внутри этих файлов импортируется переменная `bp` из этого файла.
-from app.admin import (
-    auth, dashboard, news, contacts, documents,
-    pages, projects, socials, statistics, database,
-    prof_stats, professions, team
-)
+from app.admin.core import auth, dashboard, database, statistics, prof_stats
+from app.admin.content import news, pages, projects, documents
+from app.admin.directory import professions, team, socials, contacts

@@ -5,7 +5,7 @@ import shutil
 from datetime import datetime
 from flask import render_template, request, redirect, url_for, session, flash, send_file, Response
 from app.admin import bp
-from app.admin.auth import login_required
+from app.admin.core.auth import login_required
 from app.db import get_db_connection
 from werkzeug.utils import secure_filename
 
@@ -88,13 +88,7 @@ def db_export_sqlite():
 def db_execute_sql():
     """
     Выполнение произвольного SQL-запроса из админки.
-    Требует ввода пароля администратора для подтверждения полномочий.
     """
-    password = request.form.get('admin_password', '')
-    if password != 'admin123':
-        flash("Неверный пароль администратора", "danger")
-        return redirect(url_for('admin.dashboard', tab='database'))
-        
     query = request.form.get('sql_query', '').strip()
     if not query:
         flash("Запрос пуст", "warning")
@@ -128,11 +122,6 @@ def db_import_sqlite():
     Импорт (восстановление) базы данных из загруженного .sqlite файла.
     Перед заменой создает бэкап текущей БД с суффиксом .bak.
     """
-    password = request.form.get('admin_password', '')
-    if password != 'admin123':
-        flash("Неверный пароль администратора", "danger")
-        return redirect(url_for('admin.dashboard', tab='database'))
-        
     if 'sqlite_file' not in request.files:
         flash('Файл не выбран', 'warning')
         return redirect(url_for('admin.dashboard', tab='database'))
@@ -164,11 +153,8 @@ def db_update_cells():
     """
     Обработчик AJAX-запросов для inline-редактирования ячеек БД прямо из таблицы.
     """
+    import re
     data = request.json
-    password = data.get('admin_password', '')
-    if password != 'admin123':
-        return {"success": False, "error": "Неверный пароль администратора"}, 403
-        
     table = data.get('table')
     pk_col = data.get('pk_col')
     changes = data.get('changes', []) # [{'pk_val': 1, 'column': 'title', 'value': 'new'}]
@@ -178,9 +164,9 @@ def db_update_cells():
         
     conn = get_db_connection()
     try:
-        # Basic validation to prevent SQL injection in table name
-        if not table.isalnum() and '_' not in table:
-             return {"success": False, "error": "Invalid table name"}, 400
+        # Strict validation to prevent SQL injection in table name
+        if not re.match(r'^[a-zA-Z0-9_]+$', table) or not re.match(r'^[a-zA-Z0-9_]+$', pk_col):
+             return {"success": False, "error": "Invalid table or pk column name"}, 400
              
         cursor = conn.cursor()
         for change in changes:
@@ -188,8 +174,8 @@ def db_update_cells():
             pk_val = change.get('pk_val')
             new_val = change.get('value')
             
-            # Simple column name validation (alphanumeric + underscore)
-            if not column.isalnum() and '_' not in column:
+            # Strict column name validation
+            if not column or not re.match(r'^[a-zA-Z0-9_]+$', column):
                 continue
                 
             cursor.execute(f"UPDATE {table} SET {column} = ? WHERE {pk_col} = ?", (new_val, pk_val))

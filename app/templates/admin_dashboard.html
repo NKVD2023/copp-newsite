@@ -4,53 +4,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель</title>
+    <title>Панель управления — ЦОПП РК</title>
     <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
-<body>
+<body class="admin-wrapper">
 
-    <div class="container-fluid py-4 px-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold text-dark m-0">Панель управления администратора</h3>
-            <a href="{{ url_for('admin.logout') }}" class="btn btn-danger btn-sm">Выйти</a>
+    <!-- ШАП КА -->
+    <div class="admin-topbar">
+        <div class="admin-topbar-left">
+            <span class="admin-topbar-title">
+                <i class="fas fa-shield-halved" style="color: var(--copp-blue); font-size: 0.9rem;"></i>
+                &nbsp;Панель управления
+            </span>
+            <div class="admin-topbar-divider"></div>
+            <span class="admin-topbar-subtitle">ЦОПП Республики Крым</span>
         </div>
+        <a href="{{ url_for('admin.logout') }}" class="a-btn-exit">
+            <i class="fas fa-right-from-bracket"></i> Выйти
+        </a>
+    </div>
 
-        <!-- ========================================== -->
-        <!-- НАВИГАЦИОННЫЕ ВКЛАДКИ (TABS) -->
-        <!-- ========================================== -->
-        <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
-            <li class="nav-item"><button class="nav-link {% if not active_tab or active_tab == 'news' or active_tab == 'users' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#usersTab"
-                    type="button">Управления новостями</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'prof_stats' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#reportsTab"
-                    type="button">Статистика профессий (Дашборд)</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'prof_atlas' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#profAtlasTab"
-                    type="button">Атлас профессий</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'projects' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#projectsTab"
-                    type="button">Наши проекты</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'pages' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#pagesTab"
-                    type="button">Управление страницами</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'documents' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#documentsTab"
-                    type="button">Файлы и документы</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'statistics' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#statisticsTab"
-                    type="button">Статистика</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'contacts' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#contactsTab"
-                    type="button">Обратная связь</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'forms_data' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#formsDataTab"
-                    type="button">Данные форм / Сбор</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'socials' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#socialsTab"
-                    type="button">Соц. сети</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'team' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#teamTab"
-                    type="button">Команда</button></li>
-            <li class="nav-item"><button class="nav-link {% if active_tab == 'database' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#databaseTab"
-                    type="button"><i class="fas fa-database"></i> База Данных</button></li>
+    <!-- НАВИГАЦИЯ — одна компактная строка с иконками -->
+    <div class="admin-nav-wrap">
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link {% if not active_tab or active_tab == 'news' or active_tab == 'users' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#usersTab" type="button">
+                    <i class="fas fa-newspaper"></i> Новости
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'prof_stats' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#reportsTab" type="button">
+                    <i class="fas fa-chart-bar"></i> Статистика дашборда
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'prof_atlas' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#profAtlasTab" type="button">
+                    <i class="fas fa-graduation-cap"></i> Атлас профессий
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'projects' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#projectsTab" type="button">
+                    <i class="fas fa-folder-open"></i> Проекты
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'pages' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#pagesTab" type="button">
+                    <i class="fas fa-file-lines"></i> Страницы
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'documents' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#documentsTab" type="button">
+                    <i class="fas fa-paperclip"></i> Файлы
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'statistics' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#statisticsTab" type="button">
+                    <i class="fas fa-square-poll-vertical"></i> Показатели
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'contacts' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#contactsTab" type="button">
+                    <i class="fas fa-envelope"></i> Обратная связь
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'forms_data' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#formsDataTab" type="button">
+                    <i class="fas fa-table-list"></i> Данные форм
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'socials' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#socialsTab" type="button">
+                    <i class="fas fa-share-nodes"></i> Соцсети
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'team' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#teamTab" type="button">
+                    <i class="fas fa-users"></i> Команда
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'database' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#databaseTab" type="button">
+                    <i class="fas fa-database"></i> База данных
+                </button>
+            </li>
         </ul>
+    </div>
 
-        <!-- ========================================== -->
-        <!-- СОДЕРЖИМОЕ ВКЛАДОК (КОНТЕНТ ПОДКЛЮЧАЕТСЯ ИЗ admin_tabs) -->
-        <!-- ========================================== -->
+    <!-- КОНТЕНТ ВКЛАДОК -->
+    <div class="admin-content">
         <div class="tab-content">
             <div class="tab-pane fade {% if not active_tab or active_tab == 'news' or active_tab == 'users' %}show active{% endif %}" id="usersTab" role="tabpanel">
                 {% include 'admin_tabs/tab_news.html' %}
@@ -101,6 +159,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Глобальное модальное окно Медиабиблиотеки -->
     {% include 'admin_tabs/media_picker_modal.html' %}
@@ -215,7 +274,7 @@ async function uploadAndInsertDoc() {
     formData.append('ajax', '1');
     
     try {
-        const response = await fetch('{{ url_for("admin.upload_document") }}', {
+        const response = await fetch('{{ url_for("admin.upload_document") }}', { headers: { "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
             method: 'POST',
             body: formData
         });

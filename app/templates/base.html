@@ -7,6 +7,7 @@
     <title>{% block title %}ЦОПП РК{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css', v=4) }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bvi.css', v=4) }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Мобильная адаптивность (отдельные файлы) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/main_mobile.css', v=4) }}" media="screen and (max-width: 768px)">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/news_mobile.css', v=4) }}" media="screen and (max-width: 768px)">
@@ -203,6 +204,7 @@
             </div>
             
             <form id="contactForm" style="display: flex; flex-direction: column; gap: 15px;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 130px;">
                         <label class="form-label" style="display: block; font-size: 0.9rem; color: var(--copp-text); font-weight: 600; margin-bottom: 5px; opacity: 0.8;">Имя <span style="color: #ff4d4f;">*</span></label>
@@ -301,7 +303,7 @@
                 alertBox.className = 'alert';
                 
                 try {
-                    const res = await fetch('{{ url_for("main.contact_submit") }}', {
+                    const res = await fetch('{{ url_for("main.contact_submit") }}', { headers: { "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

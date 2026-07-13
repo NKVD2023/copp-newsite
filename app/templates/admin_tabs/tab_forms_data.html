@@ -1,27 +1,26 @@
-<div class="admin-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Сбор данных / Формы заявок</h5>
-    </div>
-    
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <select class="form-select" id="formFilter" onchange="filterSubmissions()">
-                <option value="">Выберите форму...</option>
-                {% for form in forms_list %}
-                    <option value="{{ form.id }}">
-                        {{ form.title }} ({{ form.year }}) 
-                        {% if form.status == 'archived' %}[В архиве]{% elif form.status == 'hidden' %}[Скрыта]{% else %}[Активна]{% endif %}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-6 text-end">
-            <a href="#" id="exportBtn" class="btn btn-success disabled" target="_blank"><i class="fas fa-file-excel"></i> Выгрузить в Excel</a>
-        </div>
+<div class="a-panel">
+    <div class="a-panel-toolbar">
+        <h6 class="a-panel-title mb-0" style="border:none;padding:0;"><i class="fas fa-table-list"></i> Сбор данных / Формы заявок</h6>
+        <a href="#" id="exportBtn" class="a-btn a-btn-success a-btn-sm disabled" target="_blank">
+            <i class="fas fa-file-excel"></i> Выгрузить в Excel
+        </a>
     </div>
 
-    <div class="table-responsive" id="submissionsContainer">
-        <p class="text-muted text-center py-4">Выберите форму из списка, чтобы увидеть собранные данные.</p>
+    <div class="a-form-group mb-3" style="max-width:420px;">
+        <label class="a-label">Выберите форму</label>
+        <select class="a-select" id="formFilter" onchange="filterSubmissions()">
+            <option value="">Все формы...</option>
+            {% for form in forms_list %}
+                <option value="{{ form.id }}">
+                    {{ form.title }} ({{ form.year }})
+                    {% if form.status == 'archived' %} — В архиве{% elif form.status == 'hidden' %} — Скрыта{% else %} — Активна{% endif %}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="a-table-responsive" id="submissionsContainer">
+        <div class="a-empty"><i class="fas fa-hand-pointer"></i><p>Выберите форму из списка, чтобы увидеть данные</p></div>
     </div>
 </div>
 
@@ -32,7 +31,7 @@ const allSubmissions = [
         id: {{ sub.id }},
         form_id: {{ sub.form_id }},
         date: '{{ sub.created_at }}',
-        data: {{ sub.submission_data|safe }}
+        data: JSON.parse({{ sub.submission_data|tojson|safe }})
     }{% if not loop.last %},{% endif %}
     {% endfor %}
 ];
@@ -43,7 +42,7 @@ function filterSubmissions() {
     const exportBtn = document.getElementById('exportBtn');
     
     if (!formId) {
-        container.innerHTML = '<p class="text-muted text-center py-4">Выберите форму из списка, чтобы увидеть собранные данные.</p>';
+        container.innerHTML = '<div class="a-empty"><i class="fas fa-hand-pointer"></i><p>Выберите форму из списка, чтобы увидеть данные</p></div>';
         exportBtn.classList.add('disabled');
         exportBtn.href = "#";
         return;
@@ -55,7 +54,7 @@ function filterSubmissions() {
     const filtered = allSubmissions.filter(s => s.form_id == formId);
     
     if (filtered.length === 0) {
-        container.innerHTML = '<p class="text-muted text-center py-4">Для этой формы пока нет отправленных данных.</p>';
+        container.innerHTML = '<div class="a-empty"><i class="fas fa-inbox"></i><p>Для этой формы пока нет отправленных данных.</p></div>';
         return;
     }
     
@@ -66,8 +65,8 @@ function filterSubmissions() {
     });
     columns = Array.from(columns);
     
-    let html = '<table class="table table-hover table-bordered align-middle" style="font-size:0.9rem;">';
-    html += '<thead class="table-light"><tr><th>Дата отправки</th>';
+    let html = '<table class="a-table">';
+    html += '<thead><tr><th>Дата отправки</th>';
     columns.forEach(col => {
         html += `<th>${col}</th>`;
     });
@@ -80,8 +79,9 @@ function filterSubmissions() {
         });
         html += `
             <td>
-                <form action="/admin/delete_submission/${sub.id}" method="POST" onsubmit="return confirm('Вы уверены, что хотите удалить эту запись?');" style="display:inline;">
-                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                <form action="/admin/delete_submission/${sub.id}" method="POST" onsubmit="return confirm('Удалить эту запись?');" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="a-btn a-btn-danger a-btn-sm"><i class="fas fa-trash"></i></button>
                 </form>
             </td>
         </tr>`;

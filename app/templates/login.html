@@ -9,6 +9,7 @@
 <div class="login-container">
     <h2>Вход для сотрудников</h2>
     <form method="POST" action="{{ url_for('admin.login') }}" class="login-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="password" name="password" placeholder="Введите пароль доступа" required autocomplete="current-password">
         <button type="submit">Войти в систему</button>
     </form>

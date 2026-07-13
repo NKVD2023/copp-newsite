@@ -25,6 +25,7 @@
                 <div class="btn-group btn-group-sm">
                     <button type="button" class="btn btn-outline-secondary" onclick="copyLink('{{ url_for('static', filename=file.filepath) }}')" title="Копировать ссылку"><i class="fas fa-copy"></i></button>
                     <form action="{{ url_for('admin.delete_media') }}" method="POST" class="d-inline m-0 p-0" onsubmit="return confirm('Вы уверены? Если файл используется на сайте, он перестанет отображаться.');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <input type="hidden" name="filepath" value="{{ file.filepath }}">
                         <button type="submit" class="btn btn-outline-secondary" title="Удалить"><i class="fas fa-trash"></i></button>
                     </form>

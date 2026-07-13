@@ -1,7 +1,7 @@
 from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
-from app.admin.auth import login_required
+from app.admin.core.auth import login_required
 import os
 from werkzeug.utils import secure_filename
 from app.utils.image_utils import save_image_as_webp

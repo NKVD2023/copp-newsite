@@ -3,7 +3,7 @@ import uuid
 from flask import render_template, request, redirect, url_for, flash, current_app
 from werkzeug.utils import secure_filename
 from app.admin import bp
-from app.admin.auth import login_required
+from app.admin.core.auth import login_required
 from app.db import get_db_connection
 from app.utils.image_utils import save_image_as_webp
 import json

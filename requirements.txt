@@ -3,4 +3,5 @@ pandas
 openpyxl
 Werkzeug
 Pillow
-Flask-Caching
+Flask-CachingFlask-WTF
+Flask-Limiter

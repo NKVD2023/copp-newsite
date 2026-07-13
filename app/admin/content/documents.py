@@ -2,7 +2,7 @@ import os
 from flask import render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from app.admin import bp
-from app.admin.auth import login_required
+from app.admin.core.auth import login_required
 from app.db import get_db_connection
 
 UPLOAD_DOCS_FOLDER = os.path.join('app', 'static', 'uploads', 'documents')

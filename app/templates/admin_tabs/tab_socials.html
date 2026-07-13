@@ -46,6 +46,7 @@
                     <td>
                         <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editSocialModal{{ social.id }}">Изменить</button>
                         <form action="{{ url_for('admin.delete_social', id=social.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Вы уверены, что хотите удалить эту соцсеть?');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
                         </form>
                     </td>
@@ -66,6 +67,7 @@
 <div class="modal fade" id="editSocialModal{{ social.id }}" tabindex="-1">
     <div class="modal-dialog">
         <form action="{{ url_for('admin.edit_social', id=social.id) }}" method="POST" enctype="multipart/form-data" class="modal-content">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="modal-header">
                 <h5 class="modal-title">Редактировать соцсеть</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -122,6 +124,7 @@
 <div class="modal fade" id="addSocialModal" tabindex="-1">
     <div class="modal-dialog">
         <form action="{{ url_for('admin.add_social') }}" method="POST" enctype="multipart/form-data" class="modal-content">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="modal-header">
                 <h5 class="modal-title">Добавить соцсеть</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

@@ -1,141 +1,174 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/news.css') }}">
 
-<div class="news-module">
+<div class="a-panel" style="margin-bottom:14px;">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
 
-    <!-- ========================================== -->
-    <!-- ВЕРХНЯЯ ПАНЕЛЬ (ПОИСК И КНОПКА ДОБАВЛЕНИЯ) -->
-    <!-- ========================================== -->
-    <div class="news-header-panel" style="flex-wrap: wrap; gap: 15px;">
-        <div class="news-search-box" style="flex: 1; min-width: 250px;">
-            <span class="search-icon"></span>
-            <input type="text" id="news-text-search" class="generic-search-input" data-target=".news-card" placeholder="Поиск по заголовку или анонсу...">
+        <!-- Поиск -->
+        <div class="a-search-box" style="flex:1; min-width:220px; max-width:400px;">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" id="news-text-search" class="a-search-input generic-search-input"
+                   data-target=".news-card" placeholder="Поиск по заголовку или анонсу...">
         </div>
-        <div class="news-filters" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <input type="month" id="filter-month" class="form-control" style="width: auto; padding: 8px;" title="Фильтр по месяцу">
-            <select id="filter-status" class="form-control" style="width: auto; padding: 8px;">
-                <option value="">Все статусы</option>
-                <option value="published">Опубликована</option>
-                <option value="draft">Черновик</option>
-                <option value="archived">В архиве</option>
-            </select>
-            <span id="news-counter" class="badge" style="background: #e9ecef; color: #495057; padding: 8px 12px; border-radius: 4px; font-weight: bold; font-size: 14px;">Отображается: 0</span>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button type="button" class="btn-create-news" style="background: #198754; border: none; color: white;" onclick="exportNewsToExcel()">
+
+        <!-- Фильтр по месяцу -->
+        <input type="month" id="filter-month" class="a-input" style="width:160px;" title="Фильтр по месяцу">
+
+        <!-- Фильтр по статусу -->
+        <select id="filter-status" class="a-select" style="width:140px;">
+            <option value="">Все статусы</option>
+            <option value="published">Опубликована</option>
+            <option value="draft">Черновик</option>
+            <option value="archived">В архиве</option>
+        </select>
+
+        <!-- Счётчик -->
+        <span id="news-counter" class="a-badge a-badge-gray" style="font-size:0.82rem; padding:5px 10px;">
+            Отображается: 0
+        </span>
+
+        <!-- Кнопки -->
+        <div style="display:flex; gap:8px; margin-left:auto; flex-shrink:0;">
+            <button type="button" class="a-btn a-btn-success" onclick="exportNewsToExcel()">
                 <i class="fas fa-file-excel"></i> Экспорт в Excel
             </button>
-            <button class="btn-create-news" onclick="toggleNewsForm()">+ Создать новость</button>
+            <button class="a-btn a-btn-accent" onclick="toggleNewsForm()">
+                <i class="fas fa-plus"></i> Создать новость
+            </button>
         </div>
-    </div>
 
-<!-- ========================================== -->
+    </div>
+</div>
+
+
 <!-- ФОРМА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ НОВОСТИ -->
-<!-- ========================================== -->
-<div id="news-form-container" class="news-form-wrapper" style="{% if edit_item %}display: block;{% else %}display: none;{% endif %}">
-    <div class="modern-form-card">
-        
-        <div class="form-header">
-            <h2>{% if edit_item %}Редактирование новости{% else %}Создание новости{% endif %}</h2>
-            
+<div id="news-form-container" style="{% if edit_item %}display: block;{% else %}display: none;{% endif %} margin-bottom:14px; animation: a-fadeIn 0.2s ease-out;">
+    <div class="a-panel">
+
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #f0f2f5;">
+            <h6 class="a-panel-title mb-0" style="border:none;padding:0;">
+                <i class="fas fa-{% if edit_item %}pen{% else %}plus{% endif %}"></i>
+                {% if edit_item %}Редактирование новости{% else %}Создание новости{% endif %}
+            </h6>
             {% if edit_item %}
-                <a href="{{ url_for('admin.dashboard') }}" class="btn-cancel" style="text-decoration:none;">Отмена</a>
+                <a href="{{ url_for('admin.dashboard') }}" class="a-btn a-btn-outline a-btn-sm" style="text-decoration:none;">
+                    <i class="fas fa-xmark"></i> Отмена
+                </a>
             {% else %}
-                <button type="button" class="btn-cancel" onclick="toggleNewsForm()">Отмена</button>
+                <button type="button" class="a-btn a-btn-outline a-btn-sm" onclick="toggleNewsForm()">
+                    <i class="fas fa-xmark"></i> Отмена
+                </button>
             {% endif %}
         </div>
 
-        <form action="{% if edit_item %}{{ url_for('admin.update_news', news_id=edit_item.id) }}{% else %}/admin/add_news{% endif %}" method="POST" enctype="multipart/form-data">
-            
-            <div class="form-row">
-                <div class="form-group span-2">
-                    <label>Полное наименование (Заголовок)</label>
-                    <input type="text" name="title" required placeholder="Введите заголовок" value="{{ edit_item.title if edit_item else '' }}">
+        <form action="{% if edit_item %}{{ url_for('admin.update_news', news_id=edit_item.id) }}{% else %}/admin/add_news{% endif %}"
+              method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <!-- Строка 1: Заголовок + Статус + Дата -->
+            <div class="a-form-grid" style="grid-template-columns: 2fr 1fr 1fr; margin-bottom:12px;">
+                <div class="a-form-group">
+                    <label class="a-label">Заголовок</label>
+                    <input type="text" name="title" class="a-input" required placeholder="Введите заголовок" value="{{ edit_item.title if edit_item else '' }}">
                 </div>
-                <div class="form-group">
-                    <label>Статус публикации</label>
-                    <select name="status">
+                <div class="a-form-group">
+                    <label class="a-label">Статус</label>
+                    <select name="status" class="a-select">
                         <option value="draft" {% if edit_item and edit_item.status == 'draft' %}selected{% endif %}>Черновик</option>
                         <option value="published" {% if edit_item and edit_item.status == 'published' %}selected{% endif %}>Опубликована</option>
                         <option value="archived" {% if edit_item and edit_item.status == 'archived' %}selected{% endif %}>В архив</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Дата публикации (Таймер)</label>
+                <div class="a-form-group">
+                    <label class="a-label">Дата публикации (Таймер)</label>
                     {% set p_date = edit_item.publish_date.replace(' ', 'T') if edit_item and edit_item.publish_date else '' %}
-                    <input type="datetime-local" name="publish_date" value="{{ p_date }}" step="1" title="Оставьте пустым для публикации прямо сейчас">
+                    <input type="datetime-local" name="publish_date" class="a-input" value="{{ p_date }}" step="1">
                 </div>
             </div>
 
-            <!-- Блок настроек мероприятия -->
-            <div class="form-row" style="background:#f9fbfc; padding: 15px; border-radius: 8px; border: 1px dashed #c2d1d9;">
-                <div class="form-group" style="flex: 0.5; justify-content: center;">
-                    <label>
-                        <input type="checkbox" name="is_event" value="1" id="is_event_cb" {% if edit_item and edit_item.is_event %}checked{% endif %} onchange="toggleEventFields()">
-                        Это мероприятие?
-                    </label>
-                </div>
-                <div class="form-group event-fields" style="display: {% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %};">
-                    <label>Дата и время</label>
-                    <input type="datetime-local" name="event_date" id="event_date_input" value="{{ edit_item.event_date if edit_item else '' }}" step="1" {% if edit_item and edit_item.is_event %}required{% endif %}>
-                </div>
-                <div class="form-group span-2 event-fields" style="display: {% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %};">
-                    <label>Место проведения (обязательно)</label>
-                    <input type="text" name="event_location" id="event_location_input" placeholder="Укажите адрес или место" value="{{ edit_item.event_location if edit_item else '' }}" {% if edit_item and edit_item.is_event %}required{% endif %}>
+            <!-- Блок мероприятия -->
+            <div style="background:#f8fafc; padding:12px 14px; border-radius:8px; border:1px dashed #d0d8e4; margin-bottom:12px;">
+                <div class="a-form-grid" style="grid-template-columns: auto 1fr 2fr; align-items:center; gap:12px;">
+                    <div class="a-form-group" style="flex-direction:row; align-items:center; gap:8px; margin:0;">
+                        <input type="checkbox" name="is_event" value="1" id="is_event_cb"
+                               {% if edit_item and edit_item.is_event %}checked{% endif %}
+                               onchange="toggleEventFields()"
+                               style="width:16px; height:16px; accent-color:var(--copp-blue); cursor:pointer;">
+                        <label for="is_event_cb" class="a-label" style="cursor:pointer; margin:0;">Это мероприятие</label>
+                    </div>
+                    <div class="a-form-group event-fields" style="display:{% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %}; margin:0;">
+                        <label class="a-label">Дата и время</label>
+                        <input type="datetime-local" name="event_date" id="event_date_input" class="a-input"
+                               value="{{ edit_item.event_date if edit_item else '' }}" step="1"
+                               {% if edit_item and edit_item.is_event %}required{% endif %}>
+                    </div>
+                    <div class="a-form-group event-fields" style="display:{% if edit_item and edit_item.is_event %}flex{% else %}none{% endif %}; margin:0;">
+                        <label class="a-label">Место проведения</label>
+                        <input type="text" name="event_location" id="event_location_input" class="a-input"
+                               placeholder="Укажите адрес или место"
+                               value="{{ edit_item.event_location if edit_item else '' }}"
+                               {% if edit_item and edit_item.is_event %}required{% endif %}>
+                    </div>
                 </div>
             </div>
 
-            <!-- Скрипт для скрытия/показа полей мероприятия -->
             <script>
                 function toggleEventFields() {
                     const cb = document.getElementById('is_event_cb');
                     const fields = document.querySelectorAll('.event-fields');
                     const loc = document.getElementById('event_location_input');
                     const date = document.getElementById('event_date_input');
-                    fields.forEach(f => {
-                        f.style.display = cb.checked ? 'flex' : 'none';
-                    });
-                    if (cb.checked) {
-                        loc.setAttribute('required', 'required');
-                        date.setAttribute('required', 'required');
-                    } else {
-                        loc.removeAttribute('required');
-                        date.removeAttribute('required');
-                    }
+                    fields.forEach(f => { f.style.display = cb.checked ? 'flex' : 'none'; });
+                    if (cb.checked) { loc.setAttribute('required','required'); date.setAttribute('required','required'); }
+                    else { loc.removeAttribute('required'); date.removeAttribute('required'); }
                 }
             </script>
 
-            <div class="form-group">
-                <label>Краткий анонс (для превью, макс. 180 символов)</label>
-                <textarea name="teaser" rows="2" maxlength="180">{{ edit_item.teaser if edit_item else '' }}</textarea>
+            <!-- Анонс -->
+            <div class="a-form-group" style="margin-bottom:12px;">
+                <label class="a-label">Краткий анонс (макс. 180 символов)</label>
+                <textarea name="teaser" class="a-textarea" rows="2" maxlength="180">{{ edit_item.teaser if edit_item else '' }}</textarea>
             </div>
 
-            <div class="form-group">
-                <label>Полный текст статьи</label>
-                <textarea id="newsContent" name="content" rows="8">{{ edit_item.content if edit_item else '' }}</textarea>
+            <!-- Полный текст -->
+            <div class="a-form-group" style="margin-bottom:12px;">
+                <label class="a-label">Полный текст статьи</label>
+                <textarea id="newsContent" name="content" class="a-textarea" rows="6">{{ edit_item.content if edit_item else '' }}</textarea>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Главная фотография {% if edit_item and edit_item.main_image %}<span style="color:#0066cc;">(Уже загружена)</span>{% endif %}</label>
-                    <div class="input-group mb-2" style="display: flex;">
-                        <input type="text" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; outline: none;" name="existing_main_image" id="newsMainImageInput" placeholder="Путь к картинке (или выберите из библиотеки)" value="{{ edit_item.main_image if edit_item else '' }}" readonly>
-                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; cursor: pointer;" type="button" onclick="openMediaPicker('newsMainImageInput', 'image')"><i class="fas fa-images"></i> Выбрать из библиотеки</button>
-                        <button style="padding: 10px 15px; border: 1px solid #ccc; border-left: none; background: #f8f9fa; border-radius: 0 4px 4px 0; cursor: pointer; color: #dc3545;" type="button" onclick="document.getElementById('newsMainImageInput').value=''; document.getElementById('newsMainImageInputPreview').style.display='none';" title="Очистить выбранное фото"><i class="fas fa-times"></i></button>
+            <!-- Фотографии -->
+            <div class="a-form-grid a-form-grid-2" style="margin-bottom:16px;">
+                <div class="a-form-group">
+                    <label class="a-label">Главная фотография {% if edit_item and edit_item.main_image %}<span style="color:#0066cc;">(загружена)</span>{% endif %}</label>
+                    <div style="display:flex; gap:0; margin-bottom:8px;">
+                        <input type="text" class="a-input" style="border-radius:7px 0 0 7px; flex:1;"
+                               name="existing_main_image" id="newsMainImageInput"
+                               placeholder="Путь к картинке или выберите из библиотеки"
+                               value="{{ edit_item.main_image if edit_item else '' }}" readonly>
+                        <button style="padding:8px 12px; border:1px solid #e0e4e8; border-left:none; background:#f5f7fa; cursor:pointer; font-size:0.8rem; white-space:nowrap;"
+                                type="button" onclick="openMediaPicker('newsMainImageInput', 'image')">
+                            <i class="fas fa-images"></i> Выбрать
+                        </button>
+                        <button style="padding:8px 12px; border:1px solid #e0e4e8; border-left:none; background:#fff0f0; cursor:pointer; border-radius:0 7px 7px 0; color:#c0392b;"
+                                type="button" onclick="document.getElementById('newsMainImageInput').value=''; document.getElementById('newsMainImageInputPreview').style.display='none';">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                     {% if edit_item and edit_item.main_image %}
-                    <img id="newsMainImageInputPreview" src="{{ url_for('static', filename=edit_item.main_image) }}" alt="Preview" style="max-height: 100px; display: block; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    <img id="newsMainImageInputPreview" src="{{ url_for('static', filename=edit_item.main_image) }}" alt="Preview"
+                         style="max-height:90px; display:block; border-radius:6px; margin-bottom:8px; object-fit:contain;">
                     {% else %}
-                    <img id="newsMainImageInputPreview" src="" alt="Preview" style="max-height: 100px; display: none; border-radius: 4px; margin-bottom: 10px; object-fit: contain;">
+                    <img id="newsMainImageInputPreview" src="" alt="Preview" style="max-height:90px; display:none; border-radius:6px; margin-bottom:8px; object-fit:contain;">
                     {% endif %}
-                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новый файл с компьютера (старый будет заменен):</label>
-                    <div class="file-upload-box">
+                    <label class="a-label" style="margin-bottom:4px;">Или загрузить новый файл:</label>
+                    <div class="a-dropzone file-upload-box">
                         <input type="file" name="main_image" accept="image/*">
+                        <i class="fas fa-cloud-arrow-up"></i>
+                        <span class="a-dropzone-text">Перетащите или нажмите для выбора</span>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Дополнительные фотографии</label>
-                    <div id="newsExtraImagesContainer" style="margin-bottom: 10px; min-height: 20px;">
+                <div class="a-form-group">
+                    <label class="a-label">Дополнительные фотографии</label>
+                    <div id="newsExtraImagesContainer" style="margin-bottom:8px; min-height:20px;">
                         {% if edit_item and edit_item.extra_images %}
                             {% for ext_img in edit_item.extra_images.split(',') %}
                                 {% if ext_img %}
@@ -148,23 +181,29 @@
                             {% endfor %}
                         {% endif %}
                     </div>
-                    <div class="mb-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openMediaPicker(function(path){ addMediaToGallery('newsExtraImagesContainer', path); }, 'image', true)"><i class="fas fa-plus"></i> Добавить из библиотеки</button>
+                    <div style="margin-bottom:8px;">
+                        <button type="button" class="a-btn a-btn-outline a-btn-sm"
+                                onclick="openMediaPicker(function(path){ addMediaToGallery('newsExtraImagesContainer', path); }, 'image', true)">
+                            <i class="fas fa-plus"></i> Добавить из библиотеки
+                        </button>
                     </div>
-                    <label class="small text-muted mb-1 d-block" style="font-size: 13px;">Или загрузите новые файлы (старые останутся):</label>
-                    <div class="file-upload-box">
+                    <label class="a-label" style="margin-bottom:4px;">Или загрузить новые файлы:</label>
+                    <div class="a-dropzone file-upload-box">
                         <input type="file" name="extra_images" accept="image/*" multiple>
+                        <i class="fas fa-cloud-arrow-up"></i>
+                        <span class="a-dropzone-text">Перетащите или нажмите для выбора</span>
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="btn-submit-large">
+            <button type="submit" class="a-btn a-btn-primary" style="width:100%; justify-content:center; padding:10px;">
+                <i class="fas fa-floppy-disk"></i>
                 {% if edit_item %}Сохранить изменения{% else %}Сохранить новость{% endif %}
             </button>
         </form>
     </div>
 </div>
-</div>
+
 
 <!-- ========================================== -->
 <!-- СПИСОК НОВОСТЕЙ (СЕТКА КАРТОЧЕК) -->
@@ -223,6 +262,7 @@
         <div class="card-actions">
 
             <form action="{{ url_for('admin.toggle_news_status', news_id=news.id) }}" method="POST" style="flex: 1;">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="hidden" name="current_status" value="{{ news.status }}">
                 {% if news.status == 'published' %}
                 <button type="submit" class="btn-card btn-archive w-100">В архив</button>
@@ -236,6 +276,7 @@
             </form>
 
             <form action="{{ url_for('admin.delete_news', news_id=news.id) }}" method="POST" style="flex: 1;" onsubmit="return confirm('Вы уверены, что хотите навсегда удалить эту новость?');">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="btn-card btn-danger w-100">Удалить</button>
             </form>
 
@@ -261,7 +302,7 @@
         const monthFilter = document.getElementById('filter-month');
         const statusFilter = document.getElementById('filter-status');
         const textSearch = document.getElementById('news-text-search');
-        const cards = document.querySelectorAll('.news-card');
+        const cards = document.querySelectorAll('.admin-news-grid .news-card');
         const counter = document.getElementById('news-counter');
 
         function applyNewsFilters() {

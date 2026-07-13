@@ -8,4 +8,4 @@ bp = Blueprint('main', __name__)
 
 # Импорт маршрутов должен быть строго ВНИЗУ, после создания bp, 
 # чтобы избежать ошибки циклических импортов (circular imports).
-from app.main import routes
+from app.main.routes import index, news, atlas, pages, projects, dashboard, team

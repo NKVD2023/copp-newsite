@@ -1,42 +1,46 @@
-<div class="admin-card mb-4">
-    <h5>Настройки контактов</h5>
+<div class="a-panel">
+    <h6 class="a-panel-title"><i class="fas fa-gear"></i> Настройки контактов</h6>
     <form action="{{ url_for('admin.update_contact_settings') }}" method="POST">
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Заголовок блока</label>
-                <input type="text" name="title" class="form-control" value="{{ contact_settings.title if contact_settings else 'Контакты' }}" required>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="a-form-grid a-form-grid-2 mb-3">
+            <div class="a-form-group">
+                <label class="a-label">Заголовок блока</label>
+                <input type="text" name="title" class="a-input" value="{{ contact_settings.title if contact_settings else 'Контакты' }}" required>
             </div>
-            <div class="col-md-6">
-                <label class="form-label">Название организации</label>
-                <input type="text" name="org_name" class="form-control" value="{{ contact_settings.org_name if contact_settings else 'ЦОПП Республики Крым' }}" required>
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Телефоны (каждый с новой строки)</label>
-                <textarea name="phones" class="form-control" rows="3" required>{{ contact_settings.phones if contact_settings else '8 (3652) 51-04-40\n7 (978) 391-46-44' }}</textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Email</label>
-                <input type="text" name="email" class="form-control" value="{{ contact_settings.email if contact_settings else 'office@copp82.ru' }}" required>
+            <div class="a-form-group">
+                <label class="a-label">Название организации</label>
+                <input type="text" name="org_name" class="a-input" value="{{ contact_settings.org_name if contact_settings else 'ЦОПП Республики Крым' }}" required>
             </div>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Адрес</label>
-            <input type="text" name="address" class="form-control" value="{{ contact_settings.address if contact_settings else '295051 Респ. Крым, г. Симферополь, ул. Металлистов, д. 13' }}" required>
+        <div class="a-form-grid a-form-grid-2 mb-3">
+            <div class="a-form-group">
+                <label class="a-label">Телефоны (каждый с новой строки)</label>
+                <textarea name="phones" class="a-textarea" rows="3" required>{{ contact_settings.phones if contact_settings else '8 (3652) 51-04-40\n7 (978) 391-46-44' }}</textarea>
+            </div>
+            <div class="a-form-group">
+                <label class="a-label">Email</label>
+                <input type="text" name="email" class="a-input" value="{{ contact_settings.email if contact_settings else 'office@copp82.ru' }}" required>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+        <div class="a-form-group mb-3">
+            <label class="a-label">Адрес</label>
+            <input type="text" name="address" class="a-input" value="{{ contact_settings.address if contact_settings else '295051 Респ. Крым, г. Симферополь, ул. Металлистов, д. 13' }}" required>
+        </div>
+        <button type="submit" class="a-btn a-btn-primary"><i class="fas fa-floppy-disk"></i> Сохранить настройки</button>
     </form>
 </div>
 
-<div class="admin-card">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Заявки из формы обратной связи</h5>
-        <input type="text" class="form-control generic-search-input w-25" data-target=".contact-row" placeholder="Поиск по ФИО или Email...">
+<div class="a-panel">
+    <div class="a-panel-toolbar">
+        <h6 class="a-panel-title mb-0" style="border:none; padding:0;"><i class="fas fa-inbox"></i> Заявки из формы обратной связи</h6>
+        <div class="a-search-box" style="width:260px;">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" class="a-search-input generic-search-input" data-target=".contact-row" placeholder="Поиск по ФИО или Email...">
+        </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
+    <div class="a-table-responsive">
+        <table class="a-table">
+            <thead>
                 <tr>
                     <th>Дата</th>
                     <th>ФИО</th>
@@ -48,34 +52,37 @@
             </thead>
             <tbody>
                 {% for req in contact_requests %}
-                <tr class="contact-row {% if req.status == 'new' %}table-warning{% endif %}">
-                    <td>{{ req.created_at }}</td>
-                    <td>{{ req.last_name }} {{ req.first_name }} {{ req.middle_name }}</td>
-                    <td><a href="mailto:{{ req.email }}">{{ req.email }}</a></td>
-                    <td>{{ req.message }}</td>
+                <tr class="contact-row">
+                    <td style="white-space:nowrap; color:#8a9ab0; font-size:0.8rem;">{{ req.created_at }}</td>
+                    <td><strong>{{ req.last_name }} {{ req.first_name }} {{ req.middle_name }}</strong></td>
+                    <td><a href="mailto:{{ req.email }}" style="color:var(--copp-blue2); text-decoration:none;">{{ req.email }}</a></td>
+                    <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ req.message }}</td>
                     <td>
                         {% if req.status == 'new' %}
-                        <span class="badge bg-danger">Новая</span>
+                        <span class="a-badge a-badge-red"><i class="fas fa-circle" style="font-size:0.5rem;"></i> Новая</span>
                         {% else %}
-                        <span class="badge bg-secondary">Прочитана</span>
+                        <span class="a-badge a-badge-gray">Прочитана</span>
                         {% endif %}
                     </td>
                     <td>
                         <div class="d-flex gap-2">
                             {% if req.status == 'new' %}
                             <form action="{{ url_for('admin.mark_request_read', id=req.id) }}" method="POST">
-                                <button type="submit" class="btn btn-sm btn-success">Прочитано</button>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="a-btn a-btn-success a-btn-sm"><i class="fas fa-check"></i> Прочитано</button>
                             </form>
                             {% endif %}
-                            <form action="{{ url_for('admin.delete_request', id=req.id) }}" method="POST" onsubmit="return confirm('Вы уверены, что хотите удалить заявку?');">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                            <form action="{{ url_for('admin.delete_request', id=req.id) }}" method="POST"
+                                  onsubmit="return confirm('Удалить заявку?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="a-btn a-btn-danger a-btn-sm"><i class="fas fa-trash"></i> Удалить</button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">Нет новых заявок</td>
+                    <td colspan="6" class="a-empty"><i class="fas fa-inbox"></i><p>Нет новых заявок</p></td>
                 </tr>
                 {% endfor %}
             </tbody>
