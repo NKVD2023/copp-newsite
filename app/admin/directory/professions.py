@@ -285,6 +285,32 @@ def delete_profession(prof_id):
         
     return redirect(url_for('admin.dashboard', tab='prof_atlas'))
 
+@bp.route('/delete_all_professions', methods=['POST'])
+@login_required
+def delete_all_professions():
+    """
+    Удаление всех профессий из атласа (очистка).
+    """
+    conn = get_db_connection()
+    try:
+        # Получаем все профессии, чтобы удалить их картинки
+        profs = conn.execute('SELECT image_path FROM professions WHERE image_path IS NOT NULL').fetchall()
+        for prof in profs:
+            if prof['image_path']:
+                try:
+                    os.remove(os.path.join('app', 'static', prof['image_path']))
+                except Exception:
+                    pass
+        
+        conn.execute('DELETE FROM professions')
+        conn.commit()
+        flash('Все профессии были успешно удалены!', 'success')
+    except Exception as e:
+        flash(f'Ошибка при удалении профессий: {e}', 'danger')
+        
+    return redirect(url_for('admin.dashboard', tab='prof_atlas'))
+
+
 @bp.route('/import_professions', methods=['POST'])
 @login_required
 def import_professions():

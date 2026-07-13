@@ -450,5 +450,46 @@ if (searchInput) {
         applyProfessionsFilters();
     });
 }
+
+// Поиск для учебных заведений
+const collegesSearchInput = document.getElementById('colleges-search');
+if (collegesSearchInput) {
+    collegesSearchInput.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const collegeCards = document.querySelectorAll('.college-card');
+        let countVisible = 0;
+        
+        collegeCards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            if (name.includes(query)) {
+                card.style.display = 'flex';
+                countVisible++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Обработка сообщения "Ничего не найдено" для учебных заведений
+        const listContainer = document.getElementById('colleges-list');
+        if (listContainer) {
+            let noResultsMsg = document.getElementById('no-colleges-results');
+            if (countVisible === 0) {
+                if (!noResultsMsg) {
+                    noResultsMsg = document.createElement('div');
+                    noResultsMsg.id = 'no-colleges-results';
+                    noResultsMsg.className = 'w-100 text-center text-muted p-5 bg-white rounded shadow-sm';
+                    noResultsMsg.style.gridColumn = '1 / -1';
+                    noResultsMsg.style.fontSize = '1.1rem';
+                    noResultsMsg.textContent = 'Учебные заведения по вашему запросу не найдены.';
+                    listContainer.appendChild(noResultsMsg);
+                }
+            } else {
+                if (noResultsMsg) {
+                    noResultsMsg.remove();
+                }
+            }
+        }
+    });
+}
 </script>
 {% endblock %}
