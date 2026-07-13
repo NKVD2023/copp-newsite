@@ -1,6 +1,7 @@
-from flask import request, redirect, url_for, flash, session
+from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
+from app.admin.auth import login_required
 import os
 from werkzeug.utils import secure_filename
 from app.utils.image_utils import save_image_as_webp
@@ -19,10 +20,8 @@ def handle_icon_upload(file, existing_icon_file=None):
     return existing_icon_file
 
 @bp.route('/team/add', methods=['POST'])
+@login_required
 def add_team_member():
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     full_name = request.form.get('full_name')
     position = request.form.get('position')
     email = request.form.get('email', '')
@@ -40,16 +39,13 @@ def add_team_member():
         VALUES (?, ?, ?, ?, ?)
     ''', (full_name, position, email, display_order, image_path))
     conn.commit()
-    conn.close()
     
     flash('Сотрудник успешно добавлен!', 'success')
     return redirect(url_for('admin.dashboard', tab='team'))
 
 @bp.route('/team/<int:id>/edit', methods=['POST'])
+@login_required
 def edit_team_member(id):
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     full_name = request.form.get('full_name')
     position = request.form.get('position')
     email = request.form.get('email', '')
@@ -68,16 +64,13 @@ def edit_team_member(id):
         WHERE id = ?
     ''', (full_name, position, email, display_order, image_path, id))
     conn.commit()
-    conn.close()
     
     flash('Сотрудник успешно обновлен!', 'success')
     return redirect(url_for('admin.dashboard', tab='team'))
 
 @bp.route('/team/<int:id>/delete', methods=['POST'])
+@login_required
 def delete_team_member(id):
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     conn = get_db_connection()
     member = conn.execute('SELECT image_path FROM team_members WHERE id = ?', (id,)).fetchone()
     if member and member['image_path']:
@@ -87,7 +80,6 @@ def delete_team_member(id):
             
     conn.execute('DELETE FROM team_members WHERE id = ?', (id,))
     conn.commit()
-    conn.close()
     
     flash('Сотрудник удален.', 'success')
     return redirect(url_for('admin.dashboard', tab='team'))

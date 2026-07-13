@@ -1,6 +1,7 @@
-from flask import request, redirect, url_for, flash, session
+from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
+from app.admin.auth import login_required
 import os
 from werkzeug.utils import secure_filename
 from app.utils.image_utils import save_image_as_webp
@@ -19,14 +20,12 @@ def handle_icon_upload(file, existing_icon_file=None):
     return existing_icon_file
 
 @bp.route('/socials/add', methods=['POST'])
+@login_required
 def add_social():
     """
     Добавление новой социальной сети (ссылка + иконка).
     Поддерживает как SVG-код, так и загрузку картинки/иконки файлом.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     name = request.form.get('name')
     url = request.form.get('url')
     icon_svg = request.form.get('icon_svg', '')
@@ -42,19 +41,16 @@ def add_social():
         VALUES (?, ?, ?, ?, ?)
     ''', (name, url, icon_svg, display_order, image_path))
     conn.commit()
-    conn.close()
     
     flash('Социальная сеть успешно добавлена!', 'success')
     return redirect(url_for('admin.dashboard', tab='socials'))
 
 @bp.route('/socials/<int:id>/edit', methods=['POST'])
+@login_required
 def edit_social(id):
     """
     Редактирование параметров социальной сети (название, ссылка, иконка, порядок отображения, статус).
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     name = request.form.get('name')
     url = request.form.get('url')
     icon_svg = request.form.get('icon_svg', '')
@@ -73,19 +69,16 @@ def edit_social(id):
         WHERE id = ?
     ''', (name, url, icon_svg, display_order, is_active, image_path, id))
     conn.commit()
-    conn.close()
     
     flash('Социальная сеть успешно обновлена!', 'success')
     return redirect(url_for('admin.dashboard', tab='socials'))
 
 @bp.route('/socials/<int:id>/delete', methods=['POST'])
+@login_required
 def delete_social(id):
     """
     Удаление социальной сети и связанного с ней файла иконки.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     conn = get_db_connection()
     social = conn.execute('SELECT image_path FROM social_networks WHERE id = ?', (id,)).fetchone()
     if social and social['image_path']:
@@ -95,7 +88,6 @@ def delete_social(id):
             
     conn.execute('DELETE FROM social_networks WHERE id = ?', (id,))
     conn.commit()
-    conn.close()
     
     flash('Социальная сеть удалена.', 'success')
     return redirect(url_for('admin.dashboard', tab='socials'))

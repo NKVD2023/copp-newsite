@@ -203,13 +203,18 @@
         currentCategory = radio.value;
         document.getElementById('catText').innerText = currentCategory;
         document.getElementById('catWrapper').classList.remove('open');
-        loadData();
+        
+        // When category changes, reload filters AND data
+        loadFilters().then(() => {
+            currentPage = 1;
+            loadData(true);
+        });
     }
 
     // Main Logic
-    let allData = [];
-    let filteredData = [];
-    let currentRenderLimit = 24;
+    let currentPage = 1;
+    let limit = 24;
+    let currentData = [];
     
     let currentVacancies = 0;
     let currentJobs = 0;
@@ -239,40 +244,24 @@
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     }
 
-    function loadData() {
-        loadingOverlay.style.display = 'flex';
-        
-        fetch(`/api/dashboard?category=${encodeURIComponent(currentCategory)}`)
+    function loadFilters() {
+        return fetch(`/api/dashboard_filters?category=${encodeURIComponent(currentCategory)}`)
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    allData = data.data;
-                    populateFilterOptions();
-                    applyFilters();
+                    populateFilterOptions(data.munis, data.emps);
                 }
             })
-            .catch(err => console.error("Error loading dashboard data:", err))
-            .finally(() => {
-                loadingOverlay.style.display = 'none';
-                document.getElementById('lastUpdated').innerText = `Данные загружены`;
-            });
+            .catch(err => console.error("Error loading filters:", err));
     }
     
-    function populateFilterOptions() {
-        let munis = new Set();
-        let employers = new Set();
-        
-        allData.forEach(item => {
-            if(item.municipality && item.municipality !== 'None') munis.add(item.municipality);
-            if(item.employer && item.employer !== 'None') employers.add(item.employer);
-        });
-        
+    function populateFilterOptions(munis, employers) {
         const muniOptionsEl = document.getElementById('muniOptions');
         muniOptionsEl.innerHTML = '';
-        Array.from(munis).sort().forEach(m => {
+        munis.forEach(m => {
             muniOptionsEl.innerHTML += `
                 <label class="custom-select-option" onclick="event.stopPropagation()">
-                    <input type="checkbox" value="${m}" class="filter-muni-cb" onchange="applyFilters()"> ${m}
+                    <input type="checkbox" value="${m.replace(/"/g, '&quot;')}" class="filter-muni-cb" onchange="applyFilters()"> ${m}
                 </label>
             `;
         });
@@ -280,7 +269,7 @@
         
         const empOptionsEl = document.getElementById('empOptions');
         empOptionsEl.innerHTML = '';
-        Array.from(employers).sort().forEach(e => {
+        employers.forEach(e => {
             empOptionsEl.innerHTML += `
                 <label class="custom-select-option" onclick="event.stopPropagation()">
                     <input type="checkbox" value="${e.replace(/"/g, '&quot;')}" class="filter-emp-cb" onchange="applyFilters()"> ${e}
@@ -291,42 +280,70 @@
     }
 
     function applyFilters() {
-        // Collect checked filters
+        currentPage = 1;
+        loadData(true);
+    }
+    
+    let searchTimeout = null;
+    const vacSearchInput = document.getElementById('vacSearch');
+    if(vacSearchInput) {
+        vacSearchInput.oninput = function() {
+            if(searchTimeout) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 500);
+        };
+    }
+
+    function loadData(clearGrid = false) {
+        if (clearGrid) {
+            loadingOverlay.style.display = 'flex';
+        } else {
+            btnLoadMore.innerText = "Загрузка...";
+            btnLoadMore.disabled = true;
+        }
+        
         const checkedMunis = Array.from(document.querySelectorAll('.filter-muni-cb:checked')).map(cb => cb.value);
         const checkedEmps = Array.from(document.querySelectorAll('.filter-emp-cb:checked')).map(cb => cb.value);
-        const searchQuery = document.getElementById('vacSearch') ? document.getElementById('vacSearch').value.toLowerCase().trim() : '';
+        const searchQuery = document.getElementById('vacSearch') ? document.getElementById('vacSearch').value.trim() : '';
         
-        // Update texts
         document.getElementById('muniText').innerText = checkedMunis.length > 0 ? `Выбрано: ${checkedMunis.length}` : 'Все муниципалитеты';
         document.getElementById('empText').innerText = checkedEmps.length > 0 ? `Выбрано: ${checkedEmps.length}` : 'Все компании';
         
-        filteredData = allData.filter(item => {
-            if(checkedMunis.length > 0 && !checkedMunis.includes(item.municipality)) return false;
-            if(checkedEmps.length > 0 && !checkedEmps.includes(item.employer)) return false;
-            
-            if(searchQuery !== '') {
-                const title = (item.vacancy_name || '').toLowerCase();
-                const reqs = (item.requirements || '').toLowerCase();
-                const emp = (item.employer || '').toLowerCase();
-                if (!title.includes(searchQuery) && !reqs.includes(searchQuery) && !emp.includes(searchQuery)) {
-                    return false;
+        let url = `/api/dashboard?category=${encodeURIComponent(currentCategory)}&page=${currentPage}&limit=${limit}`;
+        if(searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+        if(checkedMunis.length) url += `&munis=${encodeURIComponent(JSON.stringify(checkedMunis))}`;
+        if(checkedEmps.length) url += `&emps=${encodeURIComponent(JSON.stringify(checkedEmps))}`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    if (clearGrid) {
+                        currentData = data.data;
+                    } else {
+                        currentData = currentData.concat(data.data);
+                    }
+                    
+                    updateStats(data.total_count, data.total_jobs, data.median_salary);
+                    renderGrid(data.data, clearGrid, data.total_count);
                 }
-            }
-            return true;
-        });
-        
-        updateStats();
-        
-        currentRenderLimit = 24;
-        renderGrid();
+            })
+            .catch(err => console.error("Error loading dashboard data:", err))
+            .finally(() => {
+                loadingOverlay.style.display = 'none';
+                btnLoadMore.innerText = "Показать еще";
+                btnLoadMore.disabled = false;
+                document.getElementById('lastUpdated').innerText = `Данные обновлены`;
+            });
     }
-    
+
     function animateValue(obj, start, end, duration, suffix = "") {
+        if (start === end) return;
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
             const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            // easeOutQuart
             const easeOut = 1 - Math.pow(1 - progress, 4);
             const currentVal = Math.floor(easeOut * (end - start) + start);
             
@@ -350,32 +367,7 @@
         window.requestAnimationFrame(step);
     }
     
-    function updateStats() {
-        let totalJobs = 0;
-        let salaries = [];
-        
-        filteredData.forEach(item => {
-            totalJobs += (item.jobs_count || 1);
-            if(item.salary && item.salary > 0) {
-                salaries.push(item.salary);
-            }
-        });
-        
-        let targetVacancies = filteredData.length;
-        let targetJobs = totalJobs;
-        let targetSalary = 0;
-        
-        if(salaries.length > 0) {
-            salaries.sort((a, b) => a - b);
-            let mid = Math.floor(salaries.length / 2);
-            if(salaries.length % 2 === 0) {
-                targetSalary = Math.round((salaries[mid-1] + salaries[mid]) / 2);
-            } else {
-                targetSalary = Math.round(salaries[mid]);
-            }
-        }
-        
-        // Animate the counters
+    function updateStats(targetVacancies, targetJobs, targetSalary) {
         animateValue(statVacancies, currentVacancies, targetVacancies, 1000);
         animateValue(statJobs, currentJobs, targetJobs, 1000);
         
@@ -391,7 +383,7 @@
     }
     
     window.openVacancyModal = function(index) {
-        const item = filteredData[index];
+        const item = currentData[index];
         modalTitle.innerText = item.vacancy_name || 'Детали вакансии';
         
         let html = `
@@ -400,7 +392,7 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
                 <div>
                     <p style="margin-bottom:8px; color:#555;"><strong>Муниципалитет:</strong> ${item.municipality || 'Не указан'}</p>
-                    <p style="margin-bottom:8px; color:#555;"><strong>Зарплата:</strong> ${item.salary ? item.salary + ' ₽' : 'Не указана'}</p>
+                    <p style="margin-bottom:8px; color:#555;"><strong>Зарплата:</strong> ${item.salary ? formatNumber(item.salary) + ' ₽' : 'Не указана'}</p>
                     <p style="margin-bottom:8px; color:#555;"><strong>Тип занятости:</strong> <br><span style="margin-left:15px;">${item.employment_type || 'Не указано'}</span></p>
                 </div>
                 <div>
@@ -446,12 +438,13 @@
         vacancyModalEl.style.display = 'flex';
     };
 
-    function renderGrid() {
+    function renderGrid(data, clearGrid, totalCount) {
         let html = '';
         
-        const itemsToRender = filteredData.slice(0, currentRenderLimit);
+        let startIdx = clearGrid ? 0 : currentData.length - data.length;
         
-        itemsToRender.forEach((item, index) => {
+        data.forEach((item, i) => {
+            let index = startIdx + i;
             let externalLink = (item.source_link && item.source_link !== 'None' && item.source_link.startsWith('http')) ? item.source_link : '#';
             
             html += `
@@ -472,63 +465,34 @@
             `;
         });
         
-        if(filteredData.length === 0) {
+        if(totalCount === 0) {
             html = '<div style="grid-column: 1 / -1; padding: 50px; text-align: center; color: #777;"><h5>Нет вакансий, подходящих под выбранные фильтры</h5></div>';
             loadMoreContainer.style.display = 'none';
         } else {
-            if(currentRenderLimit < filteredData.length) {
+            if(currentData.length < totalCount) {
                 loadMoreContainer.style.display = 'block';
             } else {
                 loadMoreContainer.style.display = 'none';
             }
         }
         
-        if(currentRenderLimit === 24) {
+        if (clearGrid) {
             vacanciesGrid.innerHTML = html;
         } else {
-            // If appending
             vacanciesGrid.insertAdjacentHTML('beforeend', html);
         }
     }
     
     btnLoadMore.addEventListener('click', function() {
-        currentRenderLimit += 24;
-        const startIdx = currentRenderLimit - 24;
-        const itemsToRender = filteredData.slice(startIdx, currentRenderLimit);
-        
-        let html = '';
-        itemsToRender.forEach((item, index) => {
-            let actualIndex = startIdx + index;
-            let externalLink = (item.source_link && item.source_link !== 'None' && item.source_link.startsWith('http')) ? item.source_link : '#';
-            
-            html += `
-            <div class="vacancy-card">
-                <div class="vac-title" title="${item.vacancy_name || 'Без названия'}">${item.vacancy_name || 'Без названия'}</div>
-                <div class="vac-company" style="color:#666;">${item.employer || 'Не указано'}</div>
-                <div class="vac-salary">${item.salary && item.salary > 0 ? formatNumber(item.salary) + ' ₽' : 'З/П не указана'}</div>
-                
-                <div class="vac-meta" style="color:#777;"><strong>Муниципалитет:</strong> ${item.municipality || 'Не указан'}</div>
-                <div class="vac-meta" style="color:#777;"><strong>Рабочих мест:</strong> ${item.jobs_count || 1}</div>
-                ${item.schedule && item.schedule !== 'None' ? `<div class="vac-meta" style="color:#777;"><strong>График:</strong> ${item.schedule}</div>` : ''}
-                
-                <div class="vac-actions">
-                    <button class="btn-vac-primary" onclick="openVacancyModal(${actualIndex})">Подробнее</button>
-                    ${externalLink !== '#' ? `<a href="${externalLink}" target="_blank" class="btn-vac-secondary" title="Открыть на сайте источника">На источник</a>` : ''}
-                </div>
-            </div>
-            `;
-        });
-        
-        vacanciesGrid.insertAdjacentHTML('beforeend', html);
-        
-        if(currentRenderLimit >= filteredData.length) {
-            loadMoreContainer.style.display = 'none';
-        }
+        currentPage += 1;
+        loadData(false);
     });
 
     // Initial load
     document.addEventListener('DOMContentLoaded', function() {
-        loadData();
+        loadFilters().then(() => {
+            loadData(true);
+        });
     });
 </script>
 

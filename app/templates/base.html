@@ -93,7 +93,12 @@
                     <div class="dropdown-content">
                         {% if dynamic_projects %}
                             {% for project in dynamic_projects %}
-                                <a href="{{ url_for('main.project', slug=project['slug']) }}">{{ project['title'] }}</a>
+                                <a href="{{ url_for('main.project', slug=project['slug']) }}"
+                                   {% if project.project_color %}
+                                   onmouseover="this.style.backgroundColor='{{ project.project_color }}'; this.style.color='#ffffff';"
+                                   onmouseout="this.style.backgroundColor=''; this.style.color='';"
+                                   {% endif %}
+                                >{{ project['title'] }}</a>
                             {% endfor %}
                         {% else %}
                             <a href="#">(Нет проектов)</a>

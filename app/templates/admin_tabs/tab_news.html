@@ -6,12 +6,27 @@
     <!-- ========================================== -->
     <!-- ВЕРХНЯЯ ПАНЕЛЬ (ПОИСК И КНОПКА ДОБАВЛЕНИЯ) -->
     <!-- ========================================== -->
-    <div class="news-header-panel">
-        <div class="news-search-box">
+    <div class="news-header-panel" style="flex-wrap: wrap; gap: 15px;">
+        <div class="news-search-box" style="flex: 1; min-width: 250px;">
             <span class="search-icon"></span>
-            <input type="text" class="generic-search-input" data-target=".news-card" placeholder="Поиск по заголовку или анонсу...">
+            <input type="text" id="news-text-search" class="generic-search-input" data-target=".news-card" placeholder="Поиск по заголовку или анонсу...">
         </div>
-        <button class="btn-create-news" onclick="toggleNewsForm()">+ Создать новость</button>
+        <div class="news-filters" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="month" id="filter-month" class="form-control" style="width: auto; padding: 8px;" title="Фильтр по месяцу">
+            <select id="filter-status" class="form-control" style="width: auto; padding: 8px;">
+                <option value="">Все статусы</option>
+                <option value="published">Опубликована</option>
+                <option value="draft">Черновик</option>
+                <option value="archived">В архиве</option>
+            </select>
+            <span id="news-counter" class="badge" style="background: #e9ecef; color: #495057; padding: 8px 12px; border-radius: 4px; font-weight: bold; font-size: 14px;">Отображается: 0</span>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-create-news" style="background: #198754; border: none; color: white;" onclick="exportNewsToExcel()">
+                <i class="fas fa-file-excel"></i> Экспорт в Excel
+            </button>
+            <button class="btn-create-news" onclick="toggleNewsForm()">+ Создать новость</button>
+        </div>
     </div>
 
 <!-- ========================================== -->
@@ -156,7 +171,7 @@
 <!-- ========================================== -->
 <div class="news-grid admin-news-grid">
     {% for news in news_list %}
-    <article class="news-card">
+    <article class="news-card" data-date="{{ news.publish_date[:7] if news.publish_date else '' }}" data-status="{{ news.status }}">
 
         {% if news.main_image %}
         <img src="{{ url_for('static', filename=news.main_image) }}" class="card-main-img" alt="Главное фото">
@@ -239,5 +254,80 @@
         } else {
             form.style.display = 'none';
         }
+    }
+
+    // --- News Filtering & Counting ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const monthFilter = document.getElementById('filter-month');
+        const statusFilter = document.getElementById('filter-status');
+        const textSearch = document.getElementById('news-text-search');
+        const cards = document.querySelectorAll('.news-card');
+        const counter = document.getElementById('news-counter');
+
+        function applyNewsFilters() {
+            const monthVal = monthFilter.value; // format: "YYYY-MM"
+            const statusVal = statusFilter.value;
+            const searchVal = textSearch.value.toLowerCase();
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const cardDate = card.getAttribute('data-date'); // format: "YYYY-MM"
+                const cardStatus = card.getAttribute('data-status');
+                
+                // Текст для поиска собираем из заголовка и анонса
+                const title = card.querySelector('.card-title') ? card.querySelector('.card-title').textContent.toLowerCase() : '';
+                const teaser = card.querySelector('.card-teaser') ? card.querySelector('.card-teaser').textContent.toLowerCase() : '';
+                const text = card.querySelector('.card-text') ? card.querySelector('.card-text').textContent.toLowerCase() : '';
+                const fullText = title + " " + teaser + " " + text;
+
+                let show = true;
+                if (monthVal && cardDate !== monthVal) show = false;
+                if (statusVal && cardStatus !== statusVal) show = false;
+                if (searchVal && !fullText.includes(searchVal)) show = false;
+
+                if (show) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (counter) {
+                counter.textContent = `Отображается: ${visibleCount}`;
+            }
+        }
+
+        if (monthFilter) monthFilter.addEventListener('change', applyNewsFilters);
+        if (statusFilter) statusFilter.addEventListener('change', applyNewsFilters);
+        if (textSearch) textSearch.addEventListener('input', applyNewsFilters);
+
+        // Remove the generic search event listener to avoid conflicts
+        const genericInputs = document.querySelectorAll('.generic-search-input');
+        genericInputs.forEach(input => {
+            if(input.id === 'news-text-search') {
+                // This input is now handled by applyNewsFilters
+                const oldClone = input.cloneNode(true);
+                input.parentNode.replaceChild(oldClone, input);
+                
+                // Re-bind to our custom filter function
+                document.getElementById('news-text-search').addEventListener('input', applyNewsFilters);
+            }
+        });
+
+        // Initial count
+        applyNewsFilters();
+    });
+
+    function exportNewsToExcel() {
+        const monthVal = document.getElementById('filter-month').value;
+        const statusVal = document.getElementById('filter-status').value;
+        let url = "{{ url_for('admin.export_news') }}?";
+        
+        let params = new URLSearchParams();
+        if (monthVal) params.append('month', monthVal);
+        if (statusVal) params.append('status', statusVal);
+        
+        window.location.href = url + params.toString();
     }
 </script>

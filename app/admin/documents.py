@@ -1,7 +1,8 @@
 import os
-from flask import render_template, request, redirect, url_for, session, flash
+from flask import render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from app.admin import bp
+from app.admin.auth import login_required
 from app.db import get_db_connection
 
 UPLOAD_DOCS_FOLDER = os.path.join('app', 'static', 'uploads', 'documents')
@@ -11,14 +12,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @bp.route('/upload_document', methods=['POST'])
+@login_required
 def upload_document():
     """
     Загрузка нового документа (PDF, Word, Excel и т.д.) через Файловый менеджер
     или напрямую из модального окна TinyMCE (с флагом ajax).
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     if 'document' not in request.files:
         flash('Нет файла для загрузки', 'danger')
         return redirect(url_for('admin.dashboard'))
@@ -72,13 +71,11 @@ def upload_document():
     return redirect(url_for('admin.dashboard', tab='documents'))
 
 @bp.route('/delete_document/<int:doc_id>', methods=['POST'])
+@login_required
 def delete_document(doc_id):
     """
     Удаление загруженного документа по его ID в БД.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     with get_db_connection() as conn:
         doc = conn.execute('SELECT filepath FROM documents WHERE id = ?', (doc_id,)).fetchone()
         
@@ -94,15 +91,13 @@ def delete_document(doc_id):
     return redirect(url_for('admin.dashboard', tab='documents'))
 
 @bp.route('/delete_media', methods=['POST'])
+@login_required
 def delete_media():
     """
     Универсальный обработчик удаления любого файла из директории uploads/
     по его относительному пути (используется во вкладке файлов).
     Включает защиту от выхода за пределы директории (directory traversal).
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     filepath = request.form.get('filepath')
     if not filepath:
         flash("Путь к файлу не указан.", "danger")

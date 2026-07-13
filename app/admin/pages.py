@@ -1,5 +1,6 @@
-from flask import render_template, request, redirect, url_for, session, flash
+from flask import render_template, request, redirect, url_for, flash
 from app.admin import bp
+from app.admin.auth import login_required
 from app.db import get_db_connection
 import os
 import uuid
@@ -14,14 +15,12 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @bp.route('/add_page', methods=['POST'])
+@login_required
 def add_page():
     """
     Создание новой статической страницы.
     Обрабатывает текст (через TinyMCE), файлы (вложения) и привязку к меню.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     title = request.form.get('title')
     slug = request.form.get('slug')
     content = request.form.get('content', '')
@@ -86,14 +85,12 @@ def add_page():
     return redirect(url_for('admin.dashboard', tab='pages'))
 
 @bp.route('/edit_page/<int:page_id>', methods=['GET'])
+@login_required
 def edit_page(page_id):
     """
     Страница редактирования статической страницы.
     Отображает дашборд с формой редактирования выбранной страницы.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     with get_db_connection() as conn:
         news_list = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
         pages_list = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
@@ -130,14 +127,12 @@ def edit_page(page_id):
                            page_form=page_form)
 
 @bp.route('/update_page/<int:page_id>', methods=['POST'])
+@login_required
 def update_page(page_id):
     """
     Обновление существующей статической страницы.
     Обрабатывает новые файлы, удаление старых файлов из ФС и обновляет БД.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     title = request.form.get('title')
     slug = request.form.get('slug')
     content = request.form.get('content', '')
@@ -218,13 +213,11 @@ def update_page(page_id):
     return redirect(url_for('admin.dashboard', tab='pages'))
 
 @bp.route('/delete_page/<int:page_id>', methods=['POST'])
+@login_required
 def delete_page(page_id):
     """
     Полное удаление страницы и всех прикрепленных к ней файлов из ФС и БД.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     with get_db_connection() as conn:
         page = conn.execute('SELECT attached_files FROM pages WHERE id = ?', (page_id,)).fetchone()
         if page and page['attached_files']:
@@ -241,13 +234,11 @@ def delete_page(page_id):
     return redirect(url_for('admin.dashboard', tab='pages'))
 
 @bp.route('/toggle_page_navbar/<int:page_id>', methods=['POST'])
+@login_required
 def toggle_page_navbar(page_id):
     """
     Включение/Отключение отображения страницы в главном меню навигации.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     current_status = int(request.form.get('current_status', 0))
     new_status = 0 if current_status == 1 else 1
     
@@ -265,14 +256,12 @@ from flask import jsonify
 UPLOAD_PAGES_FOLDER = os.path.join('app', 'static', 'uploads', 'pages')
 
 @bp.route('/upload_image', methods=['POST'])
+@login_required
 def upload_image():
     """
     Обработчик асинхронной загрузки картинок напрямую из редактора TinyMCE.
     Возвращает JSON с URL загруженной картинки.
     """
-    if not session.get('is_admin'):
-        return jsonify({'error': 'Unauthorized'}), 403
-        
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
         

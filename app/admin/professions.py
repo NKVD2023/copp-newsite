@@ -5,8 +5,10 @@ import io
 from flask import render_template, request, redirect, url_for, session, flash, send_file
 from werkzeug.utils import secure_filename
 from app.admin import bp
+from app.admin.auth import login_required
 from app.db import get_db_connection
 from app.utils.image_utils import save_image_as_webp
+from app.utils.media_utils import scan_uploads_dir
 
 UPLOAD_PROFESSIONS_FOLDER = os.path.join('app', 'static', 'uploads', 'professions')
 
@@ -78,13 +80,11 @@ def parse_category_name(val, code):
     return 'other'
 
 @bp.route('/add_profession', methods=['POST'])
+@login_required
 def add_profession():
     """
     Создание новой профессии вручную.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     code = request.form.get('code', '')
     name = request.form['name']
     description = request.form.get('description', '')
@@ -122,24 +122,19 @@ def add_profession():
         flash('Профессия успешно добавлена!', 'success')
     except Exception as e:
         flash(f'Ошибка при добавлении профессии: {e}', 'danger')
-    finally:
-        conn.close()
         
     return redirect(url_for('admin.dashboard', tab='prof_atlas'))
 
 @bp.route('/edit_profession/<int:prof_id>', methods=['GET', 'POST'])
+@login_required
 def edit_profession(prof_id):
     """
     Редактирование профессии.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     conn = get_db_connection()
     prof = conn.execute('SELECT * FROM professions WHERE id = ?', (prof_id,)).fetchone()
     
     if not prof:
-        conn.close()
         flash('Профессия не найдена.', 'danger')
         return redirect(url_for('admin.dashboard', tab='prof_atlas'))
         
@@ -184,8 +179,6 @@ def edit_profession(prof_id):
             flash('Профессия успешно обновлена!', 'success')
         except Exception as e:
             flash(f'Ошибка обновления: {e}', 'danger')
-        finally:
-            conn.close()
             
         return redirect(url_for('admin.dashboard', tab='prof_atlas'))
         
@@ -210,29 +203,8 @@ def edit_profession(prof_id):
     except Exception as e:
         print(f"Error loading colleges: {e}")
         
-    import os
-    from datetime import datetime
-    
-    # Сканирование медиа-файлов
-    uploads_dir = os.path.join('app', 'static', 'uploads')
-    all_media_files = []
-    if os.path.exists(uploads_dir):
-        for root, dirs, files in os.walk(uploads_dir):
-            for file in files:
-                filepath = os.path.join(root, file)
-                rel_path = os.path.relpath(filepath, os.path.join('app', 'static')).replace('\\', '/')
-                folder = os.path.basename(root)
-                stat = os.stat(filepath)
-                size_kb = round(stat.st_size / 1024, 1)
-                date_obj = datetime.fromtimestamp(stat.st_mtime)
-                date_str = date_obj.strftime('%Y-%m-%d %H:%M')
-                ext = file.rsplit('.', 1)[-1].lower() if '.' in file else ''
-                is_image = ext in ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp']
-                all_media_files.append({
-                    'filename': file, 'filepath': rel_path, 'folder': folder,
-                    'size_kb': size_kb, 'date_str': date_str, 'is_image': is_image, 'timestamp': stat.st_mtime
-                })
-    all_media_files.sort(key=lambda x: x['timestamp'], reverse=True)
+    # Сканирование медиа-файлов — через утилиту, а не дублированный os.walk
+    all_media_files = scan_uploads_dir()
     
     news_list = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
     pages_list = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
@@ -250,8 +222,6 @@ def edit_profession(prof_id):
     except:
         prof_uploads = []
         
-    conn.close()
-    
     return render_template('admin_dashboard.html', 
                            active_tab='prof_atlas',
                            edit_prof_item=prof,
@@ -273,13 +243,11 @@ def edit_profession(prof_id):
                            now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 @bp.route('/toggle_profession_status/<int:prof_id>', methods=['POST'])
+@login_required
 def toggle_profession_status(prof_id):
     """
     Переключение статуса публикации (Опубликовано / Черновик).
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     current_status = request.form.get('current_status', 'published')
     new_status = 'draft' if current_status == 'published' else 'published'
     
@@ -290,19 +258,15 @@ def toggle_profession_status(prof_id):
         flash('Статус публикации изменен!', 'success')
     except Exception as e:
         flash(f'Ошибка при изменении статуса: {e}', 'danger')
-    finally:
-        conn.close()
         
     return redirect(url_for('admin.dashboard', tab='prof_atlas'))
 
 @bp.route('/delete_profession/<int:prof_id>', methods=['POST'])
+@login_required
 def delete_profession(prof_id):
     """
     Удаление профессии.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     conn = get_db_connection()
     prof = conn.execute('SELECT * FROM professions WHERE id = ?', (prof_id,)).fetchone()
     
@@ -319,17 +283,14 @@ def delete_profession(prof_id):
     else:
         flash('Профессия не найдена.', 'danger')
         
-    conn.close()
     return redirect(url_for('admin.dashboard', tab='prof_atlas'))
 
 @bp.route('/import_professions', methods=['POST'])
+@login_required
 def import_professions():
     """
     Импорт профессий из Excel-файла.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     file = request.files.get('excel_file')
     if not file or not file.filename.endswith('.xlsx'):
         flash("Пожалуйста, выберите файл формата .xlsx", "error")
@@ -418,16 +379,13 @@ def import_professions():
     return redirect(url_for('admin.dashboard', tab='prof_atlas'))
 
 @bp.route('/export_professions', methods=['GET'])
+@login_required
 def export_professions():
     """
     Экспорт всех профессий в Excel-файл.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     conn = get_db_connection()
     rows = conn.execute('SELECT * FROM professions ORDER BY id ASC').fetchall()
-    conn.close()
     
     data = []
     for r in rows:

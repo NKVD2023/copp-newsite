@@ -1,6 +1,7 @@
-from flask import request, redirect, url_for, session, flash
+from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
+from app.admin.auth import login_required
 import pandas as pd
 import os
 from werkzeug.utils import secure_filename
@@ -11,15 +12,13 @@ def clean_val(v):
     return str(v)
 
 @bp.route('/upload_prof_stats', methods=['POST'])
+@login_required
 def upload_prof_stats():
     """
     Загрузка и парсинг Excel-файла со статистикой по профессиям/вакансиям.
     Данные из файла используются для Дашборда (dashboard_vacancies).
     При загрузке старые записи указанной категории удаляются и заменяются новыми.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     category = request.form.get('category')
     file = request.files.get('excel_file')
     

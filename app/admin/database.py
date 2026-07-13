@@ -5,20 +5,19 @@ import shutil
 from datetime import datetime
 from flask import render_template, request, redirect, url_for, session, flash, send_file, Response
 from app.admin import bp
+from app.admin.auth import login_required
 from app.db import get_db_connection
 from werkzeug.utils import secure_filename
 
 DB_FILE_PATH = 'coppdb.sqlite'
 
 @bp.route('/db/table/<table_name>')
+@login_required
 def db_view_table(table_name):
     """
     Отображение содержимого таблицы БД в админке.
     Для предотвращения падения браузера лимит установлен на 500 записей.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     conn = get_db_connection()
     try:
         # Check if table exists to prevent SQL injection via URL
@@ -37,17 +36,13 @@ def db_view_table(table_name):
         return render_template('admin_tabs/db_table_partial.html', table_name=table_name, columns=columns, rows=rows, columns_info=columns_info, pk_col=pk_col)
     except Exception as e:
         return f"<div class='alert alert-danger'>Ошибка: {str(e)}</div>"
-    finally:
-        conn.close()
 
 @bp.route('/db/export/csv/<table_name>')
+@login_required
 def db_export_csv(table_name):
     """
     Экспорт выбранной таблицы БД в формате CSV.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     conn = get_db_connection()
     try:
         columns_info = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
@@ -75,17 +70,13 @@ def db_export_csv(table_name):
     except Exception as e:
         flash(f"Ошибка экспорта: {str(e)}", "danger")
         return redirect(url_for('admin.dashboard', tab='database'))
-    finally:
-        conn.close()
 
 @bp.route('/db/export/sql')
+@login_required
 def db_export_sqlite():
     """
     Создание и скачивание резервной копии всей базы данных (файла SQLite).
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     try:
         return send_file(os.path.abspath(DB_FILE_PATH), as_attachment=True, download_name=f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sqlite")
     except Exception as e:
@@ -93,14 +84,12 @@ def db_export_sqlite():
         return redirect(url_for('admin.dashboard', tab='database'))
 
 @bp.route('/db/execute_sql', methods=['POST'])
+@login_required
 def db_execute_sql():
     """
     Выполнение произвольного SQL-запроса из админки.
     Требует ввода пароля администратора для подтверждения полномочий.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     password = request.form.get('admin_password', '')
     if password != 'admin123':
         flash("Неверный пароль администратора", "danger")
@@ -129,20 +118,16 @@ def db_execute_sql():
     except Exception as e:
         conn.rollback()
         flash(f"Ошибка выполнения SQL: {str(e)}", "danger")
-    finally:
-        conn.close()
         
     return redirect(url_for('admin.dashboard', tab='database'))
 
 @bp.route('/db/import/sqlite', methods=['POST'])
+@login_required
 def db_import_sqlite():
     """
     Импорт (восстановление) базы данных из загруженного .sqlite файла.
     Перед заменой создает бэкап текущей БД с суффиксом .bak.
     """
-    if not session.get('is_admin'):
-        return redirect(url_for('admin.login'))
-        
     password = request.form.get('admin_password', '')
     if password != 'admin123':
         flash("Неверный пароль администратора", "danger")
@@ -174,13 +159,11 @@ def db_import_sqlite():
     return redirect(url_for('admin.dashboard', tab='database'))
 
 @bp.route('/db/update_cells', methods=['POST'])
+@login_required
 def db_update_cells():
     """
     Обработчик AJAX-запросов для inline-редактирования ячеек БД прямо из таблицы.
     """
-    if not session.get('is_admin'):
-        return {"success": False, "error": "Unauthorized"}, 403
-        
     data = request.json
     password = data.get('admin_password', '')
     if password != 'admin123':
@@ -216,5 +199,3 @@ def db_update_cells():
     except Exception as e:
         conn.rollback()
         return {"success": False, "error": str(e)}, 500
-    finally:
-        conn.close()
