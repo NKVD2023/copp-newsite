@@ -51,6 +51,9 @@ echo -e "${CYAN}═════════════════════�
 section "1/4  Получение обновлений с GitHub"
 cd "$APP_DIR"
 
+# Фикс ошибки "fatal: detected dubious ownership" (если запускаем через sudo)
+git config --global --add safe.directory "$APP_DIR"
+
 OLD_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 if [ "$HARD_RESET" = true ]; then
