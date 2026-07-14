@@ -58,40 +58,33 @@
 /* Коллаж из фотографий */
 .ph-images {
     width: 100% !important;
-    height: 300px !important;
+    height: auto !important; /* Убираем жесткую высоту */
     margin-top: 1rem !important;
     transform: none !important;
+    display: flex !important;
+    justify-content: center !important;
+    position: relative !important;
 }
 
 .ph-img {
+    position: static !important; /* Сбрасываем абсолютное позиционирование */
     border-radius: var(--radius-lg) !important;
     box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
 }
 
 .ph-img-1 {
-    width: 180px !important;
-    height: 240px !important;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%) !important; /* Центрируем главную фотку */
+    width: 100% !important; /* Занимает всю ширину контейнера */
+    max-width: 400px !important; /* Но не больше 400px */
+    height: auto !important;
+    aspect-ratio: 4/3 !important; /* Красивые пропорции */
+    transform: none !important; /* Сбрасываем лишние трансляции */
     z-index: 2 !important;
 }
 
-.ph-img-2 {
-    width: 120px !important;
-    height: 150px !important;
-    top: 10px !important;
-    right: 10px !important;
-    left: auto !important;
-    z-index: 1 !important;
-}
-
+/* Скрываем лишние картинки на мобилках */
+.ph-img-2, 
 .ph-img-3 {
-    width: 130px !important;
-    height: 100px !important;
-    bottom: 10px !important;
-    left: 10px !important;
-    z-index: 3 !important;
+    display: none !important;
 }
 
 .ph-shape {

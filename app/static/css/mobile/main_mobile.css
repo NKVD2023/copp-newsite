@@ -3,11 +3,50 @@
    ========================================= */
 
 /* Шапка и меню навигации */
+.mobile-menu-toggle {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-around !important;
+    width: 30px !important;
+    height: 25px !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    z-index: 100 !important;
+    margin-left: auto !important; /* Прижать вправо */
+}
+
+.mobile-menu-toggle span {
+    width: 30px !important;
+    height: 3px !important;
+    background: var(--copp-blue, #00334e) !important;
+    border-radius: 10px !important;
+    transition: all 0.3s linear !important;
+    transform-origin: 1px !important;
+}
+
+/* Анимация крестика */
+.mobile-menu-toggle.active span:nth-child(1) { transform: rotate(45deg) !important; }
+.mobile-menu-toggle.active span:nth-child(2) { opacity: 0 !important; transform: translateX(20px) !important; }
+.mobile-menu-toggle.active span:nth-child(3) { transform: rotate(-45deg) !important; }
+
 header nav {
+    display: none !important; /* Скрыто по умолчанию на мобильных */
     flex-direction: column !important;
     gap: 8px !important;
     padding: 10px 0 !important;
     width: 100% !important;
+    animation: fadeIn 0.3s ease-out;
+}
+
+header nav.mobile-open {
+    display: flex !important; /* Показываем только когда открыто */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 header nav > a, 

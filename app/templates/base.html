@@ -62,7 +62,7 @@
     <!-- ШАПКА САЙТА (Навигация и логотип) -->
     <!-- ========================================== -->
     <header>
-        <div class="header-container">
+        <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
             <a class="brand-container text-decoration-none" href="/">
                 <img src="{{ url_for('static', filename='img/logoblue2.png') }}" alt="Логотип">
                 <div class="brand-text">
@@ -70,7 +70,14 @@
                 </div>
             </a>
 
-            <nav>
+            <!-- Кнопка-гамбургер для мобильных (скрыта на ПК) -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Открыть меню" style="display: none;">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav id="mainNav">
                 <!-- <a href="{{ url_for('main.index') }}">Главная</a> -->
                 <div class="dropdown">
                     <button class="dropbtn" onclick="if(window.innerWidth > 768) window.location.href='{{ url_for('main.news') }}'">Новости <span class="arrow">&#9662;</span></button>
@@ -356,12 +363,30 @@
             });
         });
 
+        // Открытие/закрытие главного мобильного меню
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mainNav = document.getElementById('mainNav');
+        
+        if (mobileMenuToggle && mainNav) {
+            mobileMenuToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                mainNav.classList.toggle('mobile-open');
+                this.classList.toggle('active');
+            });
+        }
+
         // Закрываем меню при клике в любое другое место
-        document.addEventListener('click', function() {
+        document.addEventListener('click', function(e) {
             if (window.innerWidth <= 768) {
                 document.querySelectorAll('.dropdown').forEach(dropdown => {
                     dropdown.classList.remove('open');
                 });
+                
+                // Закрываем главное мобильное меню если клик вне его
+                if (mainNav && mainNav.classList.contains('mobile-open') && !mainNav.contains(e.target) && e.target !== mobileMenuToggle) {
+                    mainNav.classList.remove('mobile-open');
+                    if(mobileMenuToggle) mobileMenuToggle.classList.remove('active');
+                }
             }
         });
     });
