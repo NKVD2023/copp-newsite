@@ -3,7 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 .agents
+_.copp82.ru_certificate.txt
+_.copp82.ru_intermediate.txt
+_.copp82.ru_private.txt
+_.copp82.ru_rootCA.txt
 
+deploy.sh
 
 # C extensions
 *.so
