@@ -55,12 +55,14 @@ OLD_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 if [ "$HARD_RESET" = true ]; then
     warn "Режим --hard: сбрасываю все локальные изменения..."
-    BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")
     git fetch origin
-    git reset --hard "origin/$BRANCH"
+    git reset --hard origin/main
     git clean -fd
 else
-    git pull
+    # Сервер всегда работает на ветке main (продакшн)
+    git fetch origin
+    git checkout main 2>/dev/null || true
+    git pull origin main
 fi
 
 NEW_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
