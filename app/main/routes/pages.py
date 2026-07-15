@@ -101,6 +101,12 @@ def robots():
     root_dir = os.path.dirname(current_app.root_path)
     return send_from_directory(root_dir, 'robots.txt')
 
+@bp.route('/yandex_34742bb70a6ab400.html')
+def yandex_verification():
+    """Отдает файл подтверждения прав для Яндекс.Вебмастера."""
+    root_dir = os.path.dirname(current_app.root_path)
+    return send_from_directory(root_dir, 'yandex_34742bb70a6ab400.html')
+
 @bp.route('/sitemap.xml')
 def sitemap():
     """Генерирует динамическую карту сайта."""
