@@ -5,12 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ЦОПП РК{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css', v=4) }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bvi.css', v=4) }}">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=999">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bvi.css') }}?v=999">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Мобильная адаптивность (отдельные файлы) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/main_mobile.css', v=4) }}" media="screen and (max-width: 768px)">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/news_mobile.css', v=4) }}" media="screen and (max-width: 768px)">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/main_mobile.css') }}?v=999" media="screen and (max-width: 768px)">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/news_mobile.css') }}?v=999" media="screen and (max-width: 768px)">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -366,27 +367,40 @@
         // Открытие/закрытие главного мобильного меню
         const mobileMenuToggle = document.getElementById('mobileMenuToggle');
         const mainNav = document.getElementById('mainNav');
+        const mobileOverlay = document.getElementById('mobileOverlay');
         
+        function toggleMobileMenu() {
+            mainNav.classList.toggle('mobile-open');
+            mobileMenuToggle.classList.toggle('active');
+            if(mobileOverlay) mobileOverlay.classList.toggle('active');
+            document.body.classList.toggle('no-scroll');
+        }
+
         if (mobileMenuToggle && mainNav) {
             mobileMenuToggle.addEventListener('click', function(e) {
                 e.stopPropagation();
-                mainNav.classList.toggle('mobile-open');
-                this.classList.toggle('active');
+                toggleMobileMenu();
+            });
+        }
+
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', function(e) {
+                if (mainNav.classList.contains('mobile-open')) {
+                    toggleMobileMenu();
+                }
             });
         }
 
         // Закрываем меню при клике в любое другое место
         document.addEventListener('click', function(e) {
             if (window.innerWidth <= 768) {
-                document.querySelectorAll('.dropdown').forEach(dropdown => {
-                    dropdown.classList.remove('open');
-                });
-                
-                // Закрываем главное мобильное меню если клик вне его
-                if (mainNav && mainNav.classList.contains('mobile-open') && !mainNav.contains(e.target) && e.target !== mobileMenuToggle) {
-                    mainNav.classList.remove('mobile-open');
-                    if(mobileMenuToggle) mobileMenuToggle.classList.remove('active');
+                // Закрываем аккордеоны если клик вне их
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown').forEach(dropdown => {
+                        dropdown.classList.remove('open');
+                    });
                 }
+                
             }
         });
     });

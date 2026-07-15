@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css', v=2) }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/index_mobile.css', v=2) }}" media="screen and (max-width: 768px)">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}?v=999">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile/index_mobile.css') }}?v=999" media="screen and (max-width: 768px)">
 <style>
 .parallax-hero {
     position: relative;

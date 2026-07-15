@@ -22,8 +22,10 @@
 
 .ph-text h1, 
 .ph-text h3 {
-    font-size: 2rem !important; /* Уменьшаем шрифт, чтобы помещалось на мобилках */
+    font-size: 1.8rem !important; /* Уменьшаем шрифт, чтобы помещалось на мобилках */
     line-height: 1.2 !important;
+    word-wrap: break-word !important; /* Предотвращаем обрезку текста */
+    hyphens: auto !important;
 }
 
 .ph-text h1 {
@@ -31,6 +33,7 @@
 }
 
 .ph-text h3 {
+    font-size: 1.3rem !important;
     margin-bottom: 1rem !important;
 }
 
@@ -38,12 +41,15 @@
     font-size: 1rem !important;
     line-height: 1.5 !important;
     margin-bottom: 1.5rem !important;
+    padding: 0 10px !important;
 }
 
 .ph-buttons {
     justify-content: center !important;
     gap: 10px !important;
     margin-bottom: 1.5rem !important;
+    flex-direction: column !important; /* Кнопки друг под другом */
+    align-items: center !important;
 }
 
 .btn-ph-primary, 
@@ -57,13 +63,7 @@
 
 /* Коллаж из фотографий */
 .ph-images {
-    width: 100% !important;
-    height: auto !important; /* Убираем жесткую высоту */
-    margin-top: 1rem !important;
-    transform: none !important;
-    display: flex !important;
-    justify-content: center !important;
-    position: relative !important;
+    display: none !important; /* Полностью скрываем 3D-коллаж на мобилках для чистоты экрана */
 }
 
 .ph-img {
@@ -105,15 +105,15 @@
 /* Секция целевой аудитории (Флип-карточки) */
 .target-audience-section {
     flex-direction: column !important;
-    gap: 20px !important;
+    gap: 15px !important;
     padding: 0 15px !important;
-    margin: 2rem auto !important;
+    margin: 1.5rem auto !important;
 }
 
 .flip-card {
     width: 100% !important;
     max-width: 100% !important;
-    height: 250px !important;
+    height: 180px !important; /* Делаем карточки ниже на телефонах */
 }
 
 .flip-card-inner {
