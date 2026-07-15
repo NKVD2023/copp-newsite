@@ -22,12 +22,12 @@
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>{{ url_for('main.professions_directory', _external=True) }}</loc>
+        <loc>{{ url_for('main.atlas', _external=True) }}</loc>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>{{ url_for('main.interactive_map', _external=True) }}</loc>
+        <loc>{{ url_for('main.dashboard', _external=True) }}</loc>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
@@ -49,7 +49,7 @@
     <!-- News Articles -->
     {% for item in news %}
     <url>
-        <loc>{{ url_for('main.news_detail', id=item.id, _external=True) }}</loc>
+        <loc>{{ url_for('main.news_detail', news_id=item.id, _external=True) }}</loc>
         {% if item.publish_date %}
         <lastmod>{{ item.publish_date.split()[0] }}</lastmod>
         {% endif %}
@@ -59,9 +59,9 @@
     {% endfor %}
 
     <!-- Projects -->
-    {% for project in projects %}
+    {% for proj in projects %}
     <url>
-        <loc>{{ url_for('main.project_detail', slug=project.slug, _external=True) }}</loc>
+        <loc>{{ url_for('main.project', slug=proj.slug, _external=True) }}</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
@@ -70,7 +70,7 @@
     <!-- Professions -->
     {% for prof in professions %}
     <url>
-        <loc>{{ url_for('main.profession_detail', id=prof.id, _external=True) }}</loc>
+        <loc>{{ url_for('main.profession_detail', prof_id=prof.id, _external=True) }}</loc>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
