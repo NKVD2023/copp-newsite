@@ -78,6 +78,7 @@
                 <button class="nav-link {% if active_tab == 'contacts' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#contactsTab" type="button">
                     <i class="fas fa-envelope"></i> Обратная связь
+                    <span id="feedback-badge" class="badge bg-danger rounded-pill" style="display: none; margin-left: 5px;">0</span>
                 </button>
             </li>
             <li class="nav-item">
@@ -392,6 +393,45 @@ document.addEventListener("DOMContentLoaded", function() {
 
 </body>
 
+<!-- Notification Audio -->
+<audio id="notificationSound" src="{{ url_for('static', filename='audio/notification.wav') }}" preload="auto"></audio>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let lastUnreadCount = 0;
+    const badge = document.getElementById('feedback-badge');
+    const audio = document.getElementById('notificationSound');
+
+    function checkUnreadContacts() {
+        fetch("{{ url_for('admin.unread_contacts_count') }}")
+            .then(response => response.json())
+            .then(data => {
+                const count = data.count;
+                
+                // Update badge UI
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                // Play sound if count increased
+                if (count > lastUnreadCount) {
+                    audio.play().catch(e => {
+                        console.log("Audio autoplay prevented by browser. User interaction needed first.");
+                    });
+                }
+                
+                lastUnreadCount = count;
+            })
+            .catch(err => console.error("Error fetching unread count:", err));
+    }
+
+    // Check immediately, then every 30 seconds
+    checkUnreadContacts();
+    setInterval(checkUnreadContacts, 30000);
+});
+</script>
 <script src="{{ url_for('static', filename='js/news.js') }}"></script>
 </html>

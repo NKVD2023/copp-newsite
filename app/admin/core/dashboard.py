@@ -3,11 +3,19 @@
 Собирает все необходимые данные из БД для вывода вкладок админки.
 """
 from datetime import datetime
-from flask import render_template, redirect, url_for, session, request
+from flask import render_template, redirect, url_for, session, request, jsonify
 from app.admin import bp
 from app.admin.core.auth import login_required
 from app.db import get_db_connection
 from app.utils.media_utils import scan_uploads_dir
+
+
+@bp.route('/api/unread_contacts_count')
+@login_required
+def unread_contacts_count():
+    with get_db_connection() as conn:
+        count = conn.execute('SELECT COUNT(*) FROM contact_requests WHERE status = "new"').fetchone()[0]
+    return jsonify({'count': count})
 
 
 @bp.route('/')
