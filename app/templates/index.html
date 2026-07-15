@@ -406,7 +406,7 @@
     <!-- ========================================== -->
     <div class="target-audience-section">
         <!-- Карточка 1: Школьники -->
-        <div class="flip-card">
+        <div class="flip-card" onclick="window.location.href='{{ url_for('main.project', slug='BVB') }}';" style="cursor: pointer;" title="Перейти к проекту «Билет в будущее»">
             <div class="flip-card-inner">
                 <div class="flip-card-front">
                     <!-- Book icon -->
@@ -423,7 +423,7 @@
         </div>
 
         <!-- Card 2 -->
-        <div class="flip-card">
+        <div class="flip-card" onclick="window.location.href='{{ url_for('main.project', slug='bck') }}';" style="cursor: pointer;" title="Перейти к проекту «Базовый центр карьеры»">
             <div class="flip-card-inner">
                 <div class="flip-card-front">
                     <!-- University icon -->
