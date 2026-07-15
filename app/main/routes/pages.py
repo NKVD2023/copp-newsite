@@ -5,7 +5,7 @@ from app import limiter
 from app.db import get_db_connection
 
 @bp.route('/contact/submit', methods=['POST'])
-@limiter.limit("5 per day")
+@limiter.limit("30 per day")
 @limiter.limit("1 per minute")
 def contact_submit():
     """
@@ -65,7 +65,7 @@ def dynamic_page(slug):
 
 
 @bp.route('/submit_dynamic_form', methods=['POST'])
-@limiter.limit("5 per day")
+@limiter.limit("30 per day")
 @limiter.limit("1 per minute")
 def submit_dynamic_form():
     """

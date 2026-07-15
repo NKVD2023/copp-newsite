@@ -13,6 +13,7 @@ from config import Config
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Глобальный объект кэша (инициализируется в create_app)
 cache = Cache()
@@ -28,6 +29,9 @@ def create_app(config_class=Config):
     """
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Настройка ProxyFix для правильного определения IP-адресов за Nginx
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # ==========================================
     # КЭШИРОВАНИЕ (SimpleCache — хранится в RAM)
