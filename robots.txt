@@ -1,0 +1,32 @@
+User-agent: Yandex
+Allow: /$
+Allow: /news/
+Allow: /projects/
+Allow: /professions/
+Allow: /events/
+Allow: /page/
+Allow: /static/
+Disallow: /admin/
+Disallow: /api/
+Host: https://copp82.ru
+Sitemap: https://copp82.ru/sitemap.xml
+Crawl-delay: 1.5
+
+User-agent: YandexImages
+Allow: /static/img/
+Allow: /static/uploads/
+Disallow: /admin/
+Disallow: /api/
+
+User-agent: *
+Allow: /$
+Allow: /news/
+Allow: /projects/
+Allow: /professions/
+Allow: /events/
+Allow: /page/
+Allow: /static/
+Disallow: /admin/
+Disallow: /api/
+Sitemap: https://copp82.ru/sitemap.xml
+Crawl-delay: 2

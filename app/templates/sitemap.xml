@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <!-- Static Routes -->
+    <url>
+        <loc>{{ url_for('main.index', _external=True) }}</loc>
+        <changefreq>daily</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('main.news', _external=True) }}</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('main.events', _external=True) }}</loc>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('main.projects', _external=True) }}</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('main.professions_directory', _external=True) }}</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('main.interactive_map', _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('main.team', _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    <!-- Dynamic Pages -->
+    {% for page in pages %}
+    <url>
+        <loc>{{ url_for('main.dynamic_page', slug=page.slug, _external=True) }}</loc>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    {% endfor %}
+
+    <!-- News Articles -->
+    {% for item in news %}
+    <url>
+        <loc>{{ url_for('main.news_detail', id=item.id, _external=True) }}</loc>
+        {% if item.publish_date %}
+        <lastmod>{{ item.publish_date.split()[0] }}</lastmod>
+        {% endif %}
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    {% endfor %}
+
+    <!-- Projects -->
+    {% for project in projects %}
+    <url>
+        <loc>{{ url_for('main.project_detail', slug=project.slug, _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    {% endfor %}
+
+    <!-- Professions -->
+    {% for prof in professions %}
+    <url>
+        <loc>{{ url_for('main.profession_detail', id=prof.id, _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    {% endfor %}
+</urlset>

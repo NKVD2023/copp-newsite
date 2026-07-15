@@ -1,4 +1,5 @@
-from flask import render_template, request, jsonify, redirect, url_for, abort
+import os
+from flask import render_template, request, jsonify, redirect, url_for, abort, Response, send_from_directory, current_app
 from app.main import bp
 from app import limiter
 from app.db import get_db_connection
@@ -93,3 +94,21 @@ def submit_dynamic_form():
     except Exception as e:
         print("Dynamic form submit error:", e)
         return jsonify({'success': False, 'message': 'Произошла ошибка при отправке.'}), 500
+
+@bp.route('/robots.txt')
+def robots():
+    """Отдает файл robots.txt из корня проекта."""
+    root_dir = os.path.dirname(current_app.root_path)
+    return send_from_directory(root_dir, 'robots.txt')
+
+@bp.route('/sitemap.xml')
+def sitemap():
+    """Генерирует динамическую карту сайта."""
+    conn = get_db_connection()
+    pages = conn.execute('SELECT slug FROM pages').fetchall()
+    news = conn.execute('SELECT id, publish_date FROM news WHERE status = "published"').fetchall()
+    projects = conn.execute('SELECT slug FROM projects WHERE status = "published"').fetchall()
+    professions = conn.execute('SELECT id FROM professions WHERE status = "published"').fetchall()
+    
+    xml = render_template('sitemap.xml', pages=pages, news=news, projects=projects, professions=professions)
+    return Response(xml, mimetype='application/xml')
