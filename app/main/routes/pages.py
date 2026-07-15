@@ -104,11 +104,15 @@ def robots():
 @bp.route('/sitemap.xml')
 def sitemap():
     """Генерирует динамическую карту сайта."""
-    conn = get_db_connection()
-    pages = conn.execute('SELECT slug FROM pages').fetchall()
-    news = conn.execute('SELECT id, publish_date FROM news WHERE status = "published"').fetchall()
-    projects = conn.execute('SELECT slug FROM projects WHERE status = "published"').fetchall()
-    professions = conn.execute('SELECT id FROM professions WHERE status = "published"').fetchall()
-    
-    xml = render_template('sitemap.xml', pages=pages, news=news, projects=projects, professions=professions)
-    return Response(xml, mimetype='application/xml')
+    try:
+        conn = get_db_connection()
+        pages = conn.execute('SELECT slug FROM pages').fetchall()
+        news = conn.execute('SELECT id, publish_date FROM news WHERE status = "published"').fetchall()
+        projects = conn.execute('SELECT slug FROM projects WHERE status = "published"').fetchall()
+        professions = conn.execute('SELECT id FROM professions WHERE status = "published"').fetchall()
+        
+        xml = render_template('sitemap.xml', pages=pages, news=news, projects=projects, professions=professions)
+        return Response(xml, mimetype='application/xml')
+    except Exception as e:
+        import traceback
+        return Response(traceback.format_exc(), mimetype='text/plain')
