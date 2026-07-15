@@ -16,11 +16,7 @@
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
     </url>
-    <url>
-        <loc>{{ url_for('main.projects', _external=True) }}</loc>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
+
     <url>
         <loc>{{ url_for('main.atlas', _external=True) }}</loc>
         <changefreq>weekly</changefreq>
