@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ЦОПП РК{% endblock %}</title>
+    <!-- Favicon (логотип на вкладках) -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logoblue2.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logoblue2.png') }}">
     <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=999">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bvi.css') }}?v=999">
