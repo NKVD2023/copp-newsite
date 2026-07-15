@@ -36,9 +36,10 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 if [ ! -d "$APP_DIR/.git" ]; then
-    error "Директория проекта не найдена: $APP_DIR"
-    error "Сначала выполните первичный деплой: sudo bash deploy.sh"
-    exit 1
+    warn "Папка .git не найдена! Восстанавливаю привязку к репозиторию..."
+    cd "$APP_DIR"
+    git init
+    git remote add origin https://github.com/NKVD2023/copp-newsite.git
 fi
 
 START_TIME=$(date +%s)
@@ -60,12 +61,12 @@ if [ "$HARD_RESET" = true ]; then
     warn "Режим --hard: сбрасываю все локальные изменения..."
     git fetch origin
     git reset --hard origin/main
-    git clean -fd
 else
     # Сервер всегда работает на ветке main (продакшн)
+    # Принудительно сбрасываем состояние от возможных прямых загрузок (deploy_direct)
     git fetch origin
     git checkout main 2>/dev/null || true
-    git pull origin main
+    git reset --hard origin/main
 fi
 
 NEW_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
@@ -122,7 +123,14 @@ chown "$APP_USER":"$APP_USER" /var/log/${SERVICE_NAME}_error.log /var/log/${SERV
 
 info "Права расставлены."
 
-# ─── 4. ПЕРЕЗАПУСК ────────────────────────────────────────────────────────────
+# ─── 4. АВТОПАТЧ NGINX (ЛИМИТ ЗАГРУЗКИ) ─────────────────────────────────────────
+if ! grep -q "client_max_body_size" /etc/nginx/sites-available/copp 2>/dev/null; then
+    sed -i '/server_name/a \    client_max_body_size 100M;' /etc/nginx/sites-available/copp
+    nginx -t >/dev/null 2>&1 && systemctl reload nginx
+    info "Nginx пропатчен: увеличен лимит загрузки (client_max_body_size 100M)"
+fi
+
+# ─── 5. ПЕРЕЗАПУСК ────────────────────────────────────────────────────────────
 section "4/4  Перезапуск сервисов"
 
 if [ "$NO_RESTART" = false ]; then

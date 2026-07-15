@@ -1,4 +1,5 @@
 @echo off
+cd ..
 
 echo =========================================
 echo  Direct Upload to Server (Bypass Git)
@@ -6,7 +7,7 @@ echo =========================================
 echo.
 
 echo [*] Packing files (excluding __pycache__ and venv)...
-tar --exclude="__pycache__" --exclude=".git" --exclude="venv" -czf upload.tar.gz app run.py wsgi.py config.py requirements.txt deploy.sh update.sh .env coppdb.sqlite
+tar --exclude="__pycache__" --exclude=".git" --exclude="venv" -czf upload.tar.gz app run.py wsgi.py config.py requirements.txt deploy_scripts .env coppdb.sqlite
 
 echo [*] Preparing server...
 ssh admincopp@178.20.47.20 "mkdir -p ~/site_upload"

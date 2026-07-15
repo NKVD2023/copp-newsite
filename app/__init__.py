@@ -4,6 +4,7 @@
 регистрирует глобальные переменные для шаблонов (context processors),
 кастомные фильтры Jinja и подключает Blueprint'ы (роуты).
 """
+#fix
 import json
 import os
 from flask import Flask
