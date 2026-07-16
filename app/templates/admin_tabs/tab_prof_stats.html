@@ -6,61 +6,124 @@
         </a>
     </div>
 
-    <div style="background:#f0f6ff; border:1px solid #c8ddff; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#2255a8; display:flex; align-items:center; gap:8px;">
-        <i class="fas fa-circle-info"></i>
-        Загружайте файлы Excel (.xlsx) с актуальными данными. Система автоматически обработает и обновит дашборд.
-    </div>
 
-    <form action="{{ url_for('admin.upload_prof_stats') }}" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <div class="a-form-grid" style="grid-template-columns: 1fr 2fr auto; align-items:end; gap:10px;">
-            <div class="a-form-group">
-                <label class="a-label">Категория данных</label>
-                <select name="category" class="a-select" required>
-                    <option value="Свод по региону">Свод по региону</option>
-                    <option value="Полный список">Полный список</option>
-                    <option value="Иностранцы">Иностранцы</option>
-                    <option value="Квотируемые">Квотируемые</option>
-                    <option value="С предоставлением жилья">С предоставлением жилья</option>
-                    <option value="Соцкатегории">Соцкатегории</option>
-                    <option value="Трудовая мобильность">Трудовая мобильность</option>
-                </select>
+    <div class="trudvsem-sync-box" style="background:#f8f9fa; border:1px solid #dee2e6; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h6 style="margin:0 0 5px 0; color:#333;"><i class="fas fa-cloud-arrow-down" style="color:#0056b3;"></i> Синхронизация с порталом «Работа в России»</h6>
+            <p style="margin:0; font-size:0.85rem; color:#666;">Автоматически скачивает все открытые вакансии по региону Крым. Текущие данные будут заменены новыми.</p>
+            
+            <div id="syncStatusUI" style="display:none; margin-top:12px; background:#fff; border:1px solid #c8ddff; border-radius:6px; padding:12px; border-left:4px solid #0056b3;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+                    <strong id="syncStatusText" style="font-size:0.9rem; color:#0056b3; margin:0;">Ожидание...</strong>
+                </div>
+                <div style="height:8px; background:#e9ecef; border-radius:4px; overflow:hidden;">
+                    <div id="syncProgressBar" style="height:100%; width:0%; background:#0056b3; transition:width 0.4s ease;"></div>
+                </div>
             </div>
-            <div class="a-form-group">
-                <label class="a-label">Excel Файл (.xlsx)</label>
-                <input type="file" name="excel_file" class="a-input" accept=".xlsx" required>
-            </div>
-            <button type="submit" class="a-btn a-btn-accent" style="align-self:end;">
-                <i class="fas fa-upload"></i> Загрузить
+        </div>
+        <div style="margin-left:20px;">
+            <button id="btnStartSync" class="a-btn" style="background:#0056b3; color:white; font-weight:500;" onclick="startSync()">
+                <i class="fas fa-sync" id="syncIcon"></i> Синхронизировать
             </button>
         </div>
-    </form>
+    </div>
 </div>
 
-<div class="a-panel">
-    <h6 class="a-panel-title"><i class="fas fa-clock-rotate-left"></i> История загрузок</h6>
-    <div class="a-table-responsive">
-        <table class="a-table">
-            <thead>
-                <tr>
-                    <th>Категория</th>
-                    <th>Имя файла</th>
-                    <th>Дата обновления</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for upload in prof_uploads %}
-                <tr>
-                    <td><span class="a-badge a-badge-blue">{{ upload.category }}</span></td>
-                    <td style="font-size:0.82rem; color:#6b7a8d;">{{ upload.filename }}</td>
-                    <td style="font-size:0.82rem; color:#8a9ab0; white-space:nowrap;">{{ upload.upload_date }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="3" class="a-empty"><i class="fas fa-file-arrow-up"></i><p>Загрузок ещё не было</p></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<script>
+    let syncPollInterval = null;
+
+    function startSync() {
+        if(!confirm('Запустить синхронизацию? Это займет около минуты.')) return;
+        
+        setUIState('running', 'Запуск процесса...', 5);
+
+        fetch("{{ url_for('admin.trudvsem_sync') }}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                if(!syncPollInterval) syncPollInterval = setInterval(pollSyncStatus, 1500);
+            }
+        })
+        .catch(err => {
+            setUIState('error', 'Ошибка сети при запуске', 100);
+        });
+    }
+
+    function setUIState(state, message, progressPct) {
+        const ui = document.getElementById('syncStatusUI');
+        const text = document.getElementById('syncStatusText');
+        const bar = document.getElementById('syncProgressBar');
+        const btn = document.getElementById('btnStartSync');
+        const icon = document.getElementById('syncIcon');
+        
+        ui.style.display = 'block';
+        text.innerText = message;
+        
+        if (progressPct !== null) {
+            bar.style.width = progressPct + '%';
+        }
+
+        if (state === 'running') {
+            text.style.color = '#0056b3';
+            ui.style.borderLeftColor = '#0056b3';
+            bar.style.background = '#0056b3';
+            btn.disabled = true;
+            icon.classList.add('fa-spin');
+        } else if (state === 'finished') {
+            text.style.color = '#28a745';
+            ui.style.borderLeftColor = '#28a745';
+            bar.style.background = '#28a745';
+            btn.disabled = false;
+            icon.classList.remove('fa-spin');
+            if(syncPollInterval) { clearInterval(syncPollInterval); syncPollInterval = null; }
+        } else if (state === 'error') {
+            text.style.color = '#dc3545';
+            ui.style.borderLeftColor = '#dc3545';
+            bar.style.background = '#dc3545';
+            btn.disabled = false;
+            icon.classList.remove('fa-spin');
+            if(syncPollInterval) { clearInterval(syncPollInterval); syncPollInterval = null; }
+        } else if (state === 'idle') {
+            ui.style.display = 'none';
+        }
+    }
+
+    function pollSyncStatus() {
+        fetch("{{ url_for('admin.trudvsem_sync_status') }}")
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'running') {
+                let pct = 10;
+                if(data.total > 0 && data.downloaded > 0) {
+                    pct = Math.min(95, Math.round((data.downloaded / data.total) * 100));
+                }
+                setUIState('running', data.message || "Скачивание...", pct);
+            } else if(data.status === 'finished') {
+                setUIState('finished', data.message || "Синхронизация завершена!", 100);
+            } else if(data.status === 'error') {
+                setUIState('error', data.message || "Произошла ошибка", 100);
+            } else {
+                if(syncPollInterval) { clearInterval(syncPollInterval); syncPollInterval = null; }
+            }
+        })
+        .catch(err => console.log(err));
+    }
+    
+    // Check status on load in case it's already running
+    fetch("{{ url_for('admin.trudvsem_sync_status') }}")
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'running') {
+                setUIState('running', data.message || "Скачивание...", 10);
+                if(!syncPollInterval) syncPollInterval = setInterval(pollSyncStatus, 1500);
+            } else if(data.status === 'finished') {
+                setUIState('finished', data.message || "Синхронизация завершена!", 100);
+            } else if(data.status === 'error') {
+                setUIState('error', data.message || "Произошла ошибка", 100);
+            }
+        });
+</script>
 </div>

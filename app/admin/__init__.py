@@ -8,6 +8,7 @@ from flask import Blueprint
 bp = Blueprint('admin', __name__)
 
 
+
 @bp.context_processor
 def inject_admin_context():
     """
@@ -24,7 +25,7 @@ def inject_admin_context():
     import json
     from app.db import get_db_connection
     from app.admin.directory.professions import CATEGORIES_RU
-    from app.utils.media_utils import scan_uploads_dir  # утилита вместо дублированного os.walk
+    from app.utils.media_utils import scan_uploads_dir
 
     context = {}
     context['categories_dict'] = CATEGORIES_RU
@@ -36,13 +37,6 @@ def inject_admin_context():
         context['tables_list'] = conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
         ).fetchall()
-
-        try:
-            context['prof_uploads'] = conn.execute(
-                'SELECT * FROM dashboard_uploads ORDER BY upload_date DESC'
-            ).fetchall()
-        except Exception:
-            context['prof_uploads'] = []
 
         try:
             context['professions_list'] = conn.execute(
@@ -60,7 +54,6 @@ def inject_admin_context():
         pass
     context['colleges_list'] = colleges_list
 
-    # Сканирование медиа-файлов — теперь через общую утилиту (было продублировано 3 раза)
     context['all_media_files'] = scan_uploads_dir()
 
     return context

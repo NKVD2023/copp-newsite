@@ -15,10 +15,17 @@ def api_dashboard():
     """
     import json as _json
 
-    category = request.args.get('category', 'Полный список')
+    category = request.args.get('category', 'Все отрасли')
     search = request.args.get('search', '').strip().lower()
     munis = request.args.get('munis', '')
     emps = request.args.get('emps', '')
+    schedule = request.args.get('schedule', '')
+    exp = request.args.get('exp', '')
+
+    try:
+        exp = int(exp) if exp else None
+    except ValueError:
+        exp = None
 
     try:
         page = int(request.args.get('page', 1))
@@ -42,8 +49,12 @@ def api_dashboard():
 
     conn = get_db_connection()
 
-    query_base = "FROM dashboard_vacancies WHERE category = ?"
-    params = [category]
+    query_base = "FROM dashboard_vacancies WHERE 1=1"
+    params = []
+    
+    if category and category != 'Все отрасли':
+        query_base += " AND category = ?"
+        params.append(category)
 
     if munis_list:
         placeholders = ','.join(['?'] * len(munis_list))
@@ -54,6 +65,17 @@ def api_dashboard():
         placeholders = ','.join(['?'] * len(emps_list))
         query_base += f" AND employer IN ({placeholders})"
         params.extend(emps_list)
+
+    if schedule and schedule != 'Любой график':
+        query_base += " AND schedule = ?"
+        params.append(schedule)
+
+    if exp is not None:
+        if exp == 0:
+            query_base += " AND (experience_length = 0 OR experience_length IS NULL)"
+        else:
+            query_base += " AND experience_length >= ?"
+            params.append(exp)
 
     if search:
         query_base += " AND (LOWER(vacancy_name) LIKE ? OR LOWER(requirements) LIKE ? OR LOWER(employer) LIKE ?)"
@@ -96,12 +118,25 @@ def api_dashboard():
 
     data = [dict(r) for r in rows]
 
+    import os
+    import datetime
+    last_updated = "Неизвестно"
+    status_file = os.path.join('app', 'static', 'data', 'sync_status.json')
+    if os.path.exists(status_file):
+        try:
+            mtime = os.path.getmtime(status_file)
+            dt = datetime.datetime.fromtimestamp(mtime)
+            last_updated = dt.strftime("%d.%m.%Y %H:%M")
+        except Exception:
+            pass
+
     return jsonify({
         "success": True,
         "data": data,
         "total_count": total_count,
         "total_jobs": total_jobs,
         "median_salary": median_salary,
+        "last_updated": last_updated
     })
 
 
@@ -110,19 +145,39 @@ def api_dashboard_filters():
     """
     Эндпоинт для получения уникальных списков муниципалитетов и работодателей по выбранной категории.
     """
-    category = request.args.get('category', 'Полный список')
+    category = request.args.get('category', 'Все отрасли')
     conn = get_db_connection()
-
-    munis_rows = conn.execute(
-        "SELECT DISTINCT municipality FROM dashboard_vacancies WHERE category = ? AND municipality IS NOT NULL AND municipality != 'None' AND municipality != ''",
-        (category,)
-    ).fetchall()
-    emps_rows = conn.execute(
-        "SELECT DISTINCT employer FROM dashboard_vacancies WHERE category = ? AND employer IS NOT NULL AND employer != 'None' AND employer != ''",
-        (category,)
+    
+    # We ignore category when fetching categories
+    categories_rows = conn.execute(
+        "SELECT DISTINCT category FROM dashboard_vacancies WHERE category IS NOT NULL AND category != 'None' AND category != ''"
     ).fetchall()
 
+    # Filtering logic for municipalities and employers should also respect the category filter
+    muni_query = "SELECT DISTINCT municipality FROM dashboard_vacancies WHERE municipality IS NOT NULL AND municipality != 'None' AND municipality != ''"
+    emp_query = "SELECT DISTINCT employer FROM dashboard_vacancies WHERE employer IS NOT NULL AND employer != 'None' AND employer != ''"
+    schedule_query = "SELECT DISTINCT schedule FROM dashboard_vacancies WHERE schedule IS NOT NULL AND schedule != 'None' AND schedule != ''"
+    
+    cat_params = []
+    if category and category != 'Все отрасли':
+        muni_query += " AND category = ?"
+        emp_query += " AND category = ?"
+        schedule_query += " AND category = ?"
+        cat_params.append(category)
+        
+    munis_rows = conn.execute(muni_query, cat_params).fetchall()
+    emps_rows = conn.execute(emp_query, cat_params).fetchall()
+    schedules_rows = conn.execute(schedule_query, cat_params).fetchall()
+
+    categories = sorted([r['category'] for r in categories_rows])
     munis = sorted([r['municipality'] for r in munis_rows])
     emps = sorted([r['employer'] for r in emps_rows])
+    schedules = sorted([r['schedule'] for r in schedules_rows])
 
-    return jsonify({"success": True, "munis": munis, "emps": emps})
+    return jsonify({
+        "success": True, 
+        "categories": categories, 
+        "munis": munis, 
+        "emps": emps, 
+        "schedules": schedules
+    })

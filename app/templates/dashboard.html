@@ -3,22 +3,33 @@
 <style>
     body { background-color: #f4f6f9; }
     .dash-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-    .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 15px; }
+    .filter-panel { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 25px; display: flex; flex-direction: column; gap: 15px; position: relative; }
+    .dash-header-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
     .dash-title { color: var(--copp-blue); margin: 0; font-weight: 700; font-size: 24px; }
     
-    .filter-panel { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-    .filter-group { display: flex; flex-direction: column; gap: 8px; }
-    .filter-group label { font-size: 13px; font-weight: 600; color: #555; text-transform: uppercase; }
+    .filter-row-top { display: flex; width: 100%; align-items: center; }
+    .search-input-wrapper { position: relative; flex: 1; }
+    .search-input-wrapper i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #888; font-size: 16px; }
+    #vacSearch { padding: 14px 15px 14px 45px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 15px; width: 100%; box-sizing: border-box; outline: none; transition: all 0.2s; background: #f8f9fa; }
+    #vacSearch:focus { background: #fff; border-color: #70c6d1; box-shadow: 0 0 0 3px rgba(112, 198, 209, 0.2); }
+    
+    .btn-reset-filters { background: transparent; border: 1px solid #ddd; color: #555; padding: 13px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-left: 15px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .btn-reset-filters:hover { background: #f8f9fa; border-color: #ccc; color: #333; }
+    
+    .filter-row-bottom { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    
+    .filter-group { display: flex; flex-direction: column; gap: 6px; }
+    .filter-group label { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
     
     /* Custom Dropdowns */
     .custom-select-wrapper { position: relative; user-select: none; width: 100%; }
-    .custom-select { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; font-size: 14px; color: #333; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .custom-select:hover, .custom-select-wrapper.open .custom-select { border-color: #70c6d1; box-shadow: 0 0 0 3px rgba(112, 198, 209, 0.2); }
+    .custom-select { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fff; cursor: pointer; font-size: 14px; color: #333; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .custom-select:hover, .custom-select-wrapper.open .custom-select { border-color: #70c6d1; background: #fff; box-shadow: 0 0 0 3px rgba(112, 198, 209, 0.2); }
     .custom-select-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
-    .custom-select-options { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #70c6d1; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 100; max-height: 300px; overflow-y: auto; }
+    .custom-select-options { display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #70c6d1; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); z-index: 100; max-height: 300px; overflow-y: auto; }
     .custom-select-wrapper.open .custom-select-options { display: block; }
     .custom-select-option { padding: 10px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background 0.2s; font-size: 14px; color: #333; }
-    .custom-select-option:hover { background: #eef8f9; } /* very light tropical blue */
+    .custom-select-option:hover { background: #eef8f9; }
     .custom-select-option input[type="checkbox"], .custom-select-option input[type="radio"] { accent-color: #70c6d1; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
     .custom-select-arrow { transition: transform 0.2s; font-size: 12px; color: #888; }
     .custom-select-wrapper.open .custom-select-arrow { transform: rotate(180deg); color: #70c6d1; }
@@ -45,6 +56,9 @@
     .vac-salary { font-size: 18px; font-weight: 700; color: var(--copp-orange); margin-bottom: 15px; }
     
     .vac-meta { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #777; margin-bottom: 6px; }
+    .vac-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .vac-tag { background: #f0f4f8; color: var(--copp-blue); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(0,62,107,0.1); }
+    .vac-duties { font-size: 13px; color: #555; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
     
     .vac-actions { margin-top: auto; padding-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; }
     .btn-vac-primary { flex: 1; background-color: var(--copp-blue); color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: 600; font-size: 14px; text-align: center; transition: background 0.2s; cursor: pointer; }
@@ -60,71 +74,104 @@
 </style>
 
 <div class="dash-container">
-    <div class="dash-header">
-        <h1 class="dash-title">Статистика востребованных профессий Республики Крым</h1>
-        <div class="text-muted" id="lastUpdated" style="color: #666;">Загрузка данных...</div>
-    </div>
-
-    <!-- Filters Row -->
+    <!-- Filters Row with Header inside -->
     <div class="filter-panel">
-        <div class="filter-group" style="grid-column: 1 / -1;">
-            <label>Поиск по вакансиям</label>
-            <input type="text" id="vacSearch" placeholder="Например: Сварщик, IT, Слесарь..." oninput="applyFilters()" style="padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+        <div class="dash-header-inner">
+            <h1 class="dash-title">Статистика востребованных профессий Республики Крым</h1>
+            <div class="text-muted" id="lastUpdated" style="color: #666; font-size: 14px;">Данные актуальны на: <span id="lastUpdatedDate">Загрузка...</span></div>
         </div>
-        <div class="filter-group">
-            <label>Категория</label>
-            <div class="custom-select-wrapper" id="catWrapper">
-                <div class="custom-select" onclick="toggleDropdown('catWrapper', event)">
-                    <span class="custom-select-text" id="catText">Полный список</span>
-                    <span class="custom-select-arrow">▼</span>
-                </div>
-                <div class="custom-select-options" id="catOptions">
-                    <!-- Single select categories -->
-                    <label class="custom-select-option">
-                        <input type="radio" name="category" value="Полный список" checked onchange="changeCategory(this)"> Полный список
-                    </label>
-                    <label class="custom-select-option">
-                        <input type="radio" name="category" value="Свод по региону" onchange="changeCategory(this)"> Свод по региону
-                    </label>
-                    <label class="custom-select-option">
-                        <input type="radio" name="category" value="Иностранцы" onchange="changeCategory(this)"> Иностранцы
-                    </label>
-                    <label class="custom-select-option">
-                        <input type="radio" name="category" value="Квотируемые" onchange="changeCategory(this)"> Квотируемые
-                    </label>
-                    <label class="custom-select-option">
-                        <input type="radio" name="category" value="С предоставлением жилья" onchange="changeCategory(this)"> С предоставлением жилья
-                    </label>
-                    <label class="custom-select-option">
-                        <input type="radio" name="category" value="Соцкатегории" onchange="changeCategory(this)"> Соцкатегории
-                    </label>
-                    <label class="custom-select-option">
-                        <input type="radio" name="category" value="Трудовая мобильность" onchange="changeCategory(this)"> Трудовая мобильность
-                    </label>
+        
+        <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 5px 0 10px 0;">
+        
+        <div class="filter-row-top">
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" id="vacSearch" placeholder="Поиск по названию вакансии, работодателю, навыкам..." oninput="applyFilters()">
+            </div>
+            <button class="btn-reset-filters" onclick="resetFilters()">
+                <i class="fas fa-times"></i> Сбросить
+            </button>
+        </div>
+        <div class="filter-row-bottom">
+            <div class="filter-group">
+                <label>Отрасль</label>
+                <div class="custom-select-wrapper" id="catWrapper">
+                    <div class="custom-select" onclick="toggleDropdown('catWrapper', event)">
+                        <span class="custom-select-text" id="catText">Все отрасли</span>
+                        <span class="custom-select-arrow">▼</span>
+                    </div>
+                    <div class="custom-select-options" id="catOptions">
+                        <label class="custom-select-option">
+                            <input type="radio" name="category" value="Все отрасли" checked onchange="changeCategory(this)"> Все отрасли
+                        </label>
+                        <!-- Other options will be populated dynamically -->
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="filter-group">
-            <label>Муниципалитеты</label>
-            <div class="custom-select-wrapper" id="muniWrapper">
-                <div class="custom-select" onclick="toggleDropdown('muniWrapper', event)">
-                    <span class="custom-select-text" id="muniText">Все муниципалитеты</span>
-                    <span class="custom-select-arrow">▼</span>
-                </div>
-                <div class="custom-select-options" id="muniOptions">
-                    <!-- Checkboxes generated by JS -->
+            
+            <div class="filter-group">
+                <label>Муниципалитет</label>
+                <div class="custom-select-wrapper" id="muniWrapper">
+                    <div class="custom-select" onclick="toggleDropdown('muniWrapper', event)">
+                        <span class="custom-select-text" id="muniText">Все муниципалитеты</span>
+                        <span class="custom-select-arrow">▼</span>
+                    </div>
+                    <div class="custom-select-options" id="muniOptions">
+                        <!-- Checkboxes generated by JS -->
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="filter-group">
-            <label>Работодатели</label>
-            <div class="custom-select-wrapper" id="empWrapper">
-                <div class="custom-select" onclick="toggleDropdown('empWrapper', event)">
-                    <span class="custom-select-text" id="empText">Все компании</span>
-                    <span class="custom-select-arrow">▼</span>
+            
+            <div class="filter-group">
+                <label>Работодатель</label>
+                <div class="custom-select-wrapper" id="empWrapper">
+                    <div class="custom-select" onclick="toggleDropdown('empWrapper', event)">
+                        <span class="custom-select-text" id="empText">Все компании</span>
+                        <span class="custom-select-arrow">▼</span>
+                    </div>
+                    <div class="custom-select-options" id="empOptions">
+                        <!-- Checkboxes generated by JS -->
+                    </div>
                 </div>
-                <div class="custom-select-options" id="empOptions">
-                    <!-- Checkboxes generated by JS -->
+            </div>
+            
+            <div class="filter-group">
+                <label>График работы</label>
+                <div class="custom-select-wrapper" id="scheduleWrapper">
+                    <div class="custom-select" onclick="toggleDropdown('scheduleWrapper', event)">
+                        <span class="custom-select-text" id="scheduleText">Любой график</span>
+                        <span class="custom-select-arrow">▼</span>
+                    </div>
+                    <div class="custom-select-options" id="scheduleOptions">
+                        <label class="custom-select-option">
+                            <input type="radio" name="schedule" value="Любой график" checked onchange="changeSchedule(this)"> Любой график
+                        </label>
+                        <!-- Other options generated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Опыт работы</label>
+                <div class="custom-select-wrapper" id="expWrapper">
+                    <div class="custom-select" onclick="toggleDropdown('expWrapper', event)">
+                        <span class="custom-select-text" id="expText">Любой опыт</span>
+                        <span class="custom-select-arrow">▼</span>
+                    </div>
+                    <div class="custom-select-options" id="expOptions">
+                        <label class="custom-select-option">
+                            <input type="radio" name="exp" value="" checked onchange="changeExp(this, 'Любой опыт')"> Любой опыт
+                        </label>
+                        <label class="custom-select-option">
+                            <input type="radio" name="exp" value="0" onchange="changeExp(this, 'Без опыта')"> Без опыта
+                        </label>
+                        <label class="custom-select-option">
+                            <input type="radio" name="exp" value="1" onchange="changeExp(this, 'От 1 года')"> От 1 года
+                        </label>
+                        <label class="custom-select-option">
+                            <input type="radio" name="exp" value="3" onchange="changeExp(this, 'От 3 лет')"> От 3 лет
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -197,7 +244,7 @@
         }
     });
 
-    let currentCategory = "Полный список";
+    let currentCategory = "Все отрасли";
 
     function changeCategory(radio) {
         currentCategory = radio.value;
@@ -209,6 +256,52 @@
             currentPage = 1;
             loadData(true);
         });
+    }
+
+    function resetFilters() {
+        // Reset Search
+        const searchInput = document.getElementById('vacSearch');
+        if (searchInput) searchInput.value = '';
+
+        // Reset Category
+        const defaultCatRadio = document.querySelector('input[name="category"][value="Все отрасли"]');
+        if (defaultCatRadio) defaultCatRadio.checked = true;
+        currentCategory = "Все отрасли";
+        document.getElementById('catText').innerText = currentCategory;
+
+        // Reset Schedule
+        const defaultSchedRadio = document.querySelector('input[name="schedule"][value="Любой график"]');
+        if (defaultSchedRadio) defaultSchedRadio.checked = true;
+        currentSchedule = "Любой график";
+        document.getElementById('scheduleText').innerText = currentSchedule;
+
+        // Reset Experience
+        const defaultExpRadio = document.querySelector('input[name="exp"][value=""]');
+        if (defaultExpRadio) defaultExpRadio.checked = true;
+        currentExp = "";
+        document.getElementById('expText').innerText = "Любой опыт";
+
+        // Reload filters to uncheck munis/emps
+        loadFilters().then(() => {
+            currentPage = 1;
+            loadData(true);
+        });
+    }
+
+    let currentSchedule = "Любой график";
+    function changeSchedule(radio) {
+        currentSchedule = radio.value;
+        document.getElementById('scheduleText').innerText = currentSchedule;
+        document.getElementById('scheduleWrapper').classList.remove('open');
+        applyFilters();
+    }
+
+    let currentExp = "";
+    function changeExp(radio, text) {
+        currentExp = radio.value;
+        document.getElementById('expText').innerText = text;
+        document.getElementById('expWrapper').classList.remove('open');
+        applyFilters();
     }
 
     // Main Logic
@@ -249,34 +342,74 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    populateFilterOptions(data.munis, data.emps);
+                    populateCategories(data.categories);
+                    populateFilterOptions(data.munis, data.emps, data.schedules || []);
                 }
             })
-            .catch(err => console.error("Error loading filters:", err));
+            .catch(err => console.error(err));
+    }
+
+    function populateCategories(categories) {
+        const catOptions = document.getElementById('catOptions');
+        let html = `
+            <label class="custom-select-option">
+                <input type="radio" name="category" value="Все отрасли" ${currentCategory === 'Все отрасли' ? 'checked' : ''} onchange="changeCategory(this)"> Все отрасли
+            </label>
+        `;
+        categories.forEach(c => {
+            if(!c || c === 'Все отрасли') return;
+            html += `
+                <label class="custom-select-option">
+                    <input type="radio" name="category" value="${c}" ${currentCategory === c ? 'checked' : ''} onchange="changeCategory(this)"> ${c}
+                </label>
+            `;
+        });
+        catOptions.innerHTML = html;
+        document.getElementById('catText').innerText = currentCategory;
     }
     
-    function populateFilterOptions(munis, employers) {
+    function populateFilterOptions(munis, employers, schedules) {
         const muniOptionsEl = document.getElementById('muniOptions');
-        muniOptionsEl.innerHTML = '';
+        let muniHtml = '';
         munis.forEach(m => {
-            muniOptionsEl.innerHTML += `
+            if(!m) return;
+            muniHtml += `
                 <label class="custom-select-option" onclick="event.stopPropagation()">
                     <input type="checkbox" value="${m.replace(/"/g, '&quot;')}" class="filter-muni-cb" onchange="applyFilters()"> ${m}
                 </label>
             `;
         });
+        muniOptionsEl.innerHTML = muniHtml;
         document.getElementById('muniText').innerText = 'Все муниципалитеты';
         
         const empOptionsEl = document.getElementById('empOptions');
-        empOptionsEl.innerHTML = '';
+        let empHtml = '';
         employers.forEach(e => {
-            empOptionsEl.innerHTML += `
+            if(!e) return;
+            empHtml += `
                 <label class="custom-select-option" onclick="event.stopPropagation()">
                     <input type="checkbox" value="${e.replace(/"/g, '&quot;')}" class="filter-emp-cb" onchange="applyFilters()"> ${e}
                 </label>
             `;
         });
+        empOptionsEl.innerHTML = empHtml;
         document.getElementById('empText').innerText = 'Все компании';
+
+        const scheduleOptionsEl = document.getElementById('scheduleOptions');
+        let schedHtml = `
+            <label class="custom-select-option">
+                <input type="radio" name="schedule" value="Любой график" ${currentSchedule === 'Любой график' ? 'checked' : ''} onchange="changeSchedule(this)"> Любой график
+            </label>
+        `;
+        schedules.forEach(s => {
+            if(!s) return;
+            schedHtml += `
+                <label class="custom-select-option">
+                    <input type="radio" name="schedule" value="${s.replace(/"/g, '&quot;')}" ${currentSchedule === s ? 'checked' : ''} onchange="changeSchedule(this)"> ${s}
+                </label>
+            `;
+        });
+        scheduleOptionsEl.innerHTML = schedHtml;
     }
 
     function applyFilters() {
@@ -314,6 +447,8 @@
         if(searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
         if(checkedMunis.length) url += `&munis=${encodeURIComponent(JSON.stringify(checkedMunis))}`;
         if(checkedEmps.length) url += `&emps=${encodeURIComponent(JSON.stringify(checkedEmps))}`;
+        if(currentSchedule && currentSchedule !== 'Любой график') url += `&schedule=${encodeURIComponent(currentSchedule)}`;
+        if(currentExp !== '') url += `&exp=${encodeURIComponent(currentExp)}`;
         
         fetch(url)
             .then(res => res.json())
@@ -327,6 +462,9 @@
                     
                     updateStats(data.total_count, data.total_jobs, data.median_salary);
                     renderGrid(data.data, clearGrid, data.total_count);
+                    if (data.last_updated) {
+                        document.getElementById('lastUpdatedDate').innerText = data.last_updated;
+                    }
                 }
             })
             .catch(err => console.error("Error loading dashboard data:", err))
@@ -334,7 +472,6 @@
                 loadingOverlay.style.display = 'none';
                 btnLoadMore.innerText = "Показать еще";
                 btnLoadMore.disabled = false;
-                document.getElementById('lastUpdated').innerText = `Данные обновлены`;
             });
     }
 
@@ -384,44 +521,80 @@
     
     window.openVacancyModal = function(index) {
         const item = currentData[index];
-        modalTitle.innerText = item.vacancy_name || 'Детали вакансии';
+        let vacName = item.vacancy_name ? item.vacancy_name.charAt(0).toUpperCase() + item.vacancy_name.slice(1) : 'Детали вакансии';
+        modalTitle.innerText = vacName;
         
         let html = `
-            <h5 style="color: var(--copp-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top:0; margin-bottom:15px;">Работодатель: <strong>${item.employer || 'Не указано'}</strong></h5>
+            <div style="background: rgba(0, 62, 107, 0.05); padding: 15px 20px; border-radius: 8px; margin-bottom: 25px;">
+                <h5 style="color: var(--copp-blue); margin:0 0 5px 0; font-size: 16px;">Работодатель:</h5>
+                <p style="margin:0; font-size: 18px; font-weight: 700; color: #333;">${item.employer || 'Не указано'}</p>
+            </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
-                <div>
-                    <p style="margin-bottom:8px; color:#555;"><strong>Муниципалитет:</strong> ${item.municipality || 'Не указан'}</p>
-                    <p style="margin-bottom:8px; color:#555;"><strong>Зарплата:</strong> ${item.salary ? formatNumber(item.salary) + ' ₽' : 'Не указана'}</p>
-                    <p style="margin-bottom:8px; color:#555;"><strong>Тип занятости:</strong> <br><span style="margin-left:15px;">${item.employment_type || 'Не указано'}</span></p>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 30px;">
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #eaeaea;">
+                    <div style="font-size:13px; color:#777; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Муниципалитет</div>
+                    <div style="font-size:16px; font-weight:600; color:#333;">${item.municipality || 'Не указан'}</div>
                 </div>
-                <div>
-                    <p style="margin-bottom:8px; color:#555;"><strong>График:</strong> <br><span style="margin-left:15px;">${item.schedule || 'Не указано'}</span></p>
-                    <p style="margin-bottom:8px; color:#555;"><strong>Образование:</strong> <br><span style="margin-left:15px;">${item.education || 'Не указано'}</span></p>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #eaeaea;">
+                    <div style="font-size:13px; color:#777; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Зарплата</div>
+                    <div style="font-size:18px; font-weight:800; color:var(--copp-blue);">${item.salary ? formatNumber(item.salary) + ' ₽' : 'Не указана'}</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #eaeaea;">
+                    <div style="font-size:13px; color:#777; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Опыт работы</div>
+                    <div style="font-size:16px; font-weight:600; color:#333;">${item.experience_length ? 'От ' + item.experience_length + ' лет' : 'Без опыта'}</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #eaeaea;">
+                    <div style="font-size:13px; color:#777; text-transform:uppercase; font-weight:700; margin-bottom:8px;">График</div>
+                    <div style="font-size:16px; font-weight:600; color:#333;">${item.schedule || 'Не указано'}</div>
                 </div>
             </div>
             
-            <h6 style="margin-top:25px; font-weight:700; color:#333;">Требования к кандидату:</h6>
-            <p style="color:#555; padding:15px; background:#f8f9fa; border-radius:6px; line-height:1.5; margin-bottom:20px;">${item.requirements && item.requirements !== 'None' ? item.requirements.replace(/\\n/g, '<br>') : 'Специфических требований не указано.'}</p>
+            ${item.duties && item.duties !== 'None' ? `
+            <div style="margin-bottom: 25px;">
+                <h6 style="font-size: 16px; font-weight:700; color:var(--copp-blue); margin-bottom:10px; display:flex; align-items:center; gap:8px;"><i class="fas fa-tasks"></i> Обязанности</h6>
+                <p style="color:#444; line-height:1.6; margin:0;">${item.duties.replace(/\\n/g, '<br>')}</p>
+            </div>` : ''}
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 25px;">
-                <div>
-                    <h6 style="font-weight:700; margin-bottom:10px; color:#333;">Хард-скиллы:</h6>
-                    <p style="color:#555;">${item.hard_skills && item.hard_skills !== 'None' ? item.hard_skills : '-'}</p>
-                </div>
-                <div>
-                    <h6 style="font-weight:700; margin-bottom:10px; color:#333;">Софт-скиллы:</h6>
-                    <p style="color:#555;">${item.soft_skills && item.soft_skills !== 'None' ? item.soft_skills : '-'}</p>
+            <div style="margin-bottom: 25px;">
+                <h6 style="font-size: 16px; font-weight:700; color:var(--copp-blue); margin-bottom:10px; display:flex; align-items:center; gap:8px;"><i class="fas fa-clipboard-list"></i> Требования к кандидату</h6>
+                <p style="color:#444; line-height:1.6; margin:0; margin-bottom: 15px;">${item.requirements && item.requirements !== 'None' ? item.requirements.replace(/\\n/g, '<br>') : 'Специфических требований не указано.'}</p>
+                <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                    <span style="background:#eef2f5; padding:6px 12px; border-radius:20px; font-size:13px; color:#555; border:1px solid #dcdfe3;"><strong>Образование:</strong> ${item.education || 'Любое'}</span>
+                    <span style="background:#eef2f5; padding:6px 12px; border-radius:20px; font-size:13px; color:#555; border:1px solid #dcdfe3;"><strong>Занятость:</strong> ${item.employment_type || 'Любая'}</span>
                 </div>
             </div>
             
-            ${item.bonuses && item.bonuses !== 'None' ? `<h6 style="margin-top:20px; font-weight:700; color:#333;">Бонусы и соцпакет:</h6><p style="color:#555;">${item.bonuses}</p>` : ''}
+            ${item.hard_skills && item.hard_skills !== 'None' ? `
+            <div style="margin-bottom: 25px;">
+                <h6 style="font-size: 16px; font-weight:700; color:var(--copp-blue); margin-bottom:10px; display:flex; align-items:center; gap:8px;"><i class="fas fa-tools"></i> Профессиональные навыки</h6>
+                <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    ${item.hard_skills.split(',').map(s => `<span style="background:var(--copp-blue); color:white; padding:5px 12px; border-radius:6px; font-size:13px;">${s.trim()}</span>`).join('')}
+                </div>
+            </div>` : ''}
             
-            <div style="margin-top:25px; padding:20px; border-radius:6px; background: rgba(0, 102, 204, 0.05); border-left: 4px solid var(--copp-blue);">
-                <h6 style="font-weight:700; margin-bottom:15px; margin-top:0; color:#333;">Контакты работодателя:</h6>
-                <p style="margin-bottom:8px; color:#555;"><strong>Контактное лицо:</strong> ${item.contact_person && item.contact_person !== 'None' ? item.contact_person : 'Не указано'}</p>
-                <p style="margin-bottom:8px; color:#555;"><strong>Телефон:</strong> ${item.contact_phone && item.contact_phone !== 'None' ? item.contact_phone : 'Не указано'}</p>
-                <p style="margin-bottom:0; color:#555;"><strong>Email:</strong> ${item.contact_email && item.contact_email !== 'None' ? `<a href="mailto:${item.contact_email}" style="color:var(--copp-blue); text-decoration:none;">${item.contact_email}</a>` : 'Не указано'}</p>
+            ${item.bonuses && item.bonuses !== 'None' ? `
+            <div style="margin-bottom: 25px;">
+                <h6 style="font-size: 16px; font-weight:700; color:var(--copp-blue); margin-bottom:10px; display:flex; align-items:center; gap:8px;"><i class="fas fa-gift"></i> Условия и бонусы</h6>
+                <p style="color:#444; line-height:1.6; margin:0;">${item.bonuses}</p>
+            </div>` : ''}
+            
+            <div style="padding:20px; border-radius:8px; background: #fdfdfd; border: 1px solid #eaeaea; position: relative; overflow: hidden;">
+                <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--copp-orange);"></div>
+                <h6 style="font-size: 16px; font-weight:700; color:#333; margin-bottom:15px; margin-top:0;">Куда обращаться:</h6>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="display:flex; align-items:center; gap:10px; color:#555;">
+                        <i class="fas fa-user" style="color:#999; width:16px;"></i> 
+                        <span><strong>Контактное лицо:</strong> ${item.contact_person && item.contact_person !== 'None' ? item.contact_person : 'Не указано'}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px; color:#555;">
+                        <i class="fas fa-phone-alt" style="color:#999; width:16px;"></i> 
+                        <span><strong>Телефон:</strong> ${item.contact_phone && item.contact_phone !== 'None' ? item.contact_phone : 'Не указано'}</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px; color:#555;">
+                        <i class="fas fa-envelope" style="color:#999; width:16px;"></i> 
+                        <span><strong>Email:</strong> ${item.contact_email && item.contact_email !== 'None' ? `<a href="mailto:${item.contact_email}" style="color:var(--copp-blue); text-decoration:none;">${item.contact_email}</a>` : 'Не указано'}</span>
+                    </div>
+                </div>
             </div>
         `;
         
@@ -440,26 +613,32 @@
 
     function renderGrid(data, clearGrid, totalCount) {
         let html = '';
-        
         let startIdx = clearGrid ? 0 : currentData.length - data.length;
         
         data.forEach((item, i) => {
             let index = startIdx + i;
             let externalLink = (item.source_link && item.source_link !== 'None' && item.source_link.startsWith('http')) ? item.source_link : '#';
+            let vacName = item.vacancy_name ? item.vacancy_name.charAt(0).toUpperCase() + item.vacancy_name.slice(1) : 'Без названия';
             
             html += `
             <div class="vacancy-card">
-                <div class="vac-title" title="${item.vacancy_name || 'Без названия'}">${item.vacancy_name || 'Без названия'}</div>
+                <div class="vac-title" title="${vacName}">${vacName}</div>
                 <div class="vac-company" style="color:#666;">${item.employer || 'Не указано'}</div>
                 <div class="vac-salary">${item.salary && item.salary > 0 ? formatNumber(item.salary) + ' ₽' : 'З/П не указана'}</div>
                 
                 <div class="vac-meta" style="color:#777;"><strong>Муниципалитет:</strong> ${item.municipality || 'Не указан'}</div>
-                <div class="vac-meta" style="color:#777;"><strong>Рабочих мест:</strong> ${item.jobs_count || 1}</div>
-                ${item.schedule && item.schedule !== 'None' ? `<div class="vac-meta" style="color:#777;"><strong>График:</strong> ${item.schedule}</div>` : ''}
+                <div class="vac-meta" style="color:#777; margin-bottom: 12px;"><strong>Рабочих мест:</strong> ${item.jobs_count || 1}</div>
                 
+                <div class="vac-tags">
+                    <span class="vac-tag"><i class="far fa-clock"></i> ${item.schedule || 'Любой'}</span>
+                    <span class="vac-tag"><i class="fas fa-briefcase"></i> ${item.experience_length ? 'От ' + item.experience_length + ' лет' : 'Без опыта'}</span>
+                    <span class="vac-tag"><i class="fas fa-graduation-cap"></i> ${item.education || 'Любое образование'}</span>
+                </div>
+                
+                ${item.duties && item.duties !== 'None' ? `<div class="vac-duties">${item.duties}</div>` : ''}
+
                 <div class="vac-actions">
                     <button class="btn-vac-primary" onclick="openVacancyModal(${index})">Подробнее</button>
-                    ${externalLink !== '#' ? `<a href="${externalLink}" target="_blank" class="btn-vac-secondary" title="Открыть на сайте источника">На источник</a>` : ''}
                 </div>
             </div>
             `;
