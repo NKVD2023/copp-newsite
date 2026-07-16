@@ -46,6 +46,7 @@ def dashboard():
         menu_groups_list  = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
         tables_list       = conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall()
         contact_requests  = conn.execute('SELECT * FROM contact_requests ORDER BY id DESC').fetchall()
+        menu_items_list   = conn.execute('SELECT * FROM menu_items ORDER BY position ASC, id ASC').fetchall()
 
         try:
             forms_list = conn.execute('SELECT * FROM page_forms ORDER BY id DESC').fetchall()
@@ -95,6 +96,7 @@ def dashboard():
         contact_settings=contact_settings,
         menu_groups_list=menu_groups_list,
         tables_list=tables_list,
+        menu_items_list=menu_items_list,
         all_media_files=all_media_files,
         prof_uploads=prof_uploads,
         professions_list=professions_list,

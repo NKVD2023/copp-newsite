@@ -2,6 +2,7 @@ import os
 import csv
 import io
 import shutil
+import zipfile
 from datetime import datetime
 from flask import render_template, request, redirect, url_for, session, flash, send_file, Response
 from app.admin import bp
@@ -71,16 +72,35 @@ def db_export_csv(table_name):
         flash(f"Ошибка экспорта: {str(e)}", "danger")
         return redirect(url_for('admin.dashboard', tab='database'))
 
-@bp.route('/db/export/sql')
+@bp.route('/db/export/full')
 @login_required
-def db_export_sqlite():
+def db_export_full():
     """
-    Создание и скачивание резервной копии всей базы данных (файла SQLite).
+    Создание и скачивание полного бэкапа (БД + папка uploads) в виде .zip архива.
     """
     try:
-        return send_file(os.path.abspath(DB_FILE_PATH), as_attachment=True, download_name=f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sqlite")
+        uploads_dir = os.path.join('app', 'static', 'uploads')
+        memory_file = io.BytesIO()
+        
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # 1. Добавляем базу данных
+            if os.path.exists(DB_FILE_PATH):
+                zf.write(DB_FILE_PATH, arcname=os.path.basename(DB_FILE_PATH))
+                
+            # 2. Добавляем папку uploads
+            if os.path.exists(uploads_dir):
+                for root, dirs, files in os.walk(uploads_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        # Вычисляем относительный путь внутри архива (в папке uploads/)
+                        arcname = os.path.join('uploads', os.path.relpath(file_path, uploads_dir))
+                        zf.write(file_path, arcname=arcname)
+                        
+        memory_file.seek(0)
+        filename = f"copp-site-{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        return send_file(memory_file, download_name=filename, as_attachment=True, mimetype='application/zip')
     except Exception as e:
-        flash(f"Ошибка скачивания бэкапа: {str(e)}", "danger")
+        flash(f"Ошибка создания полного бэкапа: {str(e)}", "danger")
         return redirect(url_for('admin.dashboard', tab='database'))
 
 @bp.route('/db/execute_sql', methods=['POST'])
@@ -115,35 +135,62 @@ def db_execute_sql():
         
     return redirect(url_for('admin.dashboard', tab='database'))
 
-@bp.route('/db/import/sqlite', methods=['POST'])
+@bp.route('/db/import/full', methods=['POST'])
 @login_required
-def db_import_sqlite():
+def db_import_full():
     """
-    Импорт (восстановление) базы данных из загруженного .sqlite файла.
-    Перед заменой создает бэкап текущей БД с суффиксом .bak.
+    Восстановление полного бэкапа из загруженного .zip файла.
+    - Делает резервную копию текущей БД.
+    - Заменяет БД файлом из архива.
+    - Извлекает папку uploads, пропуская уже существующие файлы.
     """
-    if 'sqlite_file' not in request.files:
+    if 'backup_file' not in request.files:
         flash('Файл не выбран', 'warning')
         return redirect(url_for('admin.dashboard', tab='database'))
         
-    file = request.files['sqlite_file']
+    file = request.files['backup_file']
     if file.filename == '':
         flash('Файл не выбран', 'warning')
         return redirect(url_for('admin.dashboard', tab='database'))
         
-    if file and file.filename.endswith('.sqlite'):
+    if file and file.filename.endswith('.zip'):
         try:
-            # Backup current DB
-            backup_path = f"{DB_FILE_PATH}.bak.{datetime.now().strftime('%Y%m%d%H%M%S')}"
-            shutil.copy2(DB_FILE_PATH, backup_path)
+            # 1. Бэкап текущей базы перед восстановлением
+            if os.path.exists(DB_FILE_PATH):
+                backup_path = f"{DB_FILE_PATH}.bak.{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                shutil.copy2(DB_FILE_PATH, backup_path)
             
-            # Replace with new DB
-            file.save(DB_FILE_PATH)
-            flash('База данных успешно восстановлена. Старая база сохранена как .bak файл.', 'success')
+            # Читаем ZIP из файла (чтобы не занимать много ОЗУ, можно читать напрямую)
+            with zipfile.ZipFile(file, 'r') as zf:
+                # 2. Восстановление БД
+                db_filename = os.path.basename(DB_FILE_PATH)
+                if db_filename in zf.namelist():
+                    with open(DB_FILE_PATH, 'wb') as f:
+                        f.write(zf.read(db_filename))
+                else:
+                    flash('В архиве не найдена база данных (coppdb.sqlite). Восстановление файлов продолжено.', 'warning')
+                
+                # 3. Восстановление файлов (uploads)
+                uploads_dir = os.path.join('app', 'static', 'uploads')
+                os.makedirs(uploads_dir, exist_ok=True)
+                
+                for item in zf.namelist():
+                    if item.startswith('uploads/') and not item.endswith('/'):
+                        # Определяем путь извлечения
+                        rel_path = item[len('uploads/'):]
+                        target_path = os.path.join(uploads_dir, rel_path)
+                        
+                        # Если файла еще нет, извлекаем
+                        if not os.path.exists(target_path):
+                            os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                            with open(target_path, 'wb') as f:
+                                f.write(zf.read(item))
+                                
+            flash('Сайт успешно восстановлен из полного бэкапа! Старая БД сохранена как .bak файл.', 'success')
         except Exception as e:
-            flash(f'Ошибка восстановления: {str(e)}', 'danger')
+            flash(f'Ошибка восстановления из ZIP: {str(e)}', 'danger')
     else:
-        flash('Файл должен иметь расширение .sqlite', 'danger')
+        flash('Файл должен иметь расширение .zip', 'danger')
         
     return redirect(url_for('admin.dashboard', tab='database'))
 

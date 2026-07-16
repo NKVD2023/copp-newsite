@@ -130,13 +130,35 @@ def create_app(config_class=Config):
             social_networks = [dict(row) for row in conn.execute(
                 'SELECT * FROM social_networks WHERE is_active = 1 ORDER BY display_order ASC'
             ).fetchall()]
+
+            # Получаем все активные пункты меню
+            raw_menu_items = conn.execute(
+                'SELECT * FROM menu_items WHERE is_active = 1 ORDER BY position ASC, id ASC'
+            ).fetchall()
+            
+            menu_hierarchy = []
+            menu_by_id = {}
+            for row in raw_menu_items:
+                item = dict(row)
+                item['children'] = []
+                menu_by_id[item['id']] = item
+            
+            for row in raw_menu_items:
+                item = menu_by_id[row['id']]
+                if item['parent_id']:
+                    if item['parent_id'] in menu_by_id:
+                        menu_by_id[item['parent_id']]['children'].append(item)
+                else:
+                    menu_hierarchy.append(item)
+
         except Exception:
             # В случае ошибки БД — возвращаем пустые структуры, сайт не упадёт
             single_pages = []
             grouped_pages = {}
             dynamic_projects = []
             contact_settings = None
-            social_networks = []
+            social_networks=[]
+            menu_hierarchy=[]
 
         result = dict(
             single_pages=single_pages,
@@ -144,6 +166,7 @@ def create_app(config_class=Config):
             dynamic_projects=dynamic_projects,
             contact_settings=contact_settings,
             social_networks=social_networks,
+            menu_hierarchy=menu_hierarchy,
         )
 
         # Кэшируем на 60 секунд (не включая now_str — он всегда свежий)
@@ -179,5 +202,9 @@ def create_app(config_class=Config):
     # Панель администратора (со своим префиксом URL /admin)
     from app.admin import bp as admin_bp
     app.register_blueprint(admin_bp, url_prefix='/admin')
+
+    # Инициализация недостающих таблиц в БД
+    from app.db import init_db
+    init_db(app)
 
     return app

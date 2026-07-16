@@ -12,11 +12,11 @@
         </ul>
         <hr>
         <div style="display:flex; flex-direction: column; gap:10px;">
-            <a href="{{ url_for('admin.db_export_sqlite') }}" class="btn" style="background:#28a745; color:white; text-align:center; font-size: 14px;"><i class="fas fa-download"></i> Полный Бэкап (SQL)</a>
-            <button onclick="document.getElementById('importSqliteFile').click();" class="btn" style="background:#dc3545; color:white; font-size: 14px;"><i class="fas fa-upload"></i> Восстановить БД</button>
-            <form id="formImportSqlite" action="{{ url_for('admin.db_import_sqlite') }}" method="post" enctype="multipart/form-data" style="display:none;">
+            <a href="{{ url_for('admin.db_export_full') }}" class="btn" style="background:#28a745; color:white; text-align:center; font-size: 14px;"><i class="fas fa-download"></i> Полный бекап</a>
+            <button onclick="document.getElementById('importFullBackupFile').click();" class="btn" style="background:#dc3545; color:white; font-size: 14px;"><i class="fas fa-upload"></i> Восстановить данные</button>
+            <form id="formImportFullBackup" action="{{ url_for('admin.db_import_full') }}" method="post" enctype="multipart/form-data" style="display:none;">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <input type="file" name="sqlite_file" id="importSqliteFile" accept=".sqlite,.db" onchange="if(confirm('ВНИМАНИЕ! Это полностью перезапишет текущую базу данных. Вы уверены?')) document.getElementById('formImportSqlite').submit();">
+                <input type="file" name="backup_file" id="importFullBackupFile" accept=".zip" onchange="if(confirm('ВНИМАНИЕ! Это полностью перезапишет текущую базу данных и восстановит файлы из бэкапа. Вы уверены?')) document.getElementById('formImportFullBackup').submit();">
             </form>
         </div>
     </div>

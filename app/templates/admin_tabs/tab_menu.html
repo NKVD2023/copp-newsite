@@ -1,0 +1,188 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="admin-tab-title"><i class="fas fa-bars"></i> Управление меню</h3>
+    <button class="btn btn-ph-primary" data-bs-toggle="modal" data-bs-target="#addMenuModal">
+        <i class="fas fa-plus"></i> Добавить пункт
+    </button>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover admin-table align-middle">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>URL</th>
+                <th>Позиция</th>
+                <th>Тип</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in menu_items_list %}
+            <tr>
+                <td>{{ item['id'] }}</td>
+                <td>
+                    {% if item['parent_id'] %}&mdash; {% endif %}
+                    <strong>{{ item['title'] }}</strong>
+                </td>
+                <td>{{ item['url'] }}</td>
+                <td>{{ item['position'] }}</td>
+                <td>
+                    {% if item['type'] == 'static' %}
+                        <span class="badge bg-secondary">Обычная ссылка</span>
+                    {% elif item['type'] == 'dynamic_projects' %}
+                        <span class="badge bg-primary">Проекты</span>
+                    {% elif item['type'].startswith('dynamic_pages_group_') %}
+                        <span class="badge bg-info">Группа: {{ item['type'].replace('dynamic_pages_group_', '') }}</span>
+                    {% else %}
+                        <span class="badge bg-dark">{{ item['type'] }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item['is_active'] %}
+                        <span class="badge bg-success">Активен</span>
+                    {% else %}
+                        <span class="badge bg-danger">Отключен</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editMenuModal{{ item['id'] }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteMenuModal{{ item['id'] }}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+
+            <!-- Модалка редактирования -->
+            <div class="modal fade" id="editMenuModal{{ item['id'] }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form action="{{ url_for('admin.menu_edit', item_id=item['id']) }}" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Редактировать пункт меню</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Название</label>
+                                    <input type="text" class="form-control" name="title" value="{{ item['title'] }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">URL (Оставьте пустым для выпадающего списка)</label>
+                                    <input type="text" class="form-control" name="url" value="{{ item['url'] }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Родительский пункт (ID)</label>
+                                    <input type="number" class="form-control" name="parent_id" value="{{ item['parent_id'] }}">
+                                    <small class="text-muted">Для подпункта укажите ID родителя. Оставьте пустым, если это пункт верхнего уровня.</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Позиция (чем меньше, тем левее/выше)</label>
+                                    <input type="number" class="form-control" name="position" value="{{ item['position'] }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Тип пункта</label>
+                                    <select class="form-select" name="type">
+                                        <option value="static" {% if item['type'] == 'static' %}selected{% endif %}>Обычная ссылка</option>
+                                        <option value="dynamic_projects" {% if item['type'] == 'dynamic_projects' %}selected{% endif %}>Проекты (Автоматически)</option>
+                                        {% for group in menu_groups_list %}
+                                            <option value="dynamic_pages_group_{{ group['menu_group'] }}" {% if item['type'] == 'dynamic_pages_group_' ~ group['menu_group'] %}selected{% endif %}>
+                                                Группа страниц: {{ group['menu_group'] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" name="is_active" id="isActive{{ item['id'] }}" {% if item['is_active'] %}checked{% endif %}>
+                                    <label class="form-check-label" for="isActive{{ item['id'] }}">Активен</label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit" class="btn btn-primary">Сохранить</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Модалка удаления -->
+            <div class="modal fade" id="deleteMenuModal{{ item['id'] }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Подтверждение удаления</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Вы уверены, что хотите удалить пункт меню "<strong>{{ item['title'] }}</strong>"?</p>
+                            <p class="text-danger"><small>Если это родительский пункт, все его подпункты также будут удалены!</small></p>
+                        </div>
+                        <div class="modal-footer">
+                            <form action="{{ url_for('admin.menu_delete', item_id=item['id']) }}" method="POST">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                                <button type="submit" class="btn btn-danger">Удалить</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <tr><td colspan="7" class="text-center text-muted">Нет элементов меню.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Модалка добавления -->
+<div class="modal fade" id="addMenuModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('admin.menu_add') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить пункт меню</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL (Оставьте пустым для выпадающего списка)</label>
+                        <input type="text" class="form-control" name="url">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Родительский пункт (ID)</label>
+                        <input type="number" class="form-control" name="parent_id">
+                        <small class="text-muted">Для подпункта укажите ID родителя. Оставьте пустым, если это пункт верхнего уровня.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Позиция (чем меньше, тем левее/выше)</label>
+                        <input type="number" class="form-control" name="position" value="100" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Тип пункта</label>
+                        <select class="form-select" name="type">
+                            <option value="static">Обычная ссылка</option>
+                            <option value="dynamic_projects">Проекты (Автоматически)</option>
+                            {% for group in menu_groups_list %}
+                                <option value="dynamic_pages_group_{{ group['menu_group'] }}">Группа страниц: {{ group['menu_group'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

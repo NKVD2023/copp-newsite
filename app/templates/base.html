@@ -82,55 +82,47 @@
             </button>
 
             <nav id="mainNav">
-                <!-- <a href="{{ url_for('main.index') }}">Главная</a> -->
-                <div class="dropdown">
-                    <button class="dropbtn" onclick="if(window.innerWidth > 768) window.location.href='{{ url_for('main.news') }}'">Новости <span class="arrow">&#9662;</span></button>
-                    <div class="dropdown-content">
-                        <a href="{{ url_for('main.news') }}">Все новости</a>
-                        <a href="{{ url_for('main.events') }}">Мероприятия</a>
-                    </div>
-                </div>
-                <a href="{{ url_for('main.atlas') }}">Атлас профессий</a>
-                <a href="{{ url_for('main.dashboard') }}">Востребованные професии</a>
-                <a href="cp.copp82.ru">Цифровая платформа</a>
-                
-                {% if single_pages %}
-                    {% for page in single_pages %}
-                        <a href="{{ url_for('main.dynamic_page', slug=page['slug']) }}">{{ page['title'] }}</a>
-                    {% endfor %}
-                {% endif %}
-
-                <div class="dropdown">
-                    <button class="dropbtn">Проекты <span class="arrow">&#9662;</span></button>
-                    <div class="dropdown-content">
-                        {% if dynamic_projects %}
-                            {% for project in dynamic_projects %}
-                                <a href="{{ url_for('main.project', slug=project['slug']) }}"
-                                   {% if project.project_color %}
-                                   onmouseover="this.style.backgroundColor='{{ project.project_color }}'; this.style.color='#ffffff';"
-                                   onmouseout="this.style.backgroundColor=''; this.style.color='';"
-                                   {% endif %}
-                                >{{ project['title'] }}</a>
-                            {% endfor %}
+                {% if menu_hierarchy %}
+                    {% for item in menu_hierarchy %}
+                        {% if item['children'] or item['type'] != 'static' %}
+                            <div class="dropdown">
+                                <button class="dropbtn" {% if item['url'] %}onclick="if(window.innerWidth > 768) window.location.href='{{ item['url'] }}'"{% endif %}>
+                                    {{ item['title'] }} <span class="arrow">&#9662;</span>
+                                </button>
+                                <div class="dropdown-content">
+                                    {% if item['type'] == 'dynamic_projects' %}
+                                        {% if dynamic_projects %}
+                                            {% for project in dynamic_projects %}
+                                                <a href="{{ url_for('main.project', slug=project['slug']) }}"
+                                                   {% if project.project_color %}
+                                                   onmouseover="this.style.backgroundColor='{{ project.project_color }}'; this.style.color='#ffffff';"
+                                                   onmouseout="this.style.backgroundColor=''; this.style.color='';"
+                                                   {% endif %}
+                                                >{{ project['title'] }}</a>
+                                            {% endfor %}
+                                        {% else %}
+                                            <a href="#">(Нет проектов)</a>
+                                        {% endif %}
+                                    {% elif item['type'].startswith('dynamic_pages_group_') %}
+                                        {% set group_name = item['type'].replace('dynamic_pages_group_', '') %}
+                                        {% if group_name in grouped_pages %}
+                                            {% for page in grouped_pages[group_name] %}
+                                                <a href="{{ url_for('main.dynamic_page', slug=page['slug']) }}">{{ page['title'] }}</a>
+                                            {% endfor %}
+                                            {% if group_name == 'О центре' %}
+                                                <a href="{{ url_for('main.team') }}">Наша команда</a>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% for child in item['children'] %}
+                                            <a href="{{ child['url'] }}">{{ child['title'] }}</a>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
                         {% else %}
-                            <a href="#">(Нет проектов)</a>
+                            <a href="{{ item['url'] }}">{{ item['title'] }}</a>
                         {% endif %}
-                    </div>
-                </div>
-
-                {% if grouped_pages %}
-                    {% for group_name, pages in grouped_pages.items() %}
-                    <div class="dropdown">
-                        <button class="dropbtn">{{ group_name }} <span class="arrow">&#9662;</span></button>
-                        <div class="dropdown-content">
-                            {% for page in pages %}
-                                <a href="{{ url_for('main.dynamic_page', slug=page['slug']) }}">{{ page['title'] }}</a>
-                            {% endfor %}
-                            {% if group_name == 'О центре' %}
-                                <a href="{{ url_for('main.team') }}">Наша команда</a>
-                            {% endif %}
-                        </div>
-                    </div>
                     {% endfor %}
                 {% endif %}
 
