@@ -261,3 +261,8 @@ def run_trudvsem_sync(db_path):
     cursor.execute('DROP TABLE IF EXISTS dashboard_vacancies_temp')
     conn.commit()
     conn.close()
+    if __name__ == '__main__':
+    import os
+    basedir = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+    db_path = os.path.join(basedir, 'coppdb.sqlite')
+    run_trudvsem_sync(db_path)
