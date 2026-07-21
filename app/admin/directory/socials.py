@@ -2,6 +2,7 @@ from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 import os
 from werkzeug.utils import secure_filename
 from app.utils.image_utils import save_image_as_webp
@@ -40,7 +41,11 @@ def add_social():
         INSERT INTO social_networks (name, url, icon_svg, display_order, image_path)
         VALUES (?, ?, ?, ?, ?)
     ''', (name, url, icon_svg, display_order, image_path))
+    
+    soc_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
     conn.commit()
+    
+    log_admin_action('CREATE', 'socials', entity_id=soc_id, details=f'Добавлена социальная сеть: "{name}"')
     
     flash('Социальная сеть успешно добавлена!', 'success')
     return redirect(url_for('admin.dashboard', tab='socials'))
@@ -70,6 +75,8 @@ def edit_social(id):
     ''', (name, url, icon_svg, display_order, is_active, image_path, id))
     conn.commit()
     
+    log_admin_action('UPDATE', 'socials', entity_id=id, details=f'Обновлена социальная сеть: "{name}"')
+    
     flash('Социальная сеть успешно обновлена!', 'success')
     return redirect(url_for('admin.dashboard', tab='socials'))
 
@@ -80,7 +87,9 @@ def delete_social(id):
     Удаление социальной сети и связанного с ней файла иконки.
     """
     conn = get_db_connection()
-    social = conn.execute('SELECT image_path FROM social_networks WHERE id = ?', (id,)).fetchone()
+    social = conn.execute('SELECT name, image_path FROM social_networks WHERE id = ?', (id,)).fetchone()
+    soc_name = social['name'] if social else f"ID {id}"
+    
     if social and social['image_path']:
         full_path = os.path.join('app', 'static', social['image_path'])
         if os.path.exists(full_path):
@@ -88,6 +97,8 @@ def delete_social(id):
             
     conn.execute('DELETE FROM social_networks WHERE id = ?', (id,))
     conn.commit()
+    
+    log_admin_action('DELETE', 'socials', entity_id=id, details=f'Удалена социальная сеть: "{soc_name}"')
     
     flash('Социальная сеть удалена.', 'success')
     return redirect(url_for('admin.dashboard', tab='socials'))

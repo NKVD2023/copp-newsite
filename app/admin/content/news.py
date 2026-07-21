@@ -3,6 +3,7 @@ import os
 from werkzeug.utils import secure_filename
 from app.admin import bp
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 from app.db import get_db_connection
 from app.utils.image_utils import save_image_as_webp
 
@@ -61,6 +62,10 @@ def add_news():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, publish_date))
             conn.commit()
+            
+            news_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+            log_admin_action('CREATE', 'news', entity_id=news_id, details=f'Добавлена новость: "{title}"')
+
             flash("Новость успешно добавлена!", "success")
         except Exception as e:
             flash(f"Ошибка при сохранении: {e}", "error")
@@ -166,6 +171,8 @@ def update_news(news_id):
             ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, news_id))
         conn.commit()
     
+    log_admin_action('UPDATE', 'news', entity_id=news_id, details=f'Обновлена новость: "{title}"')
+
     flash("Новость успешно обновлена!", "success")
     return redirect(url_for('admin.dashboard'))
 
@@ -183,6 +190,11 @@ def toggle_news_status(news_id):
     with get_db_connection() as conn:
         conn.execute('UPDATE news SET status = ? WHERE id = ?', (new_status, news_id))
         conn.commit()
+        
+        title = conn.execute('SELECT title FROM news WHERE id = ?', (news_id,)).fetchone()
+        log_title = title['title'] if title else f"ID {news_id}"
+        action_desc = "Опубликована" if new_status == 'published' else "Отправлена в архив"
+        log_admin_action('UPDATE', 'news', entity_id=news_id, details=f'Изменен статус новости "{log_title}": {action_desc}')
     
     flash(f"Статус новости изменен на '{new_status}'", "success")
     return redirect(url_for('admin.dashboard'))
@@ -199,9 +211,13 @@ def delete_news(news_id):
         item = conn.execute('SELECT main_image, extra_images FROM news WHERE id = ?', (news_id,)).fetchone()
         
         if item:
+            title = conn.execute('SELECT title FROM news WHERE id = ?', (news_id,)).fetchone()
             # Удаляем запись из БД
             conn.execute('DELETE FROM news WHERE id = ?', (news_id,))
             conn.commit()
+            
+            log_title = title['title'] if title else f"ID {news_id}"
+            log_admin_action('DELETE', 'news', entity_id=news_id, details=f'Удалена новость: "{log_title}"')
             
             # Физически удаляем файлы картинок
             if item['main_image']:

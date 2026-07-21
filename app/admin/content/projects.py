@@ -4,6 +4,7 @@ from flask import render_template, request, redirect, url_for, flash, current_ap
 from werkzeug.utils import secure_filename
 from app.admin import bp
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 from app.db import get_db_connection
 from app.utils.image_utils import save_image_as_webp
 import json
@@ -66,6 +67,8 @@ def add_project():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (title, slug, teaser, content, main_image_path, extra_images_json, button_text, button_url, project_color, tabs_json))
         conn.commit()
+        project_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+        log_admin_action('CREATE', 'projects', entity_id=project_id, details=f'Создан проект: "{title}"')
         flash('Проект успешно создан!', 'success')
     except Exception as e:
         flash(f'Ошибка при создании проекта (возможно, такой URL уже существует): {e}', 'danger')
@@ -138,6 +141,7 @@ def edit_project(project_id):
                 WHERE id = ?
             ''', (title, slug, teaser, content, main_image_path, extra_images_json, button_text, button_url, project_color, tabs_json, project_id))
             conn.commit()
+            log_admin_action('UPDATE', 'projects', entity_id=project_id, details=f'Обновлён проект: "{title}"')
             flash('Проект успешно обновлен!', 'success')
         except Exception as e:
             flash(f'Ошибка обновления (URL должен быть уникальным): {e}', 'danger')
@@ -189,6 +193,11 @@ def toggle_project_status(project_id):
     conn.execute('UPDATE projects SET status = ? WHERE id = ?', (new_status, project_id))
     conn.commit()
     
+    title = conn.execute('SELECT title FROM projects WHERE id = ?', (project_id,)).fetchone()
+    log_title = title['title'] if title else f"ID {project_id}"
+    action_desc = "Опубликован" if new_status == 'published' else "В архиве"
+    log_admin_action('UPDATE', 'projects', entity_id=project_id, details=f'Изменён статус проекта "{log_title}": {action_desc}')
+    
     return redirect(url_for('admin.dashboard', tab='projects'))
 
 @bp.route('/delete_project/<int:project_id>', methods=['POST'])
@@ -215,8 +224,12 @@ def delete_project(project_id):
                     os.remove(os.path.join('app', 'static', img))
             except:
                 pass
+        title = conn.execute('SELECT title FROM projects WHERE id = ?', (project_id,)).fetchone()
+        log_title = title['title'] if title else f"ID {project_id}"
                 
         conn.execute('DELETE FROM projects WHERE id = ?', (project_id,))
         conn.commit()
+        
+        log_admin_action('DELETE', 'projects', entity_id=project_id, details=f'Удалён проект: "{log_title}"')
         flash('Проект удален!', 'success')
     return redirect(url_for('admin.dashboard', tab='projects'))

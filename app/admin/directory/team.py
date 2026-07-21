@@ -2,6 +2,7 @@ from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 import os
 from werkzeug.utils import secure_filename
 from app.utils.image_utils import save_image_as_webp
@@ -38,7 +39,11 @@ def add_team_member():
         INSERT INTO team_members (full_name, position, email, display_order, image_path)
         VALUES (?, ?, ?, ?, ?)
     ''', (full_name, position, email, display_order, image_path))
+    
+    member_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
     conn.commit()
+    
+    log_admin_action('CREATE', 'team', entity_id=member_id, details=f'Добавлен сотрудник: "{full_name}"')
     
     flash('Сотрудник успешно добавлен!', 'success')
     return redirect(url_for('admin.dashboard', tab='team'))
@@ -65,6 +70,8 @@ def edit_team_member(id):
     ''', (full_name, position, email, display_order, image_path, id))
     conn.commit()
     
+    log_admin_action('UPDATE', 'team', entity_id=id, details=f'Обновлен сотрудник: "{full_name}"')
+    
     flash('Сотрудник успешно обновлен!', 'success')
     return redirect(url_for('admin.dashboard', tab='team'))
 
@@ -72,7 +79,9 @@ def edit_team_member(id):
 @login_required
 def delete_team_member(id):
     conn = get_db_connection()
-    member = conn.execute('SELECT image_path FROM team_members WHERE id = ?', (id,)).fetchone()
+    member = conn.execute('SELECT full_name, image_path FROM team_members WHERE id = ?', (id,)).fetchone()
+    member_name = member['full_name'] if member else f"ID {id}"
+    
     if member and member['image_path']:
         full_path = os.path.join('app', 'static', member['image_path'])
         if os.path.exists(full_path):
@@ -80,6 +89,8 @@ def delete_team_member(id):
             
     conn.execute('DELETE FROM team_members WHERE id = ?', (id,))
     conn.commit()
+    
+    log_admin_action('DELETE', 'team', entity_id=id, details=f'Удален сотрудник: "{member_name}"')
     
     flash('Сотрудник удален.', 'success')
     return redirect(url_for('admin.dashboard', tab='team'))

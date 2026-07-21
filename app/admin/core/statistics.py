@@ -2,6 +2,7 @@ from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.db import get_db_connection
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 
 @bp.route('/statistics', methods=['POST'])
 @login_required
@@ -25,5 +26,8 @@ def statistics():
         conn.execute('UPDATE statistics SET label = ?, value = ?, display_order = ? WHERE id = ?',
                      (label, value, display_order, stat_id))
     conn.commit()
+    
+    log_admin_action('UPDATE', 'statistics', details='Массово обновлены блоки статистики')
+    
     flash('Статистика успешно обновлена!', 'success')
     return redirect(url_for('admin.dashboard', tab='statistics'))

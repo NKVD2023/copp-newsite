@@ -1,6 +1,7 @@
 from flask import request, redirect, url_for, flash
 from app.admin import bp
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 from app.db import get_db_connection
 
 @bp.route('/contact_settings/update', methods=['POST'])
@@ -25,6 +26,8 @@ def update_contact_settings():
     ''', (title, org_name, phones, email, address))
     conn.commit()
     
+    log_admin_action('UPDATE', 'contacts', details=f'Обновлены контактные данные организации')
+    
     flash('Настройки контактов успешно обновлены!', 'success')
     return redirect(url_for('admin.dashboard', tab='contacts'))
 
@@ -39,6 +42,8 @@ def mark_request_read(id):
     conn.execute('UPDATE contact_requests SET status = "read" WHERE id = ?', (id,))
     conn.commit()
     
+    log_admin_action('UPDATE', 'contacts', entity_id=id, details=f'Входящая заявка ID {id} отмечена как прочитанная')
+    
     flash('Заявка отмечена как прочитанная.', 'success')
     return redirect(url_for('admin.dashboard', tab='contacts'))
 
@@ -50,8 +55,14 @@ def delete_request(id):
     """
         
     conn = get_db_connection()
+    
+    req = conn.execute('SELECT name FROM contact_requests WHERE id = ?', (id,)).fetchone()
+    req_name = req['name'] if req else f"ID {id}"
+    
     conn.execute('DELETE FROM contact_requests WHERE id = ?', (id,))
     conn.commit()
+    
+    log_admin_action('DELETE', 'contacts', entity_id=id, details=f'Удалена входящая заявка от "{req_name}"')
     
     flash('Заявка удалена.', 'success')
     return redirect(url_for('admin.dashboard', tab='contacts'))
@@ -66,6 +77,8 @@ def delete_submission(id):
     conn = get_db_connection()
     conn.execute('DELETE FROM form_submissions WHERE id = ?', (id,))
     conn.commit()
+    
+    log_admin_action('DELETE', 'forms_data', entity_id=id, details=f'Удалена конкурсная заявка ID {id}')
     
     flash('Заявка удалена.', 'success')
     return redirect(url_for('admin.dashboard', tab='contacts'))
@@ -129,6 +142,9 @@ def export_submissions(form_id):
     
     # Формируем безопасное имя файла
     filename = f"export_form_{form_id}.xlsx"
+    
+    log_admin_action('UPLOAD', 'forms_data', entity_id=form_id, details=f'Выгружены заявки формы ID {form_id}')
+    
     return send_file(
         out,
         as_attachment=True,

@@ -1,6 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash
 from app.admin import bp
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 from app.db import get_db_connection
 import os
 import uuid
@@ -75,7 +76,9 @@ def add_page():
                     VALUES (?, ?, ?, ?, 'active')
                 ''', (page_id, form_title, form_year, form_fields_json))
                 
+                
             conn.commit()
+            log_admin_action('CREATE', 'pages', entity_id=page_id, details=f'Создана страница: "{title}"')
             flash("Страница успешно создана!", "success")
         except Exception as e:
             with open('error_log.txt', 'a') as f:
@@ -203,7 +206,9 @@ def update_page(page_id):
                     if existing_form:
                         conn.execute("UPDATE page_forms SET status = 'hidden' WHERE id = ?", (existing_form['id'],))
                 
+                
             conn.commit()
+            log_admin_action('UPDATE', 'pages', entity_id=page_id, details=f'Обновлена страница: "{title}"')
             flash("Страница успешно обновлена!", "success")
         except Exception as e:
             with open('error_log.txt', 'a') as f:
@@ -227,8 +232,14 @@ def delete_page(page_id):
                     os.remove(os.path.join('app', 'static', file_path))
             except:
                 pass
+        
+        title = conn.execute('SELECT title FROM pages WHERE id = ?', (page_id,)).fetchone()
+        log_title = title['title'] if title else f"ID {page_id}"
+        
         conn.execute('DELETE FROM pages WHERE id = ?', (page_id,))
         conn.commit()
+        
+        log_admin_action('DELETE', 'pages', entity_id=page_id, details=f'Удалена страница: "{log_title}"')
         
     flash("Страница удалена!", "success")
     return redirect(url_for('admin.dashboard', tab='pages'))
@@ -245,6 +256,11 @@ def toggle_page_navbar(page_id):
     with get_db_connection() as conn:
         conn.execute('UPDATE pages SET is_in_navbar = ? WHERE id = ?', (new_status, page_id))
         conn.commit()
+        
+        title = conn.execute('SELECT title FROM pages WHERE id = ?', (page_id,)).fetchone()
+        log_title = title['title'] if title else f"ID {page_id}"
+        action_desc = "Отображается в меню" if new_status == 1 else "Скрыта из меню"
+        log_admin_action('UPDATE', 'pages', entity_id=page_id, details=f'Изменена видимость страницы "{log_title}": {action_desc}')
         
     flash("Статус отображения в меню изменен", "success")
     return redirect(url_for('admin.dashboard', tab='pages'))

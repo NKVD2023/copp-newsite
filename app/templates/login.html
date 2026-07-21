@@ -3,15 +3,130 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+<style>
+.login-container {
+    max-width: 420px;
+    margin: 80px auto;
+    padding: 40px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 30px rgba(0,62,107,0.12);
+}
+.login-container h2 {
+    color: var(--copp-blue);
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 22px;
+}
+.login-subtitle {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 28px;
+}
+.login-form .form-group {
+    margin-bottom: 16px;
+}
+.login-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+}
+.login-form input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #dde3ed;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.login-form input:focus {
+    outline: none;
+    border-color: var(--copp-blue);
+}
+.login-form .hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+}
+.login-form button {
+    width: 100%;
+    padding: 12px;
+    background: var(--copp-blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.2s;
+}
+.login-form button:hover {
+    background: #004a8f;
+}
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ccc;
+    font-size: 12px;
+    margin: 18px 0;
+}
+.login-divider::before, .login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #eee;
+}
+.alert-error {
+    background: #fff5f5;
+    border: 1px solid #f5c6c6;
+    border-left: 4px solid #e74c3c;
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: #c0392b;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="login-container">
-    <h2>Вход для сотрудников</h2>
+    <h2>Вход в систему</h2>
+    <p class="login-subtitle">Панель управления ЦОПП Республики Крым</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            {% if category == 'error' %}
+                <div class="alert-error">{{ message }}</div>
+            {% endif %}
+        {% endfor %}
+    {% endwith %}
+
     <form method="POST" action="{{ url_for('admin.login') }}" class="login-form">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <input type="password" name="password" placeholder="Введите пароль доступа" required autocomplete="current-password">
-        <button type="submit">Войти в систему</button>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        <div class="form-group">
+            <label for="username">Логин</label>
+            <input type="text" id="username" name="username"
+                   placeholder="Логин сотрудника"
+                   autocomplete="username">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" name="password"
+                   placeholder="Введите пароль"
+                   required autocomplete="current-password">
+        </div>
+
+        <button type="submit">
+            <i class="fas fa-right-to-bracket" style="margin-right:6px;"></i> Войти в систему
+        </button>
     </form>
 </div>
 {% endblock %}

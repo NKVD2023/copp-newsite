@@ -5,7 +5,7 @@
 from datetime import datetime
 from flask import render_template, redirect, url_for, session, request, jsonify
 from app.admin import bp
-from app.admin.core.auth import login_required
+from app.admin.core.auth import login_required, get_current_user_modules, ALL_MODULES, ROLE_LABELS
 from app.db import get_db_connection
 from app.utils.media_utils import scan_uploads_dir
 
@@ -26,7 +26,13 @@ def dashboard():
     Собирает данные из всех таблиц БД и список файлов из папки загрузок
     для отображения на соответствующих вкладках.
     """
+    allowed_modules = get_current_user_modules()
     active_tab = request.args.get('tab', 'news')
+
+    # Если активная вкладка недоступна — перенаправляем на первую доступную
+    if not session.get('is_admin') and active_tab not in allowed_modules + ['users']:
+        first = allowed_modules[0] if allowed_modules else 'news'
+        active_tab = first
 
     # Сканирование директории загрузок — вынесено в утилиту (было продублировано 3 раза)
     all_media_files = scan_uploads_dir()
@@ -75,6 +81,17 @@ def dashboard():
         except Exception:
             team_members = []
 
+        # Список субадминов и логов (только для суперадмина)
+        users_list = []
+        logs_list = []
+        if session.get('is_admin'):
+            try:
+                users_list = conn.execute('SELECT * FROM admin_users ORDER BY created_at DESC').fetchall()
+                logs_list = conn.execute('SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT 1000').fetchall()
+            except Exception:
+                users_list = []
+                logs_list = []
+
     # Загружаем список учебных заведений для чекбоксов
     colleges_list = []
     colleges_path = os.path.join('app', 'static', 'data', 'colleges.json')
@@ -106,5 +123,13 @@ def dashboard():
         forms_list=forms_list,
         submissions_list=submissions_list,
         team_members=team_members,
+        users_list=users_list,
+        logs_list=logs_list,
+        allowed_modules=allowed_modules,
+        all_modules=ALL_MODULES,
+        role_labels=ROLE_LABELS,
+        current_username=session.get('username', 'Суперадмин'),
+        current_role=session.get('user_role', 'superadmin'),
+        is_superadmin=bool(session.get('is_admin')),
         now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
     )

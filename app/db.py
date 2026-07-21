@@ -68,4 +68,32 @@ def init_db(app):
             conn.execute('INSERT INTO menu_items (title, url, parent_id, position, type) VALUES (?, ?, ?, ?, ?)', ('Конкурсы', '', None, 70, 'dynamic_pages_group_Конкурсы'))
             conn.execute('INSERT INTO menu_items (title, url, parent_id, position, type) VALUES (?, ?, ?, ?, ?)', ('Дополнительно', '', None, 80, 'dynamic_pages_group_Дополнительно'))
         
+        # Создаем таблицу пользователей-администраторов (субадминов)
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS admin_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'editor',
+            allowed_modules TEXT DEFAULT '[]',
+            is_active BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_login TIMESTAMP
+        )
+        ''')
+        # Создаем таблицу логов администраторов
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS admin_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            role TEXT NOT NULL,
+            action TEXT NOT NULL,
+            module TEXT NOT NULL,
+            entity_id INTEGER,
+            details TEXT,
+            ip_address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+
         conn.commit()

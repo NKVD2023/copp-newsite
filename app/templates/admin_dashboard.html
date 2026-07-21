@@ -9,12 +9,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 
 <body class="admin-wrapper">
 
-    <!-- ШАП КА -->
+    <!-- ШАПКА -->
     <div class="admin-topbar">
         <div class="admin-topbar-left">
             <span class="admin-topbar-title">
@@ -24,56 +25,107 @@
             <div class="admin-topbar-divider"></div>
             <span class="admin-topbar-subtitle">ЦОПП Республики Крым</span>
         </div>
-        <a href="{{ url_for('admin.logout') }}" class="a-btn-exit">
-            <i class="fas fa-right-from-bracket"></i> Выйти
-        </a>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <!-- Инфо о текущем пользователе -->
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:30px; height:30px; border-radius:50%; background:var(--copp-blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">
+                    {{ current_username[0].upper() }}
+                </div>
+                <div style="line-height:1.3;">
+                    <div style="font-size:13px; font-weight:600; color:#333;">{{ current_username }}</div>
+                    <div style="font-size:11px; color:#999;">{% if is_superadmin %}Суперадмин{% else %}{{ role_labels.get(current_role, current_role) }}{% endif %}</div>
+                </div>
+            </div>
+            <a href="{{ url_for('admin.logout') }}" class="a-btn-exit">
+                <i class="fas fa-right-from-bracket"></i> Выйти
+            </a>
+        </div>
     </div>
 
-    <!-- НАВИГАЦИЯ — одна компактная строка с иконками -->
+    <!-- НАВИГАЦИЯ - динамические вкладки на основе роли -->
     <div class="admin-nav-wrap">
         <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+
+            <!-- Вкладка пользователей — только суперадмину -->
+            {% if is_superadmin %}
             <li class="nav-item">
-                <button class="nav-link {% if not active_tab or active_tab == 'news' or active_tab == 'users' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#usersTab" type="button">
+                <button class="nav-link {% if active_tab == 'users' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#usersAdminTab" type="button">
+                    <i class="fas fa-users-gear"></i> Пользователи
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'logs' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#logsAdminTab" type="button">
+                    <i class="fas fa-list-check"></i> Журнал действий
+                </button>
+            </li>
+            {% endif %}
+
+            {% if is_superadmin or 'news' in allowed_modules %}
+            <li class="nav-item">
+                <button class="nav-link {% if active_tab == 'news' %}active{% endif %}"
+                    data-bs-toggle="tab" data-bs-target="#newsTab" type="button">
                     <i class="fas fa-newspaper"></i> Новости
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'prof_stats' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'prof_stats' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#reportsTab" type="button">
                     <i class="fas fa-chart-bar"></i> Статистика дашборда
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'prof_atlas' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'prof_atlas' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#profAtlasTab" type="button">
                     <i class="fas fa-graduation-cap"></i> Атлас профессий
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'projects' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'projects' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#projectsTab" type="button">
                     <i class="fas fa-folder-open"></i> Проекты
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'pages' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'pages' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#pagesTab" type="button">
                     <i class="fas fa-file-lines"></i> Страницы
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'documents' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'documents' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#documentsTab" type="button">
                     <i class="fas fa-paperclip"></i> Файлы
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'statistics' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'statistics' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#statisticsTab" type="button">
                     <i class="fas fa-square-poll-vertical"></i> Показатели
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'contacts' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'contacts' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#contactsTab" type="button">
@@ -81,93 +133,153 @@
                     <span id="feedback-badge" class="badge bg-danger rounded-pill" style="display: none; margin-left: 5px;">0</span>
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'forms_data' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'forms_data' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#formsDataTab" type="button">
                     <i class="fas fa-table-list"></i> Данные форм
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'socials' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'socials' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#socialsTab" type="button">
                     <i class="fas fa-share-nodes"></i> Соцсети
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'menu' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'menu' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#menuTab" type="button">
                     <i class="fas fa-bars"></i> Меню сайта
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'team' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'team' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#teamTab" type="button">
                     <i class="fas fa-users"></i> Команда
                 </button>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'database' in allowed_modules %}
             <li class="nav-item">
                 <button class="nav-link {% if active_tab == 'database' %}active{% endif %}"
                     data-bs-toggle="tab" data-bs-target="#databaseTab" type="button">
                     <i class="fas fa-database"></i> База данных
                 </button>
             </li>
+            {% endif %}
+
         </ul>
     </div>
 
     <!-- КОНТЕНТ ВКЛАДОК -->
     <div class="admin-content">
         <div class="tab-content">
-            <div class="tab-pane fade {% if not active_tab or active_tab == 'news' or active_tab == 'users' %}show active{% endif %}" id="usersTab" role="tabpanel">
+        
+            {% if is_superadmin %}
+            <div class="tab-pane fade {% if active_tab == 'users' %}show active{% endif %}" id="usersAdminTab" role="tabpanel">
+                {% include 'admin_tabs/tab_users.html' %}
+            </div>
+            <div class="tab-pane fade {% if active_tab == 'logs' %}show active{% endif %}" id="logsAdminTab" role="tabpanel">
+                {% include 'admin_tabs/tab_logs.html' %}
+            </div>
+            {% endif %}
+
+            {% if is_superadmin or 'news' in allowed_modules %}
+            <div class="tab-pane fade {% if active_tab == 'news' %}show active{% endif %}" id="newsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_news.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'prof_stats' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'prof_stats' %}show active{% endif %}" id="reportsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_prof_stats.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'prof_atlas' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'prof_atlas' %}show active{% endif %}" id="profAtlasTab" role="tabpanel">
                 {% include 'admin_tabs/tab_prof_atlas.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'projects' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'projects' %}show active{% endif %}" id="projectsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_projects.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'pages' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'pages' %}show active{% endif %}" id="pagesTab" role="tabpanel">
                 {% include 'admin_tabs/tab_pages.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'documents' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'documents' %}show active{% endif %}" id="documentsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_documents.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'statistics' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'statistics' %}show active{% endif %}" id="statisticsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_statistics.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'contacts' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'contacts' %}show active{% endif %}" id="contactsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_contacts.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'forms_data' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'forms_data' %}show active{% endif %}" id="formsDataTab" role="tabpanel">
                 {% include 'admin_tabs/tab_forms_data.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'socials' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'socials' %}show active{% endif %}" id="socialsTab" role="tabpanel">
                 {% include 'admin_tabs/tab_socials.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'team' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'team' %}show active{% endif %}" id="teamTab" role="tabpanel">
                 {% include 'admin_tabs/tab_team.html' %}
             </div>
-            
+            {% endif %}
+
+            {% if is_superadmin or 'menu' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'menu' %}show active{% endif %}" id="menuTab" role="tabpanel">
                 {% include 'admin_tabs/tab_menu.html' %}
             </div>
+            {% endif %}
 
+            {% if is_superadmin or 'database' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'database' %}show active{% endif %}" id="databaseTab" role="tabpanel">
                 {% include 'admin_tabs/tab_database.html' %}
             </div>
+            {% endif %}
+
+            <!-- Вкладка пользователей — только суперадмину -->
+            {% if is_superadmin %}
+            <div class="tab-pane fade {% if active_tab == 'users' %}show active{% endif %}" id="usersAdminTab" role="tabpanel">
+                {% include 'admin_tabs/tab_users.html' %}
+            </div>
+            {% endif %}
 
         </div>
     </div>
@@ -176,7 +288,10 @@
     <!-- Глобальное модальное окно Медиабиблиотеки -->
     {% include 'admin_tabs/media_picker_modal.html' %}
 
-    <!-- Подключение Bootstrap и TinyMCE -->
+    <!-- Подключение jQuery, DataTables, Bootstrap и TinyMCE -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/tinymce/js/tinymce/tinymce.min.js') }}"></script>
     <script>

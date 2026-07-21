@@ -1,0 +1,152 @@
+<!-- tab_logs.html -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-list-check me-2 text-secondary"></i> Журнал действий сотрудников</h5>
+    </div>
+    
+    <div class="card-body">
+        <p class="text-muted small mb-4">В данном журнале отображаются все действия сотрудников в панели управления за последнее время.</p>
+        
+        <div class="table-responsive">
+            <table class="table table-hover align-middle datatable" id="logsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th width="20%">Дата и Время</th>
+                        <th width="20%">Сотрудник</th>
+                        <th width="15%">Действие</th>
+                        <th width="30%">Детали</th>
+                        <th width="15%">IP-адрес</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs_list %}
+                    <tr>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="fw-bold">{{ log.created_at | datetime_format }}</span>
+                                <span class="d-none">{{ log.created_at }}</span> <!-- Для сортировки -->
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-bold">{{ log.username }}</div>
+                            <span class="badge bg-secondary opacity-75">{{ log.role }}</span>
+                        </td>
+                        <td>
+                            {% if log.action == 'LOGIN' %}
+                                <span class="badge bg-success">ВХОД</span>
+                            {% elif log.action == 'LOGOUT' %}
+                                <span class="badge bg-secondary">ВЫХОД</span>
+                            {% elif log.action == 'CREATE' %}
+                                <span class="badge bg-primary">СОЗДАНИЕ</span>
+                            {% elif log.action == 'UPDATE' %}
+                                <span class="badge bg-warning text-dark">ОБНОВЛЕНИЕ</span>
+                            {% elif log.action == 'DELETE' %}
+                                <span class="badge bg-danger">УДАЛЕНИЕ</span>
+                            {% elif log.action == 'UPLOAD' %}
+                                <span class="badge bg-info text-dark">ЗАГРУЗКА</span>
+                            {% else %}
+                                <span class="badge bg-dark">{{ log.action }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ log.details }}
+                            {% if log.entity_id %}
+                                <div class="text-muted small mt-1">ID объекта: {{ log.entity_id }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <code class="text-secondary">{{ log.ip_address }}</code>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="fas fa-clipboard-list fs-1 mb-3 text-light"></i>
+                            <p class="mb-0">Журнал действий пока пуст</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Стилизация DataTables под дизайн сайта */
+div.dataTables_wrapper div.dataTables_length select {
+    width: auto;
+    display: inline-block;
+    padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+div.dataTables_wrapper div.dataTables_filter input {
+    margin-left: 0.5em;
+    display: inline-block;
+    width: auto;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+.dataTables_wrapper .pagination .page-link {
+    color: var(--copp-blue, #0d6efd);
+    border: none;
+    border-radius: 0.375rem;
+    margin: 0 2px;
+}
+.dataTables_wrapper .pagination .page-item.active .page-link {
+    background-color: var(--copp-blue, #0d6efd);
+    color: white;
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация DataTables для красивого отображения и встроенного поиска/пагинации
+    if ($.fn.DataTable && $('#logsTable').length) {
+        if (!$.fn.DataTable.isDataTable('#logsTable')) {
+            $('#logsTable').DataTable({
+                "language": {
+                    "processing": "Подождите...",
+                    "search": "Поиск:",
+                    "lengthMenu": "Показать _MENU_ записей",
+                    "info": "Записи с _START_ по _END_ из _TOTAL_ записей",
+                    "infoEmpty": "Записи с 0 до 0 из 0 записей",
+                    "infoFiltered": "(отфильтровано из _MAX_ записей)",
+                    "infoPostFix": "",
+                    "loadingRecords": "Загрузка записей...",
+                    "zeroRecords": "Записи отсутствуют.",
+                    "emptyTable": "В таблице отсутствуют данные",
+                    "paginate": {
+                        "first": "Первая",
+                        "previous": "Назад",
+                        "next": "Вперед",
+                        "last": "Последняя"
+                    },
+                    "aria": {
+                        "sortAscending": ": активировать для сортировки столбца по возрастанию",
+                        "sortDescending": ": активировать для сортировки столбца по убыванию"
+                    }
+                },
+                "order": [[ 0, "desc" ]],
+                "pageLength": 50,
+                "lengthMenu": [ [25, 50, 100, 500, -1], [25, 50, 100, 500, "Все"] ],
+                "columnDefs": [
+                    { "orderable": false, "targets": [3] } // Отключаем сортировку по столбцу деталей
+                ]
+            });
+        }
+    }
+});
+</script>

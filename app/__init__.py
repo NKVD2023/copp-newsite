@@ -191,6 +191,22 @@ def create_app(config_class=Config):
         except Exception:
             return []
 
+    @app.template_filter('datetime_format')
+    def datetime_format_filter(value):
+        """
+        Форматирует строку даты из SQLite (YYYY-MM-DD HH:MM:SS) в человекочитаемый вид.
+        Например: "21 июля 2026, 05:32"
+        """
+        if not value:
+            return ""
+        try:
+            from datetime import datetime
+            dt = datetime.strptime(value[:19], '%Y-%m-%d %H:%M:%S')
+            months = ['', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+            return f"{dt.day} {months[dt.month]} {dt.year}, {dt.strftime('%H:%M')}"
+        except Exception:
+            return value
+
     # ==========================================
     # РЕГИСТРАЦИЯ КОМПОНЕНТОВ (Blueprints)
     # ==========================================

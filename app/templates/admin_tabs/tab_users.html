@@ -1,0 +1,257 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        {% if category == 'password_reveal' %}
+        <div style="background:#fff8e1; border:1px solid #ffe082; border-left:4px solid #f9a825; border-radius:8px; padding:14px 18px; margin-bottom:18px; font-size:14px;">
+            <strong style="color:#e65100;">🔑 Пароль сгенерирован — сохраните его сейчас, он больше не отображается!</strong><br>
+            <code style="display:inline-block; margin-top:8px; background:#fff3cd; padding:8px 14px; border-radius:6px; font-size:16px; letter-spacing:1px; color:#333;">{{ message }}</code>
+        </div>
+        {% elif category == 'success' %}
+        <div style="background:#f0fff4; border:1px solid #a8e6cf; border-left:4px solid #27ae60; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:14px; color:#1a6b3a;">
+            {{ message }}
+        </div>
+        {% elif category == 'error' %}
+        <div style="background:#fff5f5; border:1px solid #f5c6c6; border-left:4px solid #e74c3c; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:14px; color:#c0392b;">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endwith %}
+
+<div class="a-panel" style="margin-bottom:16px;">
+    <div class="a-panel-toolbar">
+        <h6 class="a-panel-title mb-0" style="border:none;padding:0;">
+            <i class="fas fa-users-gear"></i> Управление пользователями
+        </h6>
+        <button class="a-btn a-btn-accent" onclick="document.getElementById('addUserForm').style.display='block'; this.style.display='none';">
+            <i class="fas fa-plus"></i> Добавить пользователя
+        </button>
+    </div>
+</div>
+
+<!-- Форма добавления -->
+<div id="addUserForm" class="modern-form-card" style="display:none; margin-bottom:24px;">
+    <div class="form-header">
+        <h2><i class="fas fa-user-plus"></i> Новый пользователь</h2>
+        <button type="button" class="btn-cancel" onclick="this.closest('#addUserForm').style.display='none'; document.querySelector('[onclick*=addUserForm]').style.display='';">Отмена</button>
+    </div>
+    <form action="{{ url_for('admin.add_user') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Логин <span style="color:red">*</span></label>
+                <input type="text" name="username" required placeholder="например: ivanova_ns" style="font-family:monospace;">
+                <small style="color:#888;">Только латинские буквы, цифры и символы _-</small>
+            </div>
+            <div class="form-group">
+                <label>Роль</label>
+                <select name="role" class="a-select">
+                    <option value="editor">Редактор</option>
+                    <option value="analyst">Аналитик</option>
+                    <option value="admin">Администратор</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top:8px;">
+            <label style="font-weight:700; margin-bottom:12px; display:block;">Доступные модули</label>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">
+                {% for mod_id, mod_name, mod_icon in all_modules %}
+                <label style="display:flex; align-items:center; gap:8px; padding:10px 14px; border:1.5px solid #e0e6ef; border-radius:8px; cursor:pointer; transition:all 0.15s;" 
+                       onmouseover="this.style.borderColor='var(--copp-blue)'"
+                       onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#e0e6ef'">
+                    <input type="checkbox" name="allowed_modules" value="{{ mod_id }}"
+                           onchange="this.closest('label').style.borderColor = this.checked ? 'var(--copp-blue)' : '#e0e6ef'; this.closest('label').style.background = this.checked ? 'rgba(0,62,107,0.06)' : ''">
+                    <i class="fas {{ mod_icon }}" style="color:var(--copp-blue); width:16px;"></i>
+                    <span style="font-size:13px; font-weight:500;">{{ mod_name }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:10px; align-items:center;">
+            <button type="submit" class="a-btn a-btn-accent">
+                <i class="fas fa-key"></i> Создать и сгенерировать пароль
+            </button>
+            <span style="color:#888; font-size:12px;"><i class="fas fa-info-circle"></i> Пароль будет показан один раз после создания</span>
+        </div>
+    </form>
+</div>
+
+<!-- Таблица пользователей -->
+{% if users_list %}
+<div class="a-panel">
+    <table style="width:100%; border-collapse:collapse; font-size:14px;">
+        <thead>
+            <tr style="background:#f4f7fb; border-bottom:2px solid #e0e6ef;">
+                <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Логин</th>
+                <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Роль</th>
+                <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Доступные модули</th>
+                <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Последний вход</th>
+                <th style="padding:12px 16px; text-align:left; color:#555; font-weight:600;">Статус</th>
+                <th style="padding:12px 16px; text-align:center; color:#555; font-weight:600;">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in users_list %}
+            {% set u_modules = u.allowed_modules | tojson if u.allowed_modules is string else '[]' %}
+            <tr style="border-bottom:1px solid #f0f0f0; {% if not u.is_active %}opacity:0.55;{% endif %}">
+                <td style="padding:14px 16px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:34px; height:34px; border-radius:50%; background:var(--copp-blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;">
+                            {{ u.username[0].upper() }}
+                        </div>
+                        <div>
+                            <div style="font-weight:600; color:#222;">{{ u.username }}</div>
+                            <div style="font-size:11px; color:#aaa;">Создан: {{ u.created_at[:10] if u.created_at else '—' }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding:14px 16px;">
+                    {% if u.role == 'admin' %}
+                        <span style="background:#fff3cd; color:#856404; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600;">Администратор</span>
+                    {% elif u.role == 'editor' %}
+                        <span style="background:#d1ecf1; color:#0c5460; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600;">Редактор</span>
+                    {% elif u.role == 'analyst' %}
+                        <span style="background:#d4edda; color:#155724; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600;">Аналитик</span>
+                    {% else %}
+                        <span style="background:#f0f0f0; color:#555; padding:4px 10px; border-radius:20px; font-size:12px;">{{ u.role }}</span>
+                    {% endif %}
+                </td>
+                <td style="padding:14px 16px; max-width:250px;">
+                    {% set mods = u.allowed_modules | from_json %}
+                    {% if mods %}
+                        <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                        {% for m in mods %}
+                            {% for mod_id, mod_name, mod_icon in all_modules if mod_id == m %}
+                            <span style="background:#eef2f5; color:#555; padding:3px 8px; border-radius:4px; font-size:11px; display:flex; align-items:center; gap:3px;">
+                                <i class="fas {{ mod_icon }}" style="font-size:9px;"></i> {{ mod_name }}
+                            </span>
+                            {% endfor %}
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <span style="color:#aaa; font-size:12px;">нет доступа</span>
+                    {% endif %}
+                </td>
+                <td style="padding:14px 16px; color:#666; font-size:13px;">
+                    {{ u.last_login[:16].replace('T', ' ') if u.last_login else '—' }}
+                </td>
+                <td style="padding:14px 16px;">
+                    {% if u.is_active %}
+                        <span style="color:#27ae60; font-weight:600; font-size:13px;"><i class="fas fa-circle" style="font-size:8px;"></i> Активен</span>
+                    {% else %}
+                        <span style="color:#999; font-size:13px;"><i class="fas fa-circle" style="font-size:8px;"></i> Отключён</span>
+                    {% endif %}
+                </td>
+                <td style="padding:14px 16px; text-align:center;">
+                    <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+                        <!-- Редактировать -->
+                        <button onclick="openEditModal({{ u.id }}, '{{ u.username }}', '{{ u.role }}', {{ u.allowed_modules or '[]' }})"
+                                class="a-btn a-btn-outline a-btn-sm" title="Редактировать">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <!-- Сбросить пароль -->
+                        <form action="{{ url_for('admin.reset_user_password', user_id=u.id) }}" method="POST" style="display:inline;"
+                              onsubmit="return confirm('Сгенерировать новый пароль для «{{ u.username }}»?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="a-btn a-btn-outline a-btn-sm" title="Сбросить пароль">
+                                <i class="fas fa-key"></i>
+                            </button>
+                        </form>
+                        <!-- Активировать/Деактивировать -->
+                        <form action="{{ url_for('admin.toggle_user', user_id=u.id) }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="a-btn a-btn-outline a-btn-sm" title="{{ 'Деактивировать' if u.is_active else 'Активировать' }}">
+                                <i class="fas {{ 'fa-user-slash' if u.is_active else 'fa-user-check' }}"></i>
+                            </button>
+                        </form>
+                        <!-- Удалить -->
+                        <form action="{{ url_for('admin.delete_user', user_id=u.id) }}" method="POST" style="display:inline;"
+                              onsubmit="return confirm('Удалить пользователя «{{ u.username }}»? Это действие нельзя отменить.')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="a-btn a-btn-sm" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;" title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="a-panel" style="text-align:center; padding:40px; color:#aaa;">
+    <i class="fas fa-users" style="font-size:40px; margin-bottom:12px; opacity:0.3;"></i>
+    <p style="font-size:15px;">Пользователей ещё нет.<br>Нажмите «Добавить пользователя», чтобы создать первого.</p>
+</div>
+{% endif %}
+
+<!-- Модальное окно редактирования -->
+<div id="editUserModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div style="background:#fff; width:90%; max-width:650px; max-height:90vh; border-radius:12px; box-shadow:0 8px 40px rgba(0,0,0,0.2); overflow-y:auto; position:relative;">
+        <div style="padding:20px 24px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:1;">
+            <h5 style="margin:0; color:var(--copp-blue); font-weight:700;"><i class="fas fa-user-pen"></i> Редактирование: <span id="editUserTitle"></span></h5>
+            <button onclick="document.getElementById('editUserModal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#aaa;">&times;</button>
+        </div>
+        <div style="padding:24px;">
+            <form id="editUserForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label style="font-weight:700; margin-bottom:8px; display:block;">Роль</label>
+                    <select name="role" id="editUserRole" class="a-select" style="width:100%; padding:10px 14px; border:1.5px solid #dde3ed; border-radius:8px;">
+                        <option value="editor">Редактор</option>
+                        <option value="analyst">Аналитик</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight:700; margin-bottom:12px; display:block;">Доступные модули</label>
+                    <div id="editModulesGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">
+                        {% for mod_id, mod_name, mod_icon in all_modules %}
+                        <label class="edit-module-label" data-mod="{{ mod_id }}" 
+                               style="display:flex; align-items:center; gap:8px; padding:10px 14px; border:1.5px solid #e0e6ef; border-radius:8px; cursor:pointer; transition:all 0.15s;">
+                            <input type="checkbox" name="allowed_modules" value="{{ mod_id }}"
+                                   onchange="this.closest('label').style.borderColor = this.checked ? 'var(--copp-blue)' : '#e0e6ef'; this.closest('label').style.background = this.checked ? 'rgba(0,62,107,0.06)' : ''">
+                            <i class="fas {{ mod_icon }}" style="color:var(--copp-blue); width:16px;"></i>
+                            <span style="font-size:13px; font-weight:500;">{{ mod_name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div style="margin-top:20px;">
+                    <button type="submit" class="a-btn a-btn-accent"><i class="fas fa-save"></i> Сохранить изменения</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openEditModal(userId, username, role, allowedModules) {
+    document.getElementById('editUserTitle').textContent = username;
+    document.getElementById('editUserForm').action = '/admin/users/' + userId + '/edit';
+    document.getElementById('editUserRole').value = role;
+
+    // Сбрасываем все чекбоксы
+    document.querySelectorAll('#editModulesGrid input[type=checkbox]').forEach(cb => {
+        cb.checked = false;
+        cb.closest('label').style.borderColor = '#e0e6ef';
+        cb.closest('label').style.background = '';
+    });
+
+    // Проставляем нужные
+    if (allowedModules && Array.isArray(allowedModules)) {
+        allowedModules.forEach(mod => {
+            const label = document.querySelector(`.edit-module-label[data-mod="${mod}"]`);
+            if (label) {
+                label.querySelector('input').checked = true;
+                label.style.borderColor = 'var(--copp-blue)';
+                label.style.background = 'rgba(0,62,107,0.06)';
+            }
+        });
+    }
+
+    document.getElementById('editUserModal').style.display = 'flex';
+}
+</script>

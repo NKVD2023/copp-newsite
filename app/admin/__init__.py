@@ -59,6 +59,6 @@ def inject_admin_context():
     return context
 
 
-from app.admin.core import auth, dashboard, database, statistics, prof_stats
+from app.admin.core import auth, dashboard, database, statistics, prof_stats, users
 from app.admin.content import news, pages, projects, documents, menu_items
 from app.admin.directory import professions, team, socials, contacts

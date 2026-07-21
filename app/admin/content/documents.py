@@ -3,6 +3,7 @@ from flask import render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from app.admin import bp
 from app.admin.core.auth import login_required
+from app.admin.core.logger import log_admin_action
 from app.db import get_db_connection
 
 UPLOAD_DOCS_FOLDER = os.path.join('app', 'static', 'uploads', 'documents')
@@ -52,6 +53,9 @@ def upload_document():
                 ''', (file.filename, db_filepath))
                 uploaded_count += 1
                 
+                doc_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
+                log_admin_action('UPLOAD', 'documents', entity_id=doc_id, details=f'Загружен документ: "{file.filename}"')
+                
                 # Если ajax запрос - возвращаем после первого файла (для TinyMCE)
                 if request.form.get('ajax'):
                     conn.commit()
@@ -84,8 +88,13 @@ def delete_document(doc_id):
             if os.path.exists(full_path):
                 os.remove(full_path)
                 
+            
+            doc_name = doc['filepath'].split('/')[-1] if doc['filepath'] else f"ID {doc_id}"
+            
             conn.execute('DELETE FROM documents WHERE id = ?', (doc_id,))
             conn.commit()
+            
+            log_admin_action('DELETE', 'documents', entity_id=doc_id, details=f'Удален документ: "{doc_name}"')
             flash("Документ удален!", "success")
             
     return redirect(url_for('admin.dashboard', tab='documents'))
@@ -115,10 +124,16 @@ def delete_media():
             os.remove(full_path)
             
             # Clean up documents table if it was a document
+            doc_deleted = False
             with get_db_connection() as conn:
-                conn.execute('DELETE FROM documents WHERE filepath = ?', (filepath,))
-                conn.commit()
-                
+                doc = conn.execute('SELECT id FROM documents WHERE filepath = ?', (filepath,)).fetchone()
+                if doc:
+                    conn.execute('DELETE FROM documents WHERE filepath = ?', (filepath,))
+                    conn.commit()
+                    doc_deleted = True
+            
+            log_admin_action('DELETE', 'documents', details=f'Удален файл через менеджер: "{filepath}"')
+                    
             flash(f"Файл успешно удален!", "success")
         except Exception as e:
             flash(f"Ошибка при удалении файла: {e}", "danger")
