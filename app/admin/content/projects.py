@@ -149,35 +149,8 @@ def edit_project(project_id):
         return redirect(url_for('admin.dashboard', tab='projects'))
 
     # Для GET запроса
-    # Получим все данные для dashboard, чтобы отрендерить его с активной формой
-    news_list = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
-    pages_list = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
-    documents_list = conn.execute('SELECT * FROM documents ORDER BY id DESC').fetchall()
-    projects_list = conn.execute('SELECT * FROM projects ORDER BY id DESC').fetchall()
-    stats_list = conn.execute('SELECT * FROM statistics ORDER BY display_order ASC').fetchall()
-    socials_list = conn.execute('SELECT * FROM social_networks ORDER BY display_order ASC').fetchall()
-    contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
-    menu_groups_list = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
-    
-    extra_images_list = []
-    if project and project['extra_images']:
-        try:
-            extra_images_list = json.loads(project['extra_images'])
-        except:
-            pass
-    
-    return render_template('admin_dashboard.html', 
-                           active_tab='projects',
-                           edit_project_item=project,
-                           extra_images_list=extra_images_list,
-                           news_list=news_list,
-                           pages_list=pages_list,
-                           documents_list=documents_list,
-                           projects_list=projects_list,
-                           stats_list=stats_list,
-                           socials_list=socials_list,
-                           contact_settings=contact_settings,
-                           menu_groups_list=menu_groups_list)
+    # Редирект на дашборд с параметром edit_project_id
+    return redirect(url_for('admin.dashboard', tab='projects', edit_project_id=project_id))
 
 
 @bp.route('/toggle_project_status/<int:project_id>', methods=['POST'])

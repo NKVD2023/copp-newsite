@@ -101,6 +101,35 @@ def dashboard():
     except Exception as e:
         print(f"Error loading colleges: {e}")
 
+    # Обработка редактирования элементов через GET параметры
+    edit_item = None
+    edit_page_item = None
+    page_form = None
+    attached_files_list = []
+    edit_project_item = None
+    extra_images_list = []
+    
+    with get_db_connection() as conn:
+        if request.args.get('edit_news_id'):
+            edit_item = conn.execute('SELECT * FROM news WHERE id = ?', (request.args.get('edit_news_id'),)).fetchone()
+            
+        if request.args.get('edit_page_id'):
+            edit_page_item = conn.execute('SELECT * FROM pages WHERE id = ?', (request.args.get('edit_page_id'),)).fetchone()
+            page_form = conn.execute("SELECT * FROM page_forms WHERE page_id = ? AND status != 'archived'", (request.args.get('edit_page_id'),)).fetchone()
+            if edit_page_item and edit_page_item['attached_files']:
+                try:
+                    attached_files_list = json.loads(edit_page_item['attached_files'])
+                except:
+                    pass
+                    
+        if request.args.get('edit_project_id'):
+            edit_project_item = conn.execute('SELECT * FROM projects WHERE id = ?', (request.args.get('edit_project_id'),)).fetchone()
+            if edit_project_item and edit_project_item['extra_images']:
+                try:
+                    extra_images_list = json.loads(edit_project_item['extra_images'])
+                except:
+                    pass
+
     return render_template(
         'admin_dashboard.html',
         active_tab=active_tab,
@@ -132,4 +161,10 @@ def dashboard():
         current_role=session.get('user_role', 'superadmin'),
         is_superadmin=bool(session.get('is_admin')),
         now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        edit_item=edit_item,
+        edit_page_item=edit_page_item,
+        page_form=page_form,
+        attached_files_list=attached_files_list,
+        edit_project_item=edit_project_item,
+        extra_images_list=extra_images_list
     )

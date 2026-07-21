@@ -78,33 +78,9 @@ def add_news():
 def edit_news(news_id):
     """
     Страница редактирования новости.
-    Загружает полный дашборд, но передает конкретную новость (edit_item)
-    для заполнения формы редактирования в модальном окне/вкладке.
+    Загружает полный дашборд через редирект, передавая ID новости.
     """
-    with get_db_connection() as conn:
-        news_list = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
-        pages_list = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
-        documents_list = conn.execute('SELECT * FROM documents ORDER BY id DESC').fetchall()
-        projects_list = conn.execute('SELECT * FROM projects ORDER BY id DESC').fetchall()
-        stats_list = conn.execute('SELECT * FROM statistics ORDER BY display_order ASC').fetchall()
-        socials_list = conn.execute('SELECT * FROM social_networks ORDER BY display_order ASC').fetchall()
-        contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
-        menu_groups_list = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
-        edit_item = conn.execute('SELECT * FROM news WHERE id = ?', (news_id,)).fetchone()
-    
-    from datetime import datetime
-    return render_template('admin_dashboard.html', 
-                           active_tab='news',
-                           news_list=news_list, 
-                           pages_list=pages_list,
-                           documents_list=documents_list,
-                           projects_list=projects_list,
-                           stats_list=stats_list,
-                           socials_list=socials_list,
-                           contact_settings=contact_settings,
-                           menu_groups_list=menu_groups_list,
-                           edit_item=edit_item,
-                           now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    return redirect(url_for('admin.dashboard', tab='news', edit_news_id=news_id))
 
 
 @bp.route('/update_news/<int:news_id>', methods=['POST'])

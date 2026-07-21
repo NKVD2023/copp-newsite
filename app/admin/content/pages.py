@@ -92,42 +92,9 @@ def add_page():
 def edit_page(page_id):
     """
     Страница редактирования статической страницы.
-    Отображает дашборд с формой редактирования выбранной страницы.
+    Редирект на дашборд с параметром edit_page_id.
     """
-    with get_db_connection() as conn:
-        news_list = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
-        pages_list = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
-        documents_list = conn.execute('SELECT * FROM documents ORDER BY id DESC').fetchall()
-        projects_list = conn.execute('SELECT * FROM projects ORDER BY id DESC').fetchall()
-        stats_list = conn.execute('SELECT * FROM statistics ORDER BY display_order ASC').fetchall()
-        socials_list = conn.execute('SELECT * FROM social_networks ORDER BY display_order ASC').fetchall()
-        contact_settings = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
-        edit_page_item = conn.execute('SELECT * FROM pages WHERE id = ?', (page_id,)).fetchone()
-        menu_groups_list = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
-        
-        # Получаем привязанную форму (не архивированную)
-        page_form = conn.execute("SELECT * FROM page_forms WHERE page_id = ? AND status != 'archived'", (page_id,)).fetchone()
-    
-    attached_files_list = []
-    if edit_page_item and edit_page_item['attached_files']:
-        try:
-            attached_files_list = json.loads(edit_page_item['attached_files'])
-        except:
-            pass
-            
-    return render_template('admin_dashboard.html', 
-                           news_list=news_list, 
-                           pages_list=pages_list, 
-                           documents_list=documents_list,
-                           projects_list=projects_list,
-                           stats_list=stats_list,
-                           socials_list=socials_list,
-                           contact_settings=contact_settings,
-                           edit_page_item=edit_page_item, 
-                           attached_files_list=attached_files_list, 
-                           active_tab='pages', 
-                           menu_groups_list=menu_groups_list,
-                           page_form=page_form)
+    return redirect(url_for('admin.dashboard', tab='pages', edit_page_id=page_id))
 
 @bp.route('/update_page/<int:page_id>', methods=['POST'])
 @login_required
