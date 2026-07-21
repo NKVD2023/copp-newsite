@@ -274,13 +274,6 @@
             </div>
             {% endif %}
 
-            <!-- Вкладка пользователей — только суперадмину -->
-            {% if is_superadmin %}
-            <div class="tab-pane fade {% if active_tab == 'users' %}show active{% endif %}" id="usersAdminTab" role="tabpanel">
-                {% include 'admin_tabs/tab_users.html' %}
-            </div>
-            {% endif %}
-
         </div>
     </div>
 
