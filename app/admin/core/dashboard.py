@@ -174,15 +174,29 @@ def dashboard():
 def clear_logs():
     if not session.get('is_admin'):
         return jsonify({'error': 'Доступ запрещен'}), 403
+        
     try:
-        with get_db_connection() as conn:
-            conn.execute('DELETE FROM admin_logs')
-            conn.commit()
+        conn = get_db_connection()
+        conn.execute('DELETE FROM admin_logs')
+        conn.commit()
         from app.admin.core.logger import log_admin_action
         log_admin_action('DELETE', 'logs', details='Очищен журнал действий системы')
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@bp.route('/logs/fix_time', methods=['GET'])
+@login_required
+def fix_logs_time():
+    if not session.get('is_admin'):
+        return "Доступ запрещен", 403
+    try:
+        conn = get_db_connection()
+        conn.execute("UPDATE admin_logs SET created_at = datetime(created_at, '+3 hours')")
+        conn.commit()
+        return "Время старых логов успешно сдвинуто на +3 часа! Вернитесь назад."
+    except Exception as e:
+        return f"Ошибка: {str(e)}"
 
 @bp.route('/logs/export')
 @login_required

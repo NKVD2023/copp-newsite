@@ -23,7 +23,9 @@ def log_admin_action(action, module, entity_id=None, details=None):
     ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
 
     from datetime import datetime
-    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    import pytz
+    moscow_tz = pytz.timezone('Europe/Moscow')
+    now_str = datetime.now(moscow_tz).strftime('%Y-%m-%d %H:%M:%S')
 
     try:
         conn = get_db_connection()
