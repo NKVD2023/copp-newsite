@@ -81,16 +81,13 @@ def dashboard():
         except Exception:
             team_members = []
 
-        # Список субадминов и логов (только для суперадмина)
+        # Список субадминов (только для суперадмина)
         users_list = []
-        logs_list = []
         if session.get('is_admin'):
             try:
                 users_list = conn.execute('SELECT * FROM admin_users ORDER BY created_at DESC').fetchall()
-                logs_list = conn.execute('SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT 1000').fetchall()
             except Exception:
                 users_list = []
-                logs_list = []
 
     # Загружаем список учебных заведений для чекбоксов
     colleges_list = []
@@ -153,7 +150,6 @@ def dashboard():
         submissions_list=submissions_list,
         team_members=team_members,
         users_list=users_list,
-        logs_list=logs_list,
         allowed_modules=allowed_modules,
         all_modules=ALL_MODULES,
         role_labels=ROLE_LABELS,
@@ -238,3 +234,54 @@ def export_logs():
     except Exception as e:
         print(f"Ошибка при экспорте: {e}")
         return redirect(url_for('admin.dashboard'))
+
+@bp.route('/api/logs', methods=['GET'])
+@login_required
+def api_logs():
+    if not session.get('is_admin'):
+        return jsonify({'error': 'Доступ запрещен'}), 403
+
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 50))
+    search = request.args.get('search', '').strip()
+
+    offset = (page - 1) * per_page
+
+    try:
+        conn = get_db_connection()
+        if search:
+            search_term = f"%{search}%"
+            # Фильтрация по дате, пользователю, действию, деталям или IP
+            where_clause = "WHERE created_at LIKE ? OR username LIKE ? OR action LIKE ? OR details LIKE ? OR ip_address LIKE ?"
+            params = (search_term, search_term, search_term, search_term, search_term)
+            
+            total_count = conn.execute(f"SELECT COUNT(*) as count FROM admin_logs {where_clause}", params).fetchone()['count']
+            logs = conn.execute(f"SELECT * FROM admin_logs {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?", params + (per_page, offset)).fetchall()
+        else:
+            total_count = conn.execute("SELECT COUNT(*) as count FROM admin_logs").fetchone()['count']
+            logs = conn.execute("SELECT * FROM admin_logs ORDER BY created_at DESC LIMIT ? OFFSET ?", (per_page, offset)).fetchall()
+
+        logs_data = []
+        for log in logs:
+            logs_data.append({
+                'id': log['id'],
+                'created_at': log['created_at'], # Мы отформатируем на клиенте или здесь
+                'username': log['username'],
+                'role': log['role'],
+                'action': log['action'],
+                'details': log['details'],
+                'entity_id': log['entity_id'],
+                'ip_address': log['ip_address']
+            })
+
+        total_pages = (total_count + per_page - 1) // per_page
+        if total_pages == 0: total_pages = 1
+
+        return jsonify({
+            'logs': logs_data,
+            'total_count': total_count,
+            'total_pages': total_pages,
+            'current_page': page
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

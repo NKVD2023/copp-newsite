@@ -43,63 +43,16 @@
                         <th width="10%" class="text-uppercase" style="font-size: 0.75rem; font-weight: 500; color: #6b7280; letter-spacing: 0.05em;">IP-адрес</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for log in logs_list %}
-                    <tr>
-                        <td style="color: #6b7280; font-size: 0.875rem; white-space: nowrap;">
-                            <span class="d-none">{{ log.created_at }}</span> <!-- Для сортировки -->
-                            {{ log.created_at | datetime_format }}
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                {% if log.role == 'superadmin' %}
-                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Админ</span>
-                                {% elif log.role == 'editor' %}
-                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Редактор</span>
-                                {% elif log.role == 'viewer' %}
-                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Наблюдатель</span>
-                                {% elif log.role == 'analyst' %}
-                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #fefce8; color: #ca8a04; border: 1px solid #fef08a; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Аналитик</span>
-                                {% else %}
-                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #f9fafb; color: #4b5563; border: 1px solid #e5e7eb; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Пользователь</span>
-                                {% endif %}
-                                <span style="font-weight: 600; font-size: 0.875rem; color: #1f2937;">{{ log.username }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            {% set action_text = log.action %}
-                            {% if log.action == 'LOGIN' %} {% set action_text = 'Вход в систему' %}
-                            {% elif log.action == 'LOGOUT' %} {% set action_text = 'Выход из системы' %}
-                            {% elif log.action == 'CREATE' %} {% set action_text = 'Создание записи' %}
-                            {% elif log.action == 'UPDATE' %} {% set action_text = 'Обновление данных' %}
-                            {% elif log.action == 'DELETE' %} {% set action_text = 'Удаление записи' %}
-                            {% elif log.action == 'UPLOAD' %} {% set action_text = 'Загрузка файла' %}
-                            {% elif log.action == 'EXPORT' %} {% set action_text = 'Экспорт данных' %}
-                            {% endif %}
-                            <span style="display: flex; align-items: center; gap: 0.375rem; color: #4b5563; font-size: 12px; font-weight: 500; white-space: nowrap;">
-                                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #d1d5db;"></span>
-                                {{ action_text }}
-                            </span>
-                        </td>
-                        <td style="color: #4b5563; font-size: 0.875rem;">
-                            {{ log.details }}
-                            {% if log.entity_id %}
-                                <span class="text-muted ms-1">(ID: {{ log.entity_id }})</span>
-                            {% endif %}
-                        </td>
-                        <td style="color: #6b7280; font-size: 0.8125rem; font-family: monospace;">
-                            {{ log.ip_address }}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
-                            <p class="mb-0" style="font-size: 0.875rem; color: #9ca3af;">Записи не найдены</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="logsTableBody">
+                    <tr><td colspan="5" class="text-center py-5 text-muted">Загрузка данных...</td></tr>
                 </tbody>
             </table>
+        </div>
+        
+        <!-- Pagination & Info -->
+        <div class="logs-footer d-flex justify-content-between align-items-center" style="border-top: 1px solid #f3f4f6; padding: 0.75rem 1.5rem;">
+            <div id="logsInfo" style="font-size: 0.85rem; color: #6b7280;">Ожидание данных...</div>
+            <div id="logsPagination" class="d-flex gap-1"></div>
         </div>
     </div>
 </div>
@@ -123,47 +76,6 @@
     background-color: #ffffff !important; /* белый фон */
     border-bottom: 1px solid #e5e7eb !important;
 }
-/* Подвал DataTables */
-.logs-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #f3f4f6; /* очень светлая верхняя граница */
-    background-color: transparent;
-    padding: 0.75rem 1.5rem;
-}
-.dataTables_filter, .dataTables_length {
-    display: none;
-}
-div.dataTables_wrapper div.dataTables_info {
-    padding: 0 !important;
-    margin: 0 !important;
-    font-size: 0.85rem;
-    color: #6b7280;
-}
-div.dataTables_wrapper div.dataTables_paginate {
-    padding: 0 !important;
-    margin: 0 !important;
-}
-.dataTables_wrapper .pagination {
-    margin-bottom: 0;
-}
-.dataTables_wrapper .pagination .page-link {
-    color: #4b5563;
-    border: 1px solid #e5e7eb;
-    margin: 0 2px;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-}
-.dataTables_wrapper .pagination .page-item.active .page-link {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
-    color: white;
-}
-/* Эффект hover для строк */
-#logsTable tbody tr:hover {
-    background-color: #f9fafb;
-}
 /* Стилизация скроллбара для красоты */
 .table-responsive::-webkit-scrollbar {
     width: 6px;
@@ -179,51 +91,201 @@ div.dataTables_wrapper div.dataTables_paginate {
 .table-responsive::-webkit-scrollbar-thumb:hover {
     background: #9ca3af; 
 }
+/* Пагинация */
+.page-btn {
+    padding: 0.25rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #4b5563;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.page-btn:hover:not(:disabled) {
+    background: #f9fafb;
+}
+.page-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    if ($.fn.DataTable && $('#logsTable').length) {
-        if (!$.fn.DataTable.isDataTable('#logsTable')) {
-            var table = $('#logsTable').DataTable({
-                "language": {
-                    "search": "",
-                    "searchPlaceholder": "Поиск по журналу...",
-                    "lengthMenu": "_MENU_",
-                    "info": "Записи с _START_ по _END_ из _TOTAL_",
-                    "infoEmpty": "Нет записей",
-                    "infoFiltered": "(отфильтровано из _MAX_)",
-                    "zeroRecords": "Записи отсутствуют.",
-                    "paginate": {
-                        "previous": "Назад",
-                        "next": "Вперед"
-                    }
-                },
-                "order": [[ 0, "desc" ]],
-                "pageLength": 50,
-                // Обертка <"logs-footer" ...> создаст div с этим классом, куда поместятся info (i) и paginate (p)
-                "dom": 't<"logs-footer"ip>',
-                "columnDefs": [
-                    { "orderable": false, "targets": [3] }
-                ]
-            });
+let logsCurrentPage = 1;
+let logsSearchQuery = '';
+let logsDebounceTimer;
 
-            // Привязываем наше кастомное поле поиска к фильтру DataTables
-            $('#customSearchInput').on('keyup', function() {
-                table.search(this.value).draw();
-            });
+function fetchLogs(page = 1) {
+    logsCurrentPage = page;
+    const url = `/admin/api/logs?page=${page}&search=${encodeURIComponent(logsSearchQuery)}`;
+    
+    const tbody = document.getElementById('logsTableBody');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">Загрузка данных...</td></tr>';
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('logsTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Ошибка: ${data.error}</td></tr>`;
+                return;
+            }
+            renderLogs(data.logs);
+            renderPagination(data.total_pages, data.current_page, data.total_count);
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('logsTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-5 text-danger">Ошибка загрузки данных</td></tr>`;
+        });
+}
+
+function formatDateString(dateStr) {
+    // dateStr usually "YYYY-MM-DD HH:MM:SS"
+    if (!dateStr) return '';
+    try {
+        const parts = dateStr.split(' ');
+        if (parts.length === 2) {
+            const dateParts = parts[0].split('-');
+            const timeParts = parts[1].split(':');
+            if (dateParts.length === 3 && timeParts.length >= 2) {
+                return `${dateParts[2]}.${dateParts[1]}.${dateParts[0]} ${timeParts[0]}:${timeParts[1]}`;
+            }
         }
+    } catch (e) {}
+    return dateStr;
+}
+
+function getRoleBadge(role) {
+    if (role === 'superadmin') return '<span style="display: inline-block; width: 90px; text-align: center; background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Админ</span>';
+    if (role === 'editor') return '<span style="display: inline-block; width: 90px; text-align: center; background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Редактор</span>';
+    if (role === 'viewer') return '<span style="display: inline-block; width: 90px; text-align: center; background-color: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Наблюдатель</span>';
+    if (role === 'analyst') return '<span style="display: inline-block; width: 90px; text-align: center; background-color: #fefce8; color: #ca8a04; border: 1px solid #fef08a; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Аналитик</span>';
+    return '<span style="display: inline-block; width: 90px; text-align: center; background-color: #f9fafb; color: #4b5563; border: 1px solid #e5e7eb; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Пользователь</span>';
+}
+
+function getActionLabel(action) {
+    let text = action;
+    if (action === 'LOGIN') text = 'Вход в систему';
+    else if (action === 'LOGOUT') text = 'Выход из системы';
+    else if (action === 'CREATE') text = 'Создание записи';
+    else if (action === 'UPDATE') text = 'Обновление данных';
+    else if (action === 'DELETE') text = 'Удаление записи';
+    else if (action === 'UPLOAD') text = 'Загрузка файла';
+    else if (action === 'EXPORT') text = 'Экспорт данных';
+    
+    return `<span style="display: flex; align-items: center; gap: 0.375rem; color: #4b5563; font-size: 12px; font-weight: 500; white-space: nowrap;">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #d1d5db;"></span>
+                ${text}
+            </span>`;
+}
+
+function renderLogs(logs) {
+    const tbody = document.getElementById('logsTableBody');
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">Записи отсутствуют</td></tr>';
+        return;
+    }
+
+    let html = '';
+    logs.forEach(log => {
+        let detailsHtml = log.details || '';
+        if (log.entity_id) {
+            detailsHtml += ` <span class="text-muted ms-1">(ID: ${log.entity_id})</span>`;
+        }
+
+        html += `
+            <tr style="transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='#f9fafb'" onmouseout="this.style.backgroundColor='transparent'">
+                <td style="color: #6b7280; font-size: 0.875rem; white-space: nowrap;">
+                    ${formatDateString(log.created_at)}
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        ${getRoleBadge(log.role)}
+                        <span style="font-weight: 600; font-size: 0.875rem; color: #1f2937;">${log.username}</span>
+                    </div>
+                </td>
+                <td>${getActionLabel(log.action)}</td>
+                <td style="color: #4b5563; font-size: 0.875rem;">${detailsHtml}</td>
+                <td style="color: #6b7280; font-size: 0.8125rem; font-family: monospace;">${log.ip_address || ''}</td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function renderPagination(totalPages, currentPage, totalCount) {
+    document.getElementById('logsInfo').textContent = `Всего записей: ${totalCount}`;
+    
+    const container = document.getElementById('logsPagination');
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    
+    html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="fetchLogs(${currentPage - 1})">Назад</button>`;
+    
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        html += `<button class="page-btn" onclick="fetchLogs(1)">1</button>`;
+        if (startPage > 2) html += `<span class="px-1 text-muted">...</span>`;
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="fetchLogs(${i})">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span class="px-1 text-muted">...</span>`;
+        html += `<button class="page-btn" onclick="fetchLogs(${totalPages})">${totalPages}</button>`;
+    }
+    
+    html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="fetchLogs(${currentPage + 1})">Вперед</button>`;
+    
+    container.innerHTML = html;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Начальная загрузка первой страницы
+    if (document.getElementById('logsTableBody')) {
+        fetchLogs(1);
+    }
+
+    // Поиск с debounce
+    const searchInput = document.getElementById('customSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(logsDebounceTimer);
+            logsSearchQuery = this.value;
+            logsDebounceTimer = setTimeout(() => {
+                fetchLogs(1);
+            }, 300);
+        });
     }
 });
 
 function clearLogs() {
     if (confirm('Вы уверены, что хотите очистить весь журнал действий? Это действие нельзя отменить.')) {
+        const csrfTokenMatch = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfTokenMatch ? csrfTokenMatch.getAttribute('content') : '';
+        
         fetch("{{ url_for('admin.clear_logs') }}", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
         }).then(res => {
             if (res.ok) {
-                window.location.reload();
+                fetchLogs(1); // Перезагружаем первую страницу без перезагрузки всей админки
             } else {
                 alert('Ошибка при очистке журнала');
             }
