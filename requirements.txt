@@ -6,3 +6,5 @@ Pillow
 Flask-Caching
 Flask-WTF
 Flask-Limiter
+python-dotenv
+apscheduler

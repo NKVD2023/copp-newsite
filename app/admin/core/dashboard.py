@@ -168,3 +168,59 @@ def dashboard():
         edit_project_item=edit_project_item,
         extra_images_list=extra_images_list
     )
+
+@bp.route('/logs/clear', methods=['POST'])
+@login_required
+def clear_logs():
+    if not session.get('is_admin'):
+        return jsonify({'error': 'Доступ запрещен'}), 403
+    try:
+        with get_db_connection() as conn:
+            conn.execute('DELETE FROM admin_logs')
+            conn.commit()
+        from app.admin.core.logger import log_admin_action
+        log_admin_action('DELETE', 'logs', details='Очищен журнал действий системы')
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/logs/export')
+@login_required
+def export_logs():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin.dashboard'))
+    try:
+        import pandas as pd
+        from flask import send_file
+        import io
+        from app.admin.core.logger import log_admin_action
+        
+        with get_db_connection() as conn:
+            logs = conn.execute('SELECT created_at, username, role, action, module, details, ip_address FROM admin_logs ORDER BY created_at DESC').fetchall()
+        
+        df = pd.DataFrame(logs, columns=['Дата и Время', 'Пользователь', 'Роль', 'Действие', 'Модуль', 'Детали', 'IP-адрес'])
+        
+        action_map = {
+            'LOGIN': 'Вход в систему',
+            'LOGOUT': 'Выход из системы',
+            'CREATE': 'Создание',
+            'UPDATE': 'Обновление',
+            'DELETE': 'Удаление',
+            'UPLOAD': 'Загрузка файла',
+            'EXPORT': 'Экспорт'
+        }
+        df['Действие'] = df['Действие'].map(lambda x: action_map.get(x, x))
+        
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Журнал действий')
+        
+        output.seek(0)
+        filename = f"action_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        
+        log_admin_action('EXPORT', 'logs', details='Экспорт журнала действий в Excel')
+        
+        return send_file(output, download_name=filename, as_attachment=True)
+    except Exception as e:
+        print(f"Ошибка при экспорте: {e}")
+        return redirect(url_for('admin.dashboard'))

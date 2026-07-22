@@ -1,68 +1,100 @@
 <!-- tab_logs.html -->
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-list-check me-2 text-secondary"></i> Журнал действий сотрудников</h5>
+<div class="card border-0 shadow-sm mt-3" style="border-radius: 0.5rem; border: 1px solid #e5e7eb !important;">
+    
+    <!-- Header: Верхняя панель -->
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #f3f4f6;">
+        <h5 class="mb-0 fw-bold" style="color: #1f2937; font-size: 1.125rem;">Журнал действий системы</h5>
+        
+        <div class="d-flex align-items-center gap-2">
+            <!-- Поле поиска с иконкой -->
+            <div class="position-relative">
+                <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3" style="color: #9ca3af; font-size: 0.875rem;"></i>
+                <input 
+                    type="text" 
+                    id="customSearchInput"
+                    placeholder="Поиск по журналу..." 
+                    class="form-control form-control-sm"
+                    style="padding-left: 2.25rem; padding-right: 1rem; padding-top: 0.375rem; padding-bottom: 0.375rem; border-color: #e5e7eb; border-radius: 0.375rem; width: 250px; font-size: 0.875rem; color: #4b5563;"
+                >
+            </div>
+            
+            <!-- Кнопка Excel -->
+            <a href="{{ url_for('admin.export_logs') }}" class="btn btn-sm" style="color: #16a34a; border-color: #bbf7d0; background-color: transparent; font-weight: 500; padding: 0.375rem 0.75rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.375rem;" onmouseover="this.style.backgroundColor='#f0fdf4'" onmouseout="this.style.backgroundColor='transparent'">
+                <i class="fas fa-file-excel"></i> Excel
+            </a>
+            
+            <!-- Кнопка Очистить -->
+            <button onclick="clearLogs()" class="btn btn-sm" style="color: #ef4444; border-color: #fecaca; background-color: transparent; font-weight: 500; padding: 0.375rem 0.75rem; border-radius: 0.375rem; display: flex; align-items: center; gap: 0.375rem;" onmouseover="this.style.backgroundColor='#fef2f2'" onmouseout="this.style.backgroundColor='transparent'">
+                <i class="fas fa-trash-alt"></i> Очистить
+            </button>
+        </div>
     </div>
     
-    <div class="card-body">
-        <p class="text-muted small mb-4">В данном журнале отображаются все действия сотрудников в панели управления за последнее время.</p>
-        
-        <div class="table-responsive">
-            <table class="table table-hover align-middle datatable" id="logsTable">
-                <thead class="table-light">
+    <!-- Table Container: Прокрутка -->
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+            <table class="table align-middle table-hover mb-0 log-table" id="logsTable">
+                <thead style="position: sticky; top: 0; z-index: 10;">
                     <tr>
-                        <th width="20%">Дата и Время</th>
-                        <th width="20%">Сотрудник</th>
-                        <th width="15%">Действие</th>
-                        <th width="30%">Детали</th>
-                        <th width="15%">IP-адрес</th>
+                        <th width="12%" class="text-uppercase" style="font-size: 0.75rem; font-weight: 500; color: #6b7280; letter-spacing: 0.05em;">Дата и время</th>
+                        <th width="18%" class="text-uppercase" style="font-size: 0.75rem; font-weight: 500; color: #6b7280; letter-spacing: 0.05em;">Пользователь</th>
+                        <th width="12%" class="text-uppercase" style="font-size: 0.75rem; font-weight: 500; color: #6b7280; letter-spacing: 0.05em;">Действие</th>
+                        <th width="48%" class="text-uppercase" style="font-size: 0.75rem; font-weight: 500; color: #6b7280; letter-spacing: 0.05em;">Подробности</th>
+                        <th width="10%" class="text-uppercase" style="font-size: 0.75rem; font-weight: 500; color: #6b7280; letter-spacing: 0.05em;">IP-адрес</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for log in logs_list %}
                     <tr>
+                        <td style="color: #6b7280; font-size: 0.875rem; white-space: nowrap;">
+                            <span class="d-none">{{ log.created_at }}</span> <!-- Для сортировки -->
+                            {{ log.created_at | datetime_format }}
+                        </td>
                         <td>
-                            <div class="d-flex flex-column">
-                                <span class="fw-bold">{{ log.created_at | datetime_format }}</span>
-                                <span class="d-none">{{ log.created_at }}</span> <!-- Для сортировки -->
+                            <div class="d-flex align-items-center gap-2">
+                                {% if log.role == 'superadmin' %}
+                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Админ</span>
+                                {% elif log.role == 'editor' %}
+                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Редактор</span>
+                                {% elif log.role == 'viewer' %}
+                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Наблюдатель</span>
+                                {% elif log.role == 'analyst' %}
+                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #fefce8; color: #ca8a04; border: 1px solid #fef08a; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Аналитик</span>
+                                {% else %}
+                                    <span style="display: inline-block; width: 90px; text-align: center; background-color: #f9fafb; color: #4b5563; border: 1px solid #e5e7eb; font-size: 10px; padding: 0.125rem 0; border-radius: 0.25rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.025em;">Пользователь</span>
+                                {% endif %}
+                                <span style="font-weight: 600; font-size: 0.875rem; color: #1f2937;">{{ log.username }}</span>
                             </div>
                         </td>
                         <td>
-                            <div class="fw-bold">{{ log.username }}</div>
-                            <span class="badge bg-secondary opacity-75">{{ log.role }}</span>
-                        </td>
-                        <td>
-                            {% if log.action == 'LOGIN' %}
-                                <span class="badge bg-success">ВХОД</span>
-                            {% elif log.action == 'LOGOUT' %}
-                                <span class="badge bg-secondary">ВЫХОД</span>
-                            {% elif log.action == 'CREATE' %}
-                                <span class="badge bg-primary">СОЗДАНИЕ</span>
-                            {% elif log.action == 'UPDATE' %}
-                                <span class="badge bg-warning text-dark">ОБНОВЛЕНИЕ</span>
-                            {% elif log.action == 'DELETE' %}
-                                <span class="badge bg-danger">УДАЛЕНИЕ</span>
-                            {% elif log.action == 'UPLOAD' %}
-                                <span class="badge bg-info text-dark">ЗАГРУЗКА</span>
-                            {% else %}
-                                <span class="badge bg-dark">{{ log.action }}</span>
+                            {% set action_text = log.action %}
+                            {% if log.action == 'LOGIN' %} {% set action_text = 'Вход в систему' %}
+                            {% elif log.action == 'LOGOUT' %} {% set action_text = 'Выход из системы' %}
+                            {% elif log.action == 'CREATE' %} {% set action_text = 'Создание записи' %}
+                            {% elif log.action == 'UPDATE' %} {% set action_text = 'Обновление данных' %}
+                            {% elif log.action == 'DELETE' %} {% set action_text = 'Удаление записи' %}
+                            {% elif log.action == 'UPLOAD' %} {% set action_text = 'Загрузка файла' %}
+                            {% elif log.action == 'EXPORT' %} {% set action_text = 'Экспорт данных' %}
                             {% endif %}
+                            <span style="display: flex; align-items: center; gap: 0.375rem; color: #4b5563; font-size: 12px; font-weight: 500; white-space: nowrap;">
+                                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #d1d5db;"></span>
+                                {{ action_text }}
+                            </span>
                         </td>
-                        <td>
+                        <td style="color: #4b5563; font-size: 0.875rem;">
                             {{ log.details }}
                             {% if log.entity_id %}
-                                <div class="text-muted small mt-1">ID объекта: {{ log.entity_id }}</div>
+                                <span class="text-muted ms-1">(ID: {{ log.entity_id }})</span>
                             {% endif %}
                         </td>
-                        <td>
-                            <code class="text-secondary">{{ log.ip_address }}</code>
+                        <td style="color: #6b7280; font-size: 0.8125rem; font-family: monospace;">
+                            {{ log.ip_address }}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center py-4 text-muted">
-                            <i class="fas fa-clipboard-list fs-1 mb-3 text-light"></i>
-                            <p class="mb-0">Журнал действий пока пуст</p>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <p class="mb-0" style="font-size: 0.875rem; color: #9ca3af;">Записи не найдены</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -73,80 +105,129 @@
 </div>
 
 <style>
-/* Стилизация DataTables под дизайн сайта */
-div.dataTables_wrapper div.dataTables_length select {
-    width: auto;
-    display: inline-block;
-    padding: 0.375rem 2.25rem 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #212529;
-    background-color: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
+/* Структура и границы таблицы */
+.log-table {
+    border-collapse: separate;
+    border-spacing: 0;
 }
-div.dataTables_wrapper div.dataTables_filter input {
-    margin-left: 0.5em;
-    display: inline-block;
-    width: auto;
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #212529;
-    background-color: #fff;
-    background-clip: padding-box;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
+.log-table th, .log-table td {
+    padding: 0.6rem 1rem !important; /* средние отступы */
+    border-right: 1px solid #f3f4f6; /* тонкая светлая линия */
+    border-bottom: 1px solid #f3f4f6 !important; /* тонкая светлая линия */
+}
+.log-table th:last-child, .log-table td:last-child {
+    border-right: none;
+}
+/* Оформление шапки */
+.log-table thead th {
+    background-color: #ffffff !important; /* белый фон */
+    border-bottom: 1px solid #e5e7eb !important;
+}
+/* Подвал DataTables */
+.logs-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f3f4f6; /* очень светлая верхняя граница */
+    background-color: transparent;
+    padding: 0.75rem 1.5rem;
+}
+.dataTables_filter, .dataTables_length {
+    display: none;
+}
+div.dataTables_wrapper div.dataTables_info {
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+div.dataTables_wrapper div.dataTables_paginate {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.dataTables_wrapper .pagination {
+    margin-bottom: 0;
 }
 .dataTables_wrapper .pagination .page-link {
-    color: var(--copp-blue, #0d6efd);
-    border: none;
-    border-radius: 0.375rem;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
     margin: 0 2px;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
 }
 .dataTables_wrapper .pagination .page-item.active .page-link {
-    background-color: var(--copp-blue, #0d6efd);
+    background-color: #3b82f6;
+    border-color: #3b82f6;
     color: white;
 }
+/* Эффект hover для строк */
+#logsTable tbody tr:hover {
+    background-color: #f9fafb;
+}
+/* Стилизация скроллбара для красоты */
+.table-responsive::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.table-responsive::-webkit-scrollbar-track {
+    background: transparent; 
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #d1d5db; 
+    border-radius: 10px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af; 
+}
 </style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Инициализация DataTables для красивого отображения и встроенного поиска/пагинации
     if ($.fn.DataTable && $('#logsTable').length) {
         if (!$.fn.DataTable.isDataTable('#logsTable')) {
-            $('#logsTable').DataTable({
+            var table = $('#logsTable').DataTable({
                 "language": {
-                    "processing": "Подождите...",
-                    "search": "Поиск:",
-                    "lengthMenu": "Показать _MENU_ записей",
-                    "info": "Записи с _START_ по _END_ из _TOTAL_ записей",
-                    "infoEmpty": "Записи с 0 до 0 из 0 записей",
-                    "infoFiltered": "(отфильтровано из _MAX_ записей)",
-                    "infoPostFix": "",
-                    "loadingRecords": "Загрузка записей...",
+                    "search": "",
+                    "searchPlaceholder": "Поиск по журналу...",
+                    "lengthMenu": "_MENU_",
+                    "info": "Записи с _START_ по _END_ из _TOTAL_",
+                    "infoEmpty": "Нет записей",
+                    "infoFiltered": "(отфильтровано из _MAX_)",
                     "zeroRecords": "Записи отсутствуют.",
-                    "emptyTable": "В таблице отсутствуют данные",
                     "paginate": {
-                        "first": "Первая",
                         "previous": "Назад",
-                        "next": "Вперед",
-                        "last": "Последняя"
-                    },
-                    "aria": {
-                        "sortAscending": ": активировать для сортировки столбца по возрастанию",
-                        "sortDescending": ": активировать для сортировки столбца по убыванию"
+                        "next": "Вперед"
                     }
                 },
                 "order": [[ 0, "desc" ]],
                 "pageLength": 50,
-                "lengthMenu": [ [25, 50, 100, 500, -1], [25, 50, 100, 500, "Все"] ],
+                // Обертка <"logs-footer" ...> создаст div с этим классом, куда поместятся info (i) и paginate (p)
+                "dom": 't<"logs-footer"ip>',
                 "columnDefs": [
-                    { "orderable": false, "targets": [3] } // Отключаем сортировку по столбцу деталей
+                    { "orderable": false, "targets": [3] }
                 ]
+            });
+
+            // Привязываем наше кастомное поле поиска к фильтру DataTables
+            $('#customSearchInput').on('keyup', function() {
+                table.search(this.value).draw();
             });
         }
     }
 });
+
+function clearLogs() {
+    if (confirm('Вы уверены, что хотите очистить весь журнал действий? Это действие нельзя отменить.')) {
+        fetch("{{ url_for('admin.clear_logs') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        }).then(res => {
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert('Ошибка при очистке журнала');
+            }
+        });
+    }
+}
 </script>

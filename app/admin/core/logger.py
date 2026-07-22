@@ -22,12 +22,15 @@ def log_admin_action(action, module, entity_id=None, details=None):
     # Получаем IP-адрес пользователя
     ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
 
+    from datetime import datetime
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     try:
         conn = get_db_connection()
         conn.execute('''
-            INSERT INTO admin_logs (username, role, action, module, entity_id, details, ip_address)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (username, role, action, module, entity_id, details, ip_address))
+            INSERT INTO admin_logs (username, role, action, module, entity_id, details, ip_address, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (username, role, action, module, entity_id, details, ip_address, now_str))
         conn.commit()
     except Exception as e:
         print(f"Ошибка при записи лога: {e}")
