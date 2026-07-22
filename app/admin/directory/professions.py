@@ -6,7 +6,7 @@ from datetime import datetime
 from flask import render_template, request, redirect, url_for, session, flash, send_file
 from werkzeug.utils import secure_filename
 from app.admin import bp
-from app.admin.core.auth import login_required
+from app.admin.core.auth import login_required, module_required, ALL_MODULES, ROLE_LABELS
 from app.db import get_db_connection
 from app.utils.image_utils import save_image_as_webp
 from app.utils.media_utils import scan_uploads_dir
@@ -241,6 +241,12 @@ def edit_profession(prof_id):
                            prof_uploads=prof_uploads,
                            professions_list=professions_list,
                            categories_dict=CATEGORIES_RU,
+                           allowed_modules=session.get('allowed_modules', []),
+                           all_modules=ALL_MODULES,
+                           role_labels=ROLE_LABELS,
+                           current_username=session.get('username', 'Суперадмин'),
+                           current_role=session.get('user_role', 'superadmin'),
+                           is_superadmin=bool(session.get('is_admin')),
                            now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 @bp.route('/toggle_profession_status/<int:prof_id>', methods=['POST'])
