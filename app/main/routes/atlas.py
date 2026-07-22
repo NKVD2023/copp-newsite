@@ -33,23 +33,37 @@ def profession_detail(prof_id):
 
     colleges = current_app.get_colleges()
 
-    # Разбираем привязанные учебные заведения
-    selected_colleges = []
+    # Нормализация для поиска (игнорируем тип кавычек, двойные пробелы, регистр)
+    import re
+    def norm_s(s):
+        if not s: return ""
+        return re.sub(r'["\'«»]', '', s).replace('  ', ' ').strip().lower()
+
+    colleges_with_links = []
     inst_val = prof['institutions']
     if inst_val:
         val = inst_val.strip()
         if val.startswith('[') and val.endswith(']'):
             try:
                 selected_colleges = json.loads(val)
+                for name in selected_colleges:
+                    url = next((c['url'] for c in colleges if norm_s(c['name']) == norm_s(name)), None)
+                    colleges_with_links.append({'name': name, 'url': url})
             except Exception:
-                selected_colleges = [val]
+                pass
+        elif ',' in val:
+            for part in val.split(','):
+                part = part.strip()
+                if not part: continue
+                url = next((c['url'] for c in colleges if norm_s(c['name']) == norm_s(part)), None)
+                colleges_with_links.append({'name': part, 'url': url})
         else:
-            selected_colleges = [c.strip() for c in val.split(',') if c.strip()]
-
-    # Сопоставляем с ссылками на сайты
-    colleges_with_links = [
-        {'name': name, 'url': next((c['url'] for c in colleges if c['name'] == name), None)}
-        for name in selected_colleges
-    ]
+            # Сплошной текст без запятых. Ищем известные колледжи как подстроки.
+            norm_val = norm_s(val)
+            for c in colleges:
+                if norm_s(c['name']) in norm_val:
+                    colleges_with_links.append({'name': c['name'], 'url': c['url']})
+            if not colleges_with_links:
+                colleges_with_links.append({'name': val, 'url': None})
 
     return render_template('profession_detail.html', prof=prof, colleges=colleges_with_links)
