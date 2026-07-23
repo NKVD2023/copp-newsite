@@ -10,12 +10,23 @@ def save_image_as_webp(file, upload_folder, quality=80, add_uuid=False):
         return None
         
     os.makedirs(upload_folder, exist_ok=True)
+    
+    orig_ext = os.path.splitext(file.filename)[1].lower()
     filename = secure_filename(file.filename)
+    
+    # Если имя файла состояло только из русских букв, secure_filename вернет пустоту или только расширение
+    if not filename or filename == orig_ext.strip('.') or filename.startswith('.'):
+        import uuid
+        filename = f"image_{uuid.uuid4().hex[:8]}{orig_ext}"
+        
     if add_uuid:
         import uuid
         filename = f"{uuid.uuid4().hex}_{filename}"
         
     basename, ext = os.path.splitext(filename)
+    if not ext:
+        ext = orig_ext
+        filename += ext
     
     if ext.lower() not in ['.png', '.jpg', '.jpeg']:
         filepath = os.path.join(upload_folder, filename)
