@@ -169,6 +169,8 @@ def edit_profession(prof_id):
                     image_path = f"uploads/professions/{filename}"
         elif existing_main:
             image_path = existing_main
+        else:
+            image_path = None
                     
         try:
             conn.execute('''
@@ -371,9 +373,18 @@ def import_professions():
                 institutions_text = get_col_val(row, 'УЧЕБНЫЕ ЗАВЕДЕНИЯ СПО', 'учебные заведения', 'institutions')
                 matched_colleges = []
                 if institutions_text:
-                    institutions_text_lower = institutions_text.lower()
+                    import re
+                    def normalize_text(text):
+                        if not text: return ""
+                        t = str(text).lower()
+                        t = re.sub(r'["\'«»„“]', '', t)
+                        t = re.sub(r'[^\w\sа-яё]', ' ', t)
+                        return re.sub(r'\s+', ' ', t).strip()
+                        
+                    norm_inst = normalize_text(institutions_text)
                     for college in colleges_list:
-                        if college['name'].lower() in institutions_text_lower:
+                        norm_college = normalize_text(college['name'])
+                        if norm_college and norm_college in norm_inst:
                             matched_colleges.append(college['name'])
                     
                     if not matched_colleges:
