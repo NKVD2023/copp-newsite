@@ -35,8 +35,18 @@ def upload_document():
     with get_db_connection() as conn:
         for file in files:
             if file and allowed_file(file.filename):
+                orig_ext = os.path.splitext(file.filename)[1].lower()
                 filename = secure_filename(file.filename)
+                
+                if not filename or filename == orig_ext.strip('.') or filename.startswith('.'):
+                    import uuid
+                    filename = f"file_{uuid.uuid4().hex[:8]}{orig_ext}"
+                
                 base, extension = os.path.splitext(filename)
+                if not extension:
+                    extension = orig_ext
+                    filename += extension
+                    
                 counter = 1
                 filepath = os.path.join(UPLOAD_DOCS_FOLDER, filename)
                 while os.path.exists(filepath):
