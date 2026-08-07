@@ -23,24 +23,7 @@
 <!-- Сетка карточек -->
 <div class="prof-grid" id="professions-list">
     {% for prof in professions %}
-    <div class="prof-card" data-name="{{ prof.name.lower() }}" data-code="{{ (prof.code or '').lower() }}" data-category="{{ prof.category or 'other' }}" id="prof-card-{{ prof.id }}">
-        <div class="prof-img-box">
-            {% if prof.image_path %}
-            <img src="{{ url_for('static', filename=prof.image_path) }}" class="prof-img" alt="{{ prof.name }}">
-            {% else %}
-            <div class="prof-no-img">ЦОПП РК</div>
-            {% endif %}
-        </div>
-        <div class="prof-body">
-            {% if prof.code %}
-            <span class="prof-code">{{ prof.code }}</span>
-            {% endif %}
-            <h3 class="prof-name">{{ prof.name }}</h3>
-            <p class="prof-desc">{{ prof.description or 'Описание готовится.' }}</p>
-            
-            <a href="{{ url_for('main.profession_detail', prof_id=prof.id) }}" class="btn-details" style="text-decoration: none;">Подробнее</a>
-        </div>
-    </div>
+    {% include 'components/profession_card.html' %}
     {% else %}
     <div class="w-100 text-center text-muted p-5 bg-white rounded shadow-sm" style="grid-column: 1 / -1;">
         Профессии загружаются или пока не добавлены.

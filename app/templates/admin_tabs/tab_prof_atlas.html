@@ -90,6 +90,85 @@
                     </div>
                 </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тег: Профильное направление</label>
+                        <select name="tag_specialty" style="width: 100%; height: 44px; border: 1px solid #ced4da; padding: 0 12px;">
+                            <option value="">-- Не выбрано --</option>
+                            <option value="spec:tech" {% if edit_prof_item and edit_prof_item.tag_specialty == 'spec:tech' %}selected{% endif %}>Техническое/IT</option>
+                            <option value="spec:econ" {% if edit_prof_item and edit_prof_item.tag_specialty == 'spec:econ' %}selected{% endif %}>Экономика/Продажи</option>
+                            <option value="spec:humanitarian" {% if edit_prof_item and edit_prof_item.tag_specialty == 'spec:humanitarian' %}selected{% endif %}>Гуманитарное/Сервис</option>
+                            <option value="spec:science" {% if edit_prof_item and edit_prof_item.tag_specialty == 'spec:science' %}selected{% endif %}>Наука/Медицина</option>
+                            <option value="spec:none" {% if edit_prof_item and edit_prof_item.tag_specialty == 'spec:none' %}selected{% endif %}>Нет профиля</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Тег: Предмет труда (по Климову)</label>
+                        <select name="tag_klimov" style="width: 100%; height: 44px; border: 1px solid #ced4da; padding: 0 12px;">
+                            <option value="">-- Не выбрано --</option>
+                            <option value="klimov:man_tech" {% if edit_prof_item and edit_prof_item.tag_klimov == 'klimov:man_tech' %}selected{% endif %}>С техникой/кодом</option>
+                            <option value="klimov:man_sign" {% if edit_prof_item and edit_prof_item.tag_klimov == 'klimov:man_sign' %}selected{% endif %}>С данными/документами</option>
+                            <option value="klimov:man_man" {% if edit_prof_item and edit_prof_item.tag_klimov == 'klimov:man_man' %}selected{% endif %}>С людьми</option>
+                            <option value="klimov:man_art" {% if edit_prof_item and edit_prof_item.tag_klimov == 'klimov:man_art' %}selected{% endif %}>С образами/контентом</option>
+                            <option value="klimov:man_nature" {% if edit_prof_item and edit_prof_item.tag_klimov == 'klimov:man_nature' %}selected{% endif %}>С природой</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Тег: Ролевая модель</label>
+                        <select name="tag_role" style="width: 100%; height: 44px; border: 1px solid #ced4da; padding: 0 12px;">
+                            <option value="">-- Не выбрано --</option>
+                            <option value="role:analyst" {% if edit_prof_item and edit_prof_item.tag_role == 'role:analyst' %}selected{% endif %}>Исследователь/Аналитик</option>
+                            <option value="role:operator" {% if edit_prof_item and edit_prof_item.tag_role == 'role:operator' %}selected{% endif %}>Исполнитель/Контролер</option>
+                            <option value="role:manager" {% if edit_prof_item and edit_prof_item.tag_role == 'role:manager' %}selected{% endif %}>Организатор/Управленец</option>
+                            <option value="role:creator" {% if edit_prof_item and edit_prof_item.tag_role == 'role:creator' %}selected{% endif %}>Творец/Инноватор</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Тег: Условия и мотивация</label>
+                        <select name="tag_stress" style="width: 100%; height: 44px; border: 1px solid #ced4da; padding: 0 12px;">
+                            <option value="">-- Не выбрано --</option>
+                            <option value="stress:routine" {% if edit_prof_item and edit_prof_item.tag_stress == 'stress:routine' %}selected{% endif %}>Люблю порядок и рутину</option>
+                            <option value="stress:balanced" {% if edit_prof_item and edit_prof_item.tag_stress == 'stress:balanced' %}selected{% endif %}>Баланс 50/50</option>
+                            <option value="stress:dynamic" {% if edit_prof_item and edit_prof_item.tag_stress == 'stress:dynamic' %}selected{% endif %}>Динамика и смена задач</option>
+                            <option value="stress:responsibility" {% if edit_prof_item and edit_prof_item.tag_stress == 'stress:responsibility' %}selected{% endif %}>Готовность к ответственности</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h6 style="margin-top: 15px; margin-bottom: 10px; color: #0056b3;"><i class="fas fa-tags"></i> Дополнительные теги профориентации</h6>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>Тег: Интересы и склонности</label>
+                        <select name="tag_interests" style="width: 100%; height: 44px; border: 1px solid #ced4da; padding: 0 12px;">
+                            <option value="interests:none" {% if edit_prof_item and edit_prof_item.tag_interests == 'interests:none' %}selected{% endif %}>Не задано (Универсальная)</option>
+                            <option value="interests:it" {% if edit_prof_item and edit_prof_item.tag_interests == 'interests:it' %}selected{% endif %}>IT и Компьютеры</option>
+                            <option value="interests:art" {% if edit_prof_item and edit_prof_item.tag_interests == 'interests:art' %}selected{% endif %}>Искусство и Дизайн</option>
+                            <option value="interests:science" {% if edit_prof_item and edit_prof_item.tag_interests == 'interests:science' %}selected{% endif %}>Наука и Медицина</option>
+                            <option value="interests:social" {% if edit_prof_item and edit_prof_item.tag_interests == 'interests:social' %}selected{% endif %}>Общение и Помощь</option>
+                            <option value="interests:finance" {% if edit_prof_item and edit_prof_item.tag_interests == 'interests:finance' %}selected{% endif %}>Финансы и Бизнес</option>
+                            <option value="interests:manual" {% if edit_prof_item and edit_prof_item.tag_interests == 'interests:manual' %}selected{% endif %}>Ручной труд / Производство</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Тег: Формат работы (Стиль)</label>
+                        <select name="tag_work_style" style="width: 100%; height: 44px; border: 1px solid #ced4da; padding: 0 12px;">
+                            <option value="work_style:team" {% if edit_prof_item and edit_prof_item.tag_work_style == 'work_style:team' %}selected{% endif %}>Командная работа</option>
+                            <option value="work_style:individual" {% if edit_prof_item and edit_prof_item.tag_work_style == 'work_style:individual' %}selected{% endif %}>Индивидуальная работа</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Тег: Среда обитания (Условия)</label>
+                        <select name="tag_environment" style="width: 100%; height: 44px; border: 1px solid #ced4da; padding: 0 12px;">
+                            <option value="env:office" {% if edit_prof_item and edit_prof_item.tag_environment == 'env:office' %}selected{% endif %}>Офис / Удаленка</option>
+                            <option value="env:dynamic" {% if edit_prof_item and edit_prof_item.tag_environment == 'env:dynamic' %}selected{% endif %}>Разъезды / Встречи</option>
+                            <option value="env:physical" {% if edit_prof_item and edit_prof_item.tag_environment == 'env:physical' %}selected{% endif %}>Физический труд</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Описание</label>
                     <textarea name="description" rows="3" placeholder="Краткое описание профессии...">{{ edit_prof_item.description if edit_prof_item else '' }}</textarea>

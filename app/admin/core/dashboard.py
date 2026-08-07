@@ -80,6 +80,17 @@ def dashboard():
             team_members = conn.execute('SELECT * FROM team_members ORDER BY display_order ASC, id DESC').fetchall()
         except Exception:
             team_members = []
+            
+        try:
+            career_test_stats = conn.execute('''
+                SELECT c.id, c.created_at, p.name as profession_name 
+                FROM career_test_results c
+                LEFT JOIN professions p ON c.top_profession_id = p.id
+                ORDER BY c.created_at DESC
+                LIMIT 50
+            ''').fetchall()
+        except Exception:
+            career_test_stats = []
 
         # Список субадминов (только для суперадмина)
         users_list = []
@@ -162,7 +173,8 @@ def dashboard():
         page_form=page_form,
         attached_files_list=attached_files_list,
         edit_project_item=edit_project_item,
-        extra_images_list=extra_images_list
+        extra_images_list=extra_images_list,
+        career_test_stats=career_test_stats
     )
 
 @bp.route('/logs/clear', methods=['POST'])

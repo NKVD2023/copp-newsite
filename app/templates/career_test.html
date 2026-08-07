@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/career_test.css') }}?v=1">
+{% endblock %}
+
+{% block content %}
+<div class="blob-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+</div>
+
+<div class="container py-5 test-main-container">
+    <div id="test-intro" class="contact-glass-card p-5 test-intro-card">
+        <h1 class="fw-bold mb-3 test-intro-title">Профориентационное тестирование</h1>
+        <p class="lead mb-4 text-muted test-intro-text">Ответьте на несколько простых вопросов, и мы подберем для вас идеальную профессию и подходящие вакансии.</p>
+        <div class="test-start-btn-container">
+            <button class="btn-copp-custom" onclick="startTest()">Начать тест</button>
+        </div>
+    </div>
+
+    <div id="test-container" class="test-question-container">
+        <div id="question-box" class="contact-glass-card test-card-no-hover p-5 question-glass-box">
+            <!-- Индикатор прогресса -->
+            <div class="test-progress-container mb-4 shadow-sm">
+                <div id="progress-bar" class="test-progress-bar" style="width: 0%;"></div>
+            </div>
+
+            <h3 id="question-text" class="fw-bold mb-4 text-center question-text-title">Вопрос 1</h3>
+            
+            <div id="options-container" class="options-grid mt-4">
+                <!-- Варианты ответов будут генерироваться здесь -->
+            </div>
+            
+            <div class="test-nav-controls" style="text-align: center; margin-top: 3rem;">
+                <button id="btn-prev" class="btn-copp-custom" onclick="prevQuestion()" style="display: none;">Назад</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="results-container" class="test-results-container">
+        <div class="text-center mb-5" id="loading-section">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Анализируем...</span>
+            </div>
+            <h3 class="mt-4 fw-bold loading-title">Анализируем ваши ответы...</h3>
+            <p class="text-muted">Подбираем лучшие совпадения из нашей базы профессий</p>
+        </div>
+        
+        <div id="results-content">
+            <!-- Сюда подгрузится career_results_partial.html -->
+        </div>
+        
+        
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            title: "Какое у вас образование (или какое планируете получить)?",
+            type: "hard", tag_group: "education",
+            options: [
+                { text: "Высшее", value: "edu:vo" },
+                { text: "Среднее профессиональное (СПО)", value: "edu:spo" },
+                { text: "Курсы / Переподготовка", value: "edu:courses" },
+                { text: "Школьное", value: "edu:basic" }
+            ]
+        },
+        {
+            title: "Укажите ваш опыт работы",
+            type: "hard", tag_group: "experience",
+            options: [
+                { text: "Нет опыта / до 1 года", value: "exp:0_1" },
+                { text: "От 1 до 3 лет", value: "exp:1_3" },
+                { text: "От 3 до 5 лет", value: "exp:3_5" },
+                { text: "Более 5 лет", value: "exp:5_plus" }
+            ]
+        },
+        {
+            title: "Какой формат работы вам предпочтительнее?",
+            type: "hard", tag_group: "work_format",
+            options: [
+                { text: "Офис / Гибрид", value: "work:office_hybrid" },
+                { text: "Удаленная работа", value: "work:remote" },
+                { text: "Разъездная работа", value: "work:field" },
+                { text: "Вахта / Смены", value: "work:shift" }
+            ]
+        },
+        {
+            title: "Что из перечисленного вызывает у вас наибольший интерес?",
+            type: "soft", tag_group: "tag_interests",
+            options: [
+                { text: "IT, компьютеры, создание сайтов и программ", value: "interests:it" },
+                { text: "Искусство, дизайн, творчество", value: "interests:art" },
+                { text: "Наука, исследования, медицина", value: "interests:science" },
+                { text: "Общение, помощь людям, обучение", value: "interests:social" },
+                { text: "Финансы, бизнес, управление", value: "interests:finance" },
+                { text: "Работа руками, создание физических вещей, техника", value: "interests:manual" },
+                { text: "Затрудняюсь ответить", value: "interests:none" }
+            ]
+        },
+        {
+            title: "С чем вам больше всего нравится работать? (Классификация Климова)",
+            type: "soft", tag_group: "tag_klimov",
+            options: [
+                { text: "С техникой и механизмами", value: "klimov:man_tech" },
+                { text: "С цифрами, текстами, знаковой системой", value: "klimov:man_sign" },
+                { text: "С другими людьми", value: "klimov:man_man" },
+                { text: "С художественными образами", value: "klimov:man_art" },
+                { text: "С природой, растениями, животными", value: "klimov:man_nature" }
+            ]
+        },
+        {
+            title: "Как вы предпочитаете работать?",
+            type: "soft", tag_group: "tag_work_style",
+            options: [
+                { text: "В команде, постоянно общаясь с коллегами", value: "work_style:team" },
+                { text: "Самостоятельно, отвечая за свой участок работы", value: "work_style:individual" }
+            ]
+        },
+        {
+            title: "В каких условиях вам комфортнее всего находиться?",
+            type: "soft", tag_group: "tag_environment",
+            options: [
+                { text: "В тихом офисе или за компьютером", value: "env:office" },
+                { text: "В разъездах, на встречах, в движении", value: "env:dynamic" },
+                { text: "На производстве, стройке или в полевых условиях", value: "env:physical" }
+            ]
+        },
+        {
+            title: "Кем вы себя видите в коллективе?",
+            type: "soft", tag_group: "tag_role",
+            options: [
+                { text: "Исследователь / Аналитик (глубоко изучаю проблему)", value: "role:analyst" },
+                { text: "Исполнитель / Контролер (четко следую плану)", value: "role:operator" },
+                { text: "Организатор / Управленец (координирую процессы)", value: "role:manager" },
+                { text: "Творец / Инноватор (придумываю новое)", value: "role:creator" }
+            ]
+        },
+        {
+            title: "Какое отношение к рутине и стрессу для вас оптимально?",
+            type: "soft", tag_group: "tag_stress",
+            options: [
+                { text: "Люблю порядок, стабильность и предсказуемую рутину", value: "stress:routine" },
+                { text: "Ищу баланс (50/50 рутина и динамика)", value: "stress:balanced" },
+                { text: "Нуждаюсь в постоянной смене задач и драйве", value: "stress:dynamic" },
+                { text: "Готов(а) к высокой ответственности и напряжению", value: "stress:responsibility" }
+            ]
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    const userAnswers = {
+        hard_tags: {},
+        soft_tags: {}
+    };
+
+    function startTest() {
+        document.getElementById('test-intro').style.display = 'none';
+        document.getElementById('test-container').style.display = 'block';
+        
+        // Анимация появления
+        document.getElementById('test-container').style.opacity = '0';
+        document.getElementById('test-container').style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            document.getElementById('test-container').style.transition = 'all 0.5s ease';
+            document.getElementById('test-container').style.opacity = '1';
+            document.getElementById('test-container').style.transform = 'translateY(0)';
+        }, 50);
+        
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = questions[currentQuestionIndex];
+        document.getElementById('question-text').innerText = q.title;
+        
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        
+        let savedAnswer = null;
+        if (q.type === 'hard') savedAnswer = userAnswers.hard_tags[q.tag_group];
+        if (q.type === 'soft') savedAnswer = userAnswers.soft_tags[q.tag_group];
+
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn d-flex justify-content-between align-items-center';
+            
+            const textSpan = document.createElement('span');
+            textSpan.innerText = opt.text;
+            btn.appendChild(textSpan);
+            
+            const checkIcon = document.createElement('i');
+            checkIcon.className = 'fas fa-check-circle check-icon';
+            btn.appendChild(checkIcon);
+
+            if (savedAnswer === opt.value) {
+                btn.classList.add('selected');
+            }
+            
+            btn.onclick = () => selectOption(opt.value, btn);
+            optionsContainer.appendChild(btn);
+        });
+
+        // Кнопки навигации
+        document.getElementById('btn-prev').style.display = currentQuestionIndex > 0 ? 'inline-block' : 'none';
+
+        updateProgress();
+    }
+
+    function selectOption(value, btnElement) {
+        // Убираем selected у всех
+        document.querySelectorAll('.option-btn').forEach(b => {
+            b.classList.remove('selected');
+        });
+        
+        btnElement.classList.add('selected');
+
+        const q = questions[currentQuestionIndex];
+        if (q.type === 'hard') {
+            userAnswers.hard_tags[q.tag_group] = value;
+        } else {
+            userAnswers.soft_tags[q.tag_group] = value;
+        }
+        
+        // Автоматический переход к следующему вопросу (или завершение)
+        setTimeout(() => nextQuestion(), 400);
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex < questions.length - 1) {
+            currentQuestionIndex++;
+            renderQuestion();
+        } else {
+            submitTest();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            renderQuestion();
+        }
+    }
+
+    function updateProgress() {
+        const percent = ((currentQuestionIndex) / questions.length) * 100;
+        document.getElementById('progress-bar').style.width = percent + '%';
+    }
+
+    function submitTest() {
+        // Доводим прогресс бар до конца
+        document.getElementById('progress-bar').style.width = '100%';
+        
+        setTimeout(() => {
+            document.getElementById('test-container').style.display = 'none';
+            document.getElementById('results-container').style.display = 'block';
+            
+            fetch('/career-test/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(userAnswers)
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('results-content').innerHTML = html;
+                document.getElementById('restart-box').style.display = 'block';
+                
+                // Анимация появления результатов
+                document.getElementById('results-content').style.opacity = '0';
+                document.getElementById('results-content').style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    document.getElementById('results-content').style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    document.getElementById('results-content').style.opacity = '1';
+                    document.getElementById('results-content').style.transform = 'translateY(0)';
+                }, 50);
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('loading-section').innerHTML = '<div class="alert alert-danger">Произошла ошибка при обработке результатов.</div>';
+            });
+        }, 300);
+    }
+</script>
+{% endblock %}
