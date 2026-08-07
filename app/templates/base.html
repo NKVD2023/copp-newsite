@@ -441,30 +441,6 @@
             document.body.style.overflow = ''; // возвращаем прокрутку
         });
     });
-    
-    // Темная тема
-    const themeToggle = document.getElementById('darkModeToggle');
-    const body = document.body;
-    
-    // Проверка сохраненной темы
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark') {
-        body.classList.add('dark-theme');
-        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-    } else {
-        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-    }
-    
-    themeToggle.addEventListener('click', () => {
-        body.classList.toggle('dark-theme');
-        if (body.classList.contains('dark-theme')) {
-            localStorage.setItem('theme', 'dark');
-            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-        } else {
-            localStorage.setItem('theme', 'light');
-            themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-        }
-    });
     </script>
     
     {% block scripts %}{% endblock %}

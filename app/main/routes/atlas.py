@@ -66,4 +66,75 @@ def profession_detail(prof_id):
             if not colleges_with_links:
                 colleges_with_links.append({'name': val, 'url': None})
 
-    return render_template('profession_detail.html', prof=prof, colleges=colleges_with_links)
+    # Маппинг категорий профессий на категории вакансий
+    VACANCY_CATEGORY_MAP = {
+        'it': ['Информационные технологии, телекоммуникации, связь'],
+        'medicine': ['Здравоохранение и социальное обеспечение'],
+        'education': ['Образование, наука'],
+        'construction': ['Строительство, ремонт, стройматериалы, недвижимость', 'ЖКХ, эксплуатация'],
+        'transport': ['Транспорт, автобизнес, логистика, склад, ВЭД'],
+        'industry': ['Производство', 'Машиностроение', 'Пищевая промышленность', 'Легкая промышленность', 'Добывающая промышленность', 'Химическая, нефтехимическая, топливная промышленность'],
+        'agriculture': ['Сельское хозяйство, экология, ветеринария'],
+        'service': ['Услуги населению, сервисное обслуживание', 'Туризм, гостиницы, рестораны', 'Продажи, закупки, снабжение, торговля'],
+        'other': []
+    }
+
+    prof_cat = prof['category'] or 'other'
+    
+    # Получаем все вакансии, так как категории на ТрудВсем могут не совпадать с нашими
+    query = "SELECT * FROM dashboard_vacancies"
+    all_vacs = conn.execute(query).fetchall()
+
+    # Алгоритм "умного" подбора по корням слов
+    import re
+    stop_words = {
+        'и', 'по', 'на', 'в', 'с', 'для', 'от', 'до', 'из', 'за', 'к', 'об', 'о', 'при', 'у', 'как', 'разряда', 'класс',
+        'специалист', 'рабочий', 'мастер', 'инженер', 'заместитель', 'эксплуатация', 'эксплуатации', 'отраслям', 'отрасли',
+        'ремонту', 'ремонт', 'обслуживанию', 'обслуживание', 'производства', 'производство', 'транспорте', 'технология',
+        'строительство', 'организация', 'оператор', 'работ', 'монтаж', 'дело', 'систем', 'система', 'видам', 'управления',
+        'устройство', 'изделий', 'деятельность', 'сервис', 'сервиса'
+    }
+    
+    def get_roots(text):
+        if not text:
+            return set()
+        words = re.findall(r'[а-яА-ЯёЁa-zA-Z]+', text.lower())
+        roots = set()
+        for w in words:
+            if w not in stop_words and len(w) >= 5:
+                roots.add(w[:5]) # 5 букв отсеивает ложные срабатывания
+            elif w not in stop_words and len(w) == 4:
+                roots.add(w)
+        return roots
+    
+    prof_roots = get_roots(prof['name'])
+    
+    # Расширяем поиск: добавляем синонимы из категории, если корней мало
+    # Но для максимальной точности будем опираться именно на корни названия профессии.
+
+    scored_vacs = []
+    for vac in all_vacs:
+        vac_name = vac['vacancy_name'] or ''
+        vac_duties = vac['duties'] or ''
+        vac_roots = get_roots(vac_name)
+        
+        # Считаем пересечение корней в названии
+        score = len(prof_roots.intersection(vac_roots)) * 10
+        
+        # Дополнительный балл, если корень есть в обязанностях
+        duties_lower = vac_duties.lower()
+        for root in prof_roots:
+            if root in duties_lower:
+                score += 1
+        
+        if score > 0:
+            scored_vacs.append((score, vac))
+
+    # Сортируем: сначала по совпадениям (score), затем по зарплате
+    scored_vacs.sort(key=lambda x: (x[0], x[1]['salary'] or 0), reverse=True)
+    
+    # Берем ТОП-6 ТОЛЬКО подходящих
+    related_vacancies = [item[1] for item in scored_vacs[:6]]
+
+    # Чтобы передать колледжи
+    return render_template('profession_detail.html', prof=prof, colleges=colleges_with_links, related_vacancies=related_vacancies)
