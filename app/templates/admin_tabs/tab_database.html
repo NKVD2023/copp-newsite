@@ -12,14 +12,70 @@
         </ul>
         <hr>
         <div style="display:flex; flex-direction: column; gap:10px;">
-            <a href="{{ url_for('admin.db_export_full') }}" class="btn" style="background:#28a745; color:white; text-align:center; font-size: 14px;"><i class="fas fa-download"></i> Полный бекап</a>
+            <button onclick="open2FAModal('export')" class="btn" style="background:#28a745; color:white; font-size: 14px;"><i class="fas fa-download"></i> Полный бекап</button>
             <button onclick="document.getElementById('importFullBackupFile').click();" class="btn" style="background:#dc3545; color:white; font-size: 14px;"><i class="fas fa-upload"></i> Восстановить данные</button>
+            
+            <form id="formExportFullBackup" action="{{ url_for('admin.db_export_full') }}" method="post" style="display:none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="twofa_code" id="export2FACode">
+            </form>
+
             <form id="formImportFullBackup" action="{{ url_for('admin.db_import_full') }}" method="post" enctype="multipart/form-data" style="display:none;">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <input type="file" name="backup_file" id="importFullBackupFile" accept=".zip" onchange="if(confirm('ВНИМАНИЕ! Это полностью перезапишет текущую базу данных и восстановит файлы из бэкапа. Вы уверены?')) document.getElementById('formImportFullBackup').submit();">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="twofa_code" id="import2FACode">
+                <input type="file" name="backup_file" id="importFullBackupFile" accept=".zip" onchange="if(confirm('ВНИМАНИЕ! Это полностью перезапишет текущую базу данных и восстановит файлы из бэкапа. Вы уверены?')) open2FAModal('import'); else this.value='';">
             </form>
         </div>
     </div>
+
+    <!-- 2FA Modal -->
+    <div class="modal fade" id="twoFAModal" tabindex="-1" aria-labelledby="twoFAModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="twoFAModalLabel">Подтверждение действия</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center">
+            <i class="fas fa-shield-halved mb-3" style="font-size: 3rem; color: var(--copp-blue);"></i>
+            <p>Для выполнения этой критической операции требуется подтверждение 2FA.</p>
+            <input type="text" id="twoFAInput" class="form-control text-center" placeholder="Введите 6-значный код" maxlength="6" style="font-size: 1.2rem; letter-spacing: 2px;">
+            <input type="hidden" id="twoFAActionType">
+          </div>
+          <div class="modal-footer d-flex justify-content-center">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-primary" onclick="submit2FAAction()" style="background: var(--copp-blue); border: none;">Подтвердить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    function open2FAModal(actionType) {
+        document.getElementById('twoFAActionType').value = actionType;
+        document.getElementById('twoFAInput').value = '';
+        var modal = new bootstrap.Modal(document.getElementById('twoFAModal'));
+        modal.show();
+    }
+    
+    function submit2FAAction() {
+        var code = document.getElementById('twoFAInput').value.trim();
+        if (code.length < 6) {
+            alert('Введите 6-значный код');
+            return;
+        }
+        var actionType = document.getElementById('twoFAActionType').value;
+        if (actionType === 'export') {
+            document.getElementById('export2FACode').value = code;
+            document.getElementById('formExportFullBackup').submit();
+        } else if (actionType === 'import') {
+            document.getElementById('import2FACode').value = code;
+            document.getElementById('formImportFullBackup').submit();
+        }
+        var modal = bootstrap.Modal.getInstance(document.getElementById('twoFAModal'));
+        modal.hide();
+    }
+    </script>
     
     <div class="db-main" style="flex-grow: 1; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; position: relative;">
         

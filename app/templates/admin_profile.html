@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой профиль — Панель управления</title>
+    <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .profile-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 2rem;
+            margin-top: 2rem;
+            max-width: 600px;
+        }
+        .security-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        .status-enabled {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .status-disabled {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .security-icon {
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body class="admin-wrapper" style="background:#f4f7f6;">
+    <div class="container pb-5">
+        <div class="d-flex align-items-center mt-4 mb-3">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary me-3">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+            <h2 class="mb-0" style="color:var(--copp-blue); font-weight:700;">Мой профиль</h2>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="profile-card">
+            <h4>Безопасность аккаунта</h4>
+            <p class="text-muted">Настройте двухэтапную аутентификацию (2FA) для дополнительной защиты вашего аккаунта.</p>
+            
+            {% if is_2fa_enabled %}
+            <div class="security-status status-enabled">
+                <i class="fas fa-shield-check security-icon"></i>
+                <div>
+                    <strong>Двухэтапная аутентификация Включена</strong><br>
+                    <small>Ваш аккаунт защищен. При входе запрашивается код из приложения (Яндекс.Ключ).</small>
+                </div>
+            </div>
+            
+            <form action="{{ url_for('admin.disable_2fa') }}" method="POST" onsubmit="return confirm('Вы уверены, что хотите отключить двухэтапную аутентификацию? Защита вашего аккаунта будет снижена.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-danger">Отключить 2FA</button>
+            </form>
+            
+            {% else %}
+            <div class="security-status status-disabled">
+                <i class="fas fa-triangle-exclamation security-icon"></i>
+                <div>
+                    <strong>Двухэтапная аутентификация Отключена</strong><br>
+                    <small>Рекомендуем включить 2FA для защиты от несанкционированного доступа.</small>
+                </div>
+            </div>
+            
+            <a href="{{ url_for('admin.setup_2fa') }}" class="btn btn-primary" style="background:var(--copp-blue); border:none;">Настроить 2FA</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

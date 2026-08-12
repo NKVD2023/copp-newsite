@@ -72,12 +72,19 @@ def db_export_csv(table_name):
         flash(f"Ошибка экспорта: {str(e)}", "danger")
         return redirect(url_for('admin.dashboard', tab='database'))
 
-@bp.route('/db/export/full')
+@bp.route('/db/export/full', methods=['POST'])
 @login_required
 def db_export_full():
     """
     Создание и скачивание полного бэкапа (БД + папка uploads) в виде .zip архива.
+    Требует 2FA подтверждение.
     """
+    code = request.form.get('twofa_code', '').strip().replace(' ', '')
+    is_valid, msg = _verify_2fa_action(code)
+    if not is_valid:
+        flash(f'Ошибка 2FA: {msg}', 'error')
+        return redirect(url_for('admin.dashboard', tab='database'))
+        
     try:
         uploads_dir = os.path.join('app', 'static', 'uploads')
         memory_file = io.BytesIO()
@@ -97,11 +104,61 @@ def db_export_full():
                         zf.write(file_path, arcname=arcname)
                         
         memory_file.seek(0)
-        filename = f"copp-site-{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        filename = f"copp-site-{datetime.now().strftime('%d-%m-%Y_%H-%M')}.zip"
         return send_file(memory_file, download_name=filename, as_attachment=True, mimetype='application/zip')
     except Exception as e:
         flash(f"Ошибка создания полного бэкапа: {str(e)}", "danger")
         return redirect(url_for('admin.dashboard', tab='database'))
+
+def _verify_2fa_action(code):
+    import pyotp
+    import os
+    import json
+    from flask import session
+    from dotenv import load_dotenv
+    
+    is_admin = session.get('is_admin')
+    if is_admin:
+        load_dotenv()
+        is_2fa_enabled = os.environ.get('ADMIN_2FA_ENABLED') == '1'
+        secret = os.environ.get('ADMIN_TOTP_SECRET')
+        backup_codes_str = os.environ.get('ADMIN_BACKUP_CODES', '[]')
+    else:
+        user_id = session.get('user_id')
+        from app.db import get_db_connection
+        with get_db_connection() as conn:
+            user = conn.execute('SELECT * FROM admin_users WHERE id = ?', (user_id,)).fetchone()
+        is_2fa_enabled = bool(user['is_2fa_enabled'])
+        secret = user['totp_secret']
+        backup_codes_str = user['backup_codes'] or '[]'
+        
+    if not is_2fa_enabled:
+        return False, "Для выполнения действия необходимо включить 2FA в профиле."
+        
+    try:
+        backup_codes = json.loads(backup_codes_str)
+    except:
+        backup_codes = []
+        
+    if secret and code.isdigit() and len(code) == 6:
+        totp = pyotp.TOTP(secret)
+        if totp.verify(code):
+            return True, "OK"
+            
+    if code in backup_codes:
+        backup_codes.remove(code)
+        if is_admin:
+            from dotenv import set_key
+            dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
+            set_key(dotenv_path, 'ADMIN_BACKUP_CODES', json.dumps(backup_codes))
+        else:
+            from app.db import get_db_connection
+            with get_db_connection() as conn:
+                conn.execute('UPDATE admin_users SET backup_codes = ? WHERE id = ?', (json.dumps(backup_codes), user_id))
+                conn.commit()
+        return True, "OK"
+        
+    return False, "Неверный код подтверждения."
 
 @bp.route('/db/execute_sql', methods=['POST'])
 @login_required
@@ -144,6 +201,12 @@ def db_import_full():
     - Заменяет БД файлом из архива.
     - Извлекает папку uploads, пропуская уже существующие файлы.
     """
+    code = request.form.get('twofa_code', '').strip().replace(' ', '')
+    is_valid, msg = _verify_2fa_action(code)
+    if not is_valid:
+        flash(f'Ошибка 2FA: {msg}', 'error')
+        return redirect(url_for('admin.dashboard', tab='database'))
+        
     if 'backup_file' not in request.files:
         flash('Файл не выбран', 'warning')
         return redirect(url_for('admin.dashboard', tab='database'))

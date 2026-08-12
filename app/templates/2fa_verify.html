@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ввод кода 2FA — Панель управления</title>
+    <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+        }
+        .login-card {
+            background: #fff;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .login-title {
+            color: var(--copp-blue, #102a43);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        .btn-login {
+            background: var(--copp-blue, #102a43);
+            color: #fff;
+            font-weight: 600;
+            width: 100%;
+            padding: 0.75rem;
+        }
+        .btn-login:hover {
+            background: #0b1f33;
+            color: #fff;
+        }
+        .form-control {
+            padding: 0.75rem 1rem;
+            text-align: center;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+        .security-icon {
+            font-size: 3rem;
+            color: var(--copp-blue, #102a43);
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <i class="fas fa-shield-halved security-icon"></i>
+        <h3 class="login-title">Двухэтапная аутентификация</h3>
+        <p class="text-muted mb-4">Введите код из приложения (Яндекс.Ключ) или резервный код.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" style="font-size:0.9rem;" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('admin.verify_2fa') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="mb-4">
+                <input type="text" class="form-control" name="code" placeholder="Код подтверждения" required autocomplete="off" autofocus>
+            </div>
+            
+            <button type="submit" class="btn btn-login mb-3">Подтвердить вход</button>
+            <a href="{{ url_for('admin.login') }}" class="text-muted" style="font-size:0.9rem; text-decoration:none;">Вернуться к вводу пароля</a>
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

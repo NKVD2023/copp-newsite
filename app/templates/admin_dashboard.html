@@ -26,15 +26,15 @@
         </div>
         <div style="display:flex; align-items:center; gap:16px;">
             <!-- Инфо о текущем пользователе -->
-            <div style="display:flex; align-items:center; gap:8px;">
+            <a href="{{ url_for('admin.profile') }}" style="display:flex; align-items:center; gap:8px; text-decoration:none; transition: opacity 0.2s;">
                 <div style="width:30px; height:30px; border-radius:50%; background:var(--copp-blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">
                     {{ current_username[0].upper() }}
                 </div>
-                <div style="line-height:1.3;">
-                    <div style="font-size:13px; font-weight:600; color:#333;">{{ current_username }}</div>
+                <div style="line-height:1.3; color:#333;">
+                    <div style="font-size:13px; font-weight:600;">{{ current_username }}</div>
                     <div style="font-size:11px; color:#999;">{% if is_superadmin %}Суперадмин{% else %}{{ role_labels.get(current_role, current_role) }}{% endif %}</div>
                 </div>
-            </div>
+            </a>
             <a href="{{ url_for('admin.logout') }}" class="a-btn-exit">
                 <i class="fas fa-right-from-bracket"></i> Выйти
             </a>
