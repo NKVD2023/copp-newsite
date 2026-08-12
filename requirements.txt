@@ -9,3 +9,5 @@ Flask-Limiter
 python-dotenv
 apscheduler
 pytz
+pyotp
+qrcode
