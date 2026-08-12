@@ -96,4 +96,31 @@ def init_db(app):
         )
         ''')
 
+        # Миграция: Добавление колонок тегов профориентации в таблицу professions
+        try:
+            conn.execute('ALTER TABLE professions ADD COLUMN tag_specialty TEXT')
+            conn.execute('ALTER TABLE professions ADD COLUMN tag_klimov TEXT')
+            conn.execute('ALTER TABLE professions ADD COLUMN tag_role TEXT')
+            conn.execute('ALTER TABLE professions ADD COLUMN tag_stress TEXT')
+        except sqlite3.OperationalError:
+            pass # Колонки уже существуют
+
+        try:
+            conn.execute('ALTER TABLE professions ADD COLUMN tag_interests TEXT')
+            conn.execute('ALTER TABLE professions ADD COLUMN tag_work_style TEXT')
+            conn.execute('ALTER TABLE professions ADD COLUMN tag_environment TEXT')
+        except sqlite3.OperationalError:
+            pass # Колонки уже существуют
+
+        # Создание таблицы для результатов тестов профориентации
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS career_test_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_answers TEXT NOT NULL,
+            top_profession_id INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (top_profession_id) REFERENCES professions (id)
+        )
+        ''')
+
         conn.commit()

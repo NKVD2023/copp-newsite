@@ -27,6 +27,40 @@
             </button>
         </div>
     </div>
+    
+    <div class="a-panel-toolbar" style="margin-top: 2rem;">
+        <h6 class="a-panel-title mb-0" style="border:none;padding:0;"><i class="fas fa-list"></i> Последние пройденные тесты</h6>
+    </div>
+    <div style="background: white; border-radius: 8px; border: 1px solid #dee2e6; overflow: hidden;">
+        <table class="table mb-0" style="font-size: 0.9rem;">
+            <thead style="background: #f8f9fa;">
+                <tr>
+                    <th style="padding: 12px 15px;">ID Теста</th>
+                    <th style="padding: 12px 15px;">Дата и Время</th>
+                    <th style="padding: 12px 15px;">Подобранная профессия (Топ-1)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in career_test_stats %}
+                <tr>
+                    <td style="padding: 12px 15px;">#{{ row.id }}</td>
+                    <td style="padding: 12px 15px;">{{ row.created_at }}</td>
+                    <td style="padding: 12px 15px;">
+                        {% if row.profession_name %}
+                            <strong>{{ row.profession_name }}</strong>
+                        {% else %}
+                            <span class="text-muted">Не найдено / База пуста</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center p-4 text-muted">Пока никто не проходил тест.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>

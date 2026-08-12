@@ -94,6 +94,12 @@ def add_profession():
     medical = request.form.get('medical', '')
     status = request.form.get('status', 'published')
     
+    # Считываем теги профориентации
+    tag_specialty = request.form.get('tag_specialty', '')
+    tag_klimov = request.form.get('tag_klimov', '')
+    tag_role = request.form.get('tag_role', '')
+    tag_stress = request.form.get('tag_stress', '')
+    
     # Считываем выбранную категорию (если "auto", то автоопределение по коду)
     category = request.form.get('category', 'auto')
     if not category or category == 'auto':
@@ -120,9 +126,9 @@ def add_profession():
     conn = get_db_connection()
     try:
         conn.execute('''
-            INSERT INTO professions (code, name, description, activities, qualities, medical, institutions, image_path, status, category)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (code, name, description, activities, qualities, medical, institutions, image_path, status, category))
+            INSERT INTO professions (code, name, description, activities, qualities, medical, institutions, image_path, status, category, tag_specialty, tag_klimov, tag_role, tag_stress)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (code, name, description, activities, qualities, medical, institutions, image_path, status, category, tag_specialty, tag_klimov, tag_role, tag_stress))
         conn.commit()
         flash('Профессия успешно добавлена!', 'success')
     except Exception as e:
@@ -150,6 +156,12 @@ def edit_profession(prof_id):
         activities = request.form.get('activities', '')
         qualities = request.form.get('qualities', '')
         medical = request.form.get('medical', '')
+        
+        # Считываем теги профориентации
+        tag_specialty = request.form.get('tag_specialty', '')
+        tag_klimov = request.form.get('tag_klimov', '')
+        tag_role = request.form.get('tag_role', '')
+        tag_stress = request.form.get('tag_stress', '')
         
         # Считываем выбранную категорию
         category = request.form.get('category', 'auto')
@@ -183,9 +195,9 @@ def edit_profession(prof_id):
         try:
             conn.execute('''
                 UPDATE professions 
-                SET code = ?, name = ?, description = ?, activities = ?, qualities = ?, medical = ?, institutions = ?, image_path = ?, status = ?, category = ?
+                SET code = ?, name = ?, description = ?, activities = ?, qualities = ?, medical = ?, institutions = ?, image_path = ?, status = ?, category = ?, tag_specialty = ?, tag_klimov = ?, tag_role = ?, tag_stress = ?
                 WHERE id = ?
-            ''', (code, name, description, activities, qualities, medical, institutions, image_path, status, category, prof_id))
+            ''', (code, name, description, activities, qualities, medical, institutions, image_path, status, category, tag_specialty, tag_klimov, tag_role, tag_stress, prof_id))
             conn.commit()
             flash('Профессия успешно обновлена!', 'success')
         except Exception as e:

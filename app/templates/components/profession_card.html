@@ -1,0 +1,24 @@
+<div class="prof-card" {% if prof.name %}data-name="{{ prof.name.lower() }}"{% endif %} {% if prof.code %}data-code="{{ prof.code.lower() }}"{% endif %} {% if prof.category %}data-category="{{ prof.category }}"{% else %}data-category="other"{% endif %} id="prof-card-{{ prof.id }}" style="position: relative;">
+    <div class="prof-img-box">
+        {% if prof.image_path %}
+        <img src="{{ url_for('static', filename=prof.image_path) }}" class="prof-img" alt="{{ prof.name }}">
+        {% else %}
+        <div class="prof-no-img">ЦОПП РК</div>
+        {% endif %}
+        
+        {% if prof.match_score %}
+        <div class="result-match-badge">
+            {{ prof.match_score }}% совпадение
+        </div>
+        {% endif %}
+    </div>
+    <div class="prof-body">
+        {% if prof.code %}
+        <span class="prof-code">{{ prof.code }}</span>
+        {% endif %}
+        <h3 class="prof-name">{{ prof.name }}</h3>
+        <p class="prof-desc">{{ prof.description or 'Описание готовится.' }}</p>
+        
+        <a href="{{ url_for('main.profession_detail', prof_id=prof.id) }}" class="btn-details" style="text-decoration: none;">Узнать подробнее</a>
+    </div>
+</div>
