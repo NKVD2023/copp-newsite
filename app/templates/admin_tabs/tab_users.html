@@ -183,6 +183,16 @@
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
+                                <!-- Сбросить 2FA -->
+                                {% if u.is_2fa_enabled %}
+                                <form action="{{ url_for('admin.reset_user_2fa', user_id=u.id) }}" method="POST" style="display:inline;"
+                                      onsubmit="return confirm('Отключить двухфакторную аутентификацию для пользователя «{{ u.username }}»?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm" style="background:#fff3cd; color:#856404; border:1px solid #ffeeba;" title="Сбросить 2FA" onmouseover="this.style.background='#ffeeba'" onmouseout="this.style.background='#fff3cd'">
+                                        <i class="fas fa-shield-halved"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

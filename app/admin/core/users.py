@@ -139,3 +139,21 @@ def reset_user_password(user_id):
     if user:
         flash(f'Новый пароль для «{user["username"]}» (сохраните!): {new_password}', 'password_reveal')
     return redirect(url_for('admin.dashboard', tab='users'))
+
+
+@bp.route('/users/<int:user_id>/reset_2fa', methods=['POST'])
+@login_required
+@superadmin_required
+def reset_user_2fa(user_id):
+    """Сбросить двухфакторную аутентификацию (2FA) для пользователя."""
+    with get_db_connection() as conn:
+        user = conn.execute('SELECT username FROM admin_users WHERE id = ?', (user_id,)).fetchone()
+        if user:
+            conn.execute('UPDATE admin_users SET is_2fa_enabled = 0, totp_secret = NULL, backup_codes = NULL WHERE id = ?', (user_id,))
+            conn.commit()
+            log_admin_action('UPDATE', 'users', entity_id=user_id, details=f'Отключена двухфакторная аутентификация для пользователя "{user["username"]}"')
+            flash(f'Двухфакторная аутентификация отключена для пользователя «{user["username"]}».', 'success')
+        else:
+            flash('Пользователь не найден.', 'error')
+            
+    return redirect(url_for('admin.dashboard', tab='users'))
