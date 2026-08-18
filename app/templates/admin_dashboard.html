@@ -48,134 +48,119 @@
             <!-- Вкладка пользователей — только суперадмину -->
             {% if is_superadmin %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'users' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#usersAdminTab" type="button">
+                <a class="nav-link {% if active_tab == 'users' %}active{% endif %}" href="?tab=users">
                     <i class="fas fa-users-gear"></i> Пользователи
-                </button>
+                </a>
             </li>
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'logs' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#logsAdminTab" type="button">
+                <a class="nav-link {% if active_tab == 'logs' %}active{% endif %}" href="?tab=logs">
                     <i class="fas fa-list-check"></i> Журнал действий
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'news' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'news' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#newsTab" type="button">
+                <a class="nav-link {% if active_tab == 'news' %}active{% endif %}" href="?tab=news">
                     <i class="fas fa-newspaper"></i> Новости
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'prof_stats' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'prof_stats' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#reportsTab" type="button">
+                <a class="nav-link {% if active_tab == 'prof_stats' %}active{% endif %}" href="?tab=prof_stats">
                     <i class="fas fa-chart-bar"></i> Статистика дашборда
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'prof_atlas' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'prof_atlas' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#profAtlasTab" type="button">
+                <a class="nav-link {% if active_tab == 'prof_atlas' %}active{% endif %}" href="?tab=prof_atlas">
                     <i class="fas fa-graduation-cap"></i> Атлас профессий
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'projects' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'projects' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#projectsTab" type="button">
+                <a class="nav-link {% if active_tab == 'projects' %}active{% endif %}" href="?tab=projects">
                     <i class="fas fa-folder-open"></i> Проекты
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'pages' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'pages' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#pagesTab" type="button">
+                <a class="nav-link {% if active_tab == 'pages' %}active{% endif %}" href="?tab=pages">
                     <i class="fas fa-file-lines"></i> Страницы
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'documents' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'documents' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#documentsTab" type="button">
+                <a class="nav-link {% if active_tab == 'documents' %}active{% endif %}" href="?tab=documents">
                     <i class="fas fa-paperclip"></i> Файлы
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'statistics' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'statistics' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#statisticsTab" type="button">
+                <a class="nav-link {% if active_tab == 'statistics' %}active{% endif %}" href="?tab=statistics">
                     <i class="fas fa-square-poll-vertical"></i> Показатели
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'contacts' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'contacts' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#contactsTab" type="button">
+                <a class="nav-link {% if active_tab == 'contacts' %}active{% endif %}" href="?tab=contacts">
                     <i class="fas fa-envelope"></i> Обратная связь
                     <span id="feedback-badge" class="badge bg-danger rounded-pill" style="display: none; margin-left: 5px;">0</span>
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'forms_data' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'forms_data' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#formsDataTab" type="button">
+                <a class="nav-link {% if active_tab == 'forms_data' %}active{% endif %}" href="?tab=forms_data">
                     <i class="fas fa-table-list"></i> Данные форм
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'socials' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'socials' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#socialsTab" type="button">
+                <a class="nav-link {% if active_tab == 'socials' %}active{% endif %}" href="?tab=socials">
                     <i class="fas fa-share-nodes"></i> Соцсети
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'menu' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'menu' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#menuTab" type="button">
+                <a class="nav-link {% if active_tab == 'menu' %}active{% endif %}" href="?tab=menu">
                     <i class="fas fa-bars"></i> Меню сайта
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'team' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'team' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#teamTab" type="button">
+                <a class="nav-link {% if active_tab == 'team' %}active{% endif %}" href="?tab=team">
                     <i class="fas fa-users"></i> Команда
-                </button>
+                </a>
             </li>
             {% endif %}
 
             {% if is_superadmin or 'database' in allowed_modules %}
             <li class="nav-item">
-                <button class="nav-link {% if active_tab == 'database' %}active{% endif %}"
-                    data-bs-toggle="tab" data-bs-target="#databaseTab" type="button">
+                <a class="nav-link {% if active_tab == 'database' %}active{% endif %}" href="?tab=database">
                     <i class="fas fa-database"></i> База данных
-                </button>
+                </a>
             </li>
             {% endif %}
 
@@ -331,10 +316,12 @@
       <div class="modal-body">
         <ul class="nav nav-tabs mb-3" id="tmceTabs">
             <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tmce-existing" type="button">Выбрать загруженный</button>
+                <a class="nav-link active" href="?tab=news">
+                    Выбрать загруженный</a>
             </li>
             <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tmce-upload" type="button">Загрузить новый</button>
+                <a class="nav-link" href="?tab=news">
+                    Загрузить новый</a>
             </li>
         </ul>
         <div class="tab-content">

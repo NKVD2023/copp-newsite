@@ -5,18 +5,12 @@ from app.admin import bp
 from app.admin.core.auth import login_required
 from app.admin.core.logger import log_admin_action
 from app.db import get_db_connection
-from app.utils.image_utils import save_image_as_webp
-
-UPLOAD_FOLDER = os.path.join('app', 'static', 'uploads', 'news')
+from app.services.upload_service import UploadService
+from app.repositories.models import NewsRepository
 
 @bp.route('/add_news', methods=['POST'])
 @login_required
 def add_news():
-    """
-    Создание новой новости или мероприятия.
-    Обрабатывает загрузку файлов (основное фото и доп. фото),
-    формирует дату публикации (по таймеру или текущую) и сохраняет запись в БД.
-    """
     title = request.form.get('title')
     status = request.form.get('status')
     teaser = request.form.get('teaser')
@@ -34,63 +28,32 @@ def add_news():
         from datetime import datetime
         publish_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    main_image_path = UploadService.handle_main_image(upload_folder='uploads/news')
+    extra_images_str = UploadService.handle_extra_images(upload_folder='uploads/news')
 
-    main_image_path = request.form.get('existing_main_image', '')
-    if 'main_image' in request.files:
-        file = request.files['main_image']
-        if file and file.filename != '':
-            filename = save_image_as_webp(file, UPLOAD_FOLDER)
-            if filename:
-                main_image_path = f"uploads/news/{filename}"
+    try:
+        data = {
+            'title': title, 'teaser': teaser, 'content': content, 
+            'main_image_path': main_image_path, 'extra_images_str': extra_images_str, 
+            'status': status, 'is_event': is_event, 'event_date': event_date, 
+            'event_location': event_location, 'publish_date': publish_date
+        }
+        news_id = NewsRepository.create(data)
+        log_admin_action('CREATE', 'news', entity_id=news_id, details=f'Добавлена новость: "{title}"')
+        flash("Новость успешно добавлена!", "success")
+    except Exception as e:
+        flash(f"Ошибка при сохранении: {e}", "error")
 
-    extra_images_paths = request.form.getlist('existing_extra_images')
-    if 'extra_images' in request.files:
-        files = request.files.getlist('extra_images')
-        for file in files:
-            if file and file.filename != '':
-                filename = save_image_as_webp(file, UPLOAD_FOLDER)
-                if filename:
-                    extra_images_paths.append(f"uploads/news/{filename}")
-    
-    extra_images_str = ",".join(extra_images_paths)
-
-    with get_db_connection() as conn:
-        try:
-            conn.execute('''
-                INSERT INTO news (title, teaser, content, main_image, extra_images, status, is_event, event_date, event_location, publish_date)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, publish_date))
-            conn.commit()
-            
-            news_id = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
-            log_admin_action('CREATE', 'news', entity_id=news_id, details=f'Добавлена новость: "{title}"')
-
-            flash("Новость успешно добавлена!", "success")
-        except Exception as e:
-            flash(f"Ошибка при сохранении: {e}", "error")
-
-    return redirect(url_for('admin.dashboard'))
-
+    return redirect(url_for('admin.dashboard', tab='news'))
 
 @bp.route('/edit_news/<int:news_id>', methods=['GET'])
 @login_required
 def edit_news(news_id):
-    """
-    Страница редактирования новости.
-    Загружает полный дашборд через редирект, передавая ID новости.
-    """
     return redirect(url_for('admin.dashboard', tab='news', edit_news_id=news_id))
-
 
 @bp.route('/update_news/<int:news_id>', methods=['POST'])
 @login_required
 def update_news(news_id):
-    """
-    Обработчик сохранения изменений новости.
-    Принимает новые данные, загружает новые картинки (с удалением старых из ФС),
-    обновляет запись в БД.
-    """
     title = request.form.get('title')
     status = request.form.get('status')
     teaser = request.form.get('teaser')
@@ -104,121 +67,70 @@ def update_news(news_id):
         publish_date = publish_date.replace('T', ' ')
         if len(publish_date) == 16:
             publish_date += ":00"
-    
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    
-    with get_db_connection() as conn:
-        old_item = conn.execute('SELECT * FROM news WHERE id = ?', (news_id,)).fetchone()
-        
-        main_image_path = old_item['main_image']
-        extra_images_str = old_item['extra_images']
-        existing_main = request.form.get('existing_main_image')
-        
-        if 'main_image' in request.files and request.files['main_image'].filename != '':
-            file = request.files['main_image']
-            filename = save_image_as_webp(file, UPLOAD_FOLDER)
-            if filename:
-                main_image_path = f"uploads/news/{filename}"
-        elif existing_main:
-            main_image_path = existing_main
-                
-        # Обновление доп. фото (добавление новых и сохранение выбранных)
-        extra_paths = request.form.getlist('existing_extra_images')
-        if 'extra_images' in request.files:
-            files = request.files.getlist('extra_images')
-            for file in files:
-                if file and file.filename != '':
-                    filename = save_image_as_webp(file, UPLOAD_FOLDER)
-                    if filename:
-                        extra_paths.append(f"uploads/news/{filename}")
-        extra_images_str = ",".join(extra_paths)
-                
-        if publish_date:
-            conn.execute('''
-                UPDATE news 
-                SET title = ?, teaser = ?, content = ?, main_image = ?, extra_images = ?, status = ?, is_event = ?, event_date = ?, event_location = ?, publish_date = ?
-                WHERE id = ?
-            ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, publish_date, news_id))
-        else:
-            conn.execute('''
-                UPDATE news 
-                SET title = ?, teaser = ?, content = ?, main_image = ?, extra_images = ?, status = ?, is_event = ?, event_date = ?, event_location = ?
-                WHERE id = ?
-            ''', (title, teaser, content, main_image_path, extra_images_str, status, is_event, event_date, event_location, news_id))
-        conn.commit()
-    
-    log_admin_action('UPDATE', 'news', entity_id=news_id, details=f'Обновлена новость: "{title}"')
+            
+    main_image_path = UploadService.handle_main_image(upload_folder='uploads/news')
+    extra_images_str = UploadService.handle_extra_images(upload_folder='uploads/news')
 
-    flash("Новость успешно обновлена!", "success")
-    return redirect(url_for('admin.dashboard'))
-
+    try:
+        data = {
+            'title': title, 'teaser': teaser, 'content': content, 
+            'main_image_path': main_image_path, 'extra_images_str': extra_images_str, 
+            'status': status, 'is_event': is_event, 'event_date': event_date, 
+            'event_location': event_location, 'publish_date': publish_date
+        }
+        NewsRepository.update(news_id, data)
+        log_admin_action('UPDATE', 'news', entity_id=news_id, details=f'Обновлена новость: "{title}"')
+        flash("Новость успешно обновлена!", "success")
+    except Exception as e:
+        flash(f"Ошибка при обновлении: {e}", "error")
+        
+    return redirect(url_for('admin.dashboard', tab='news'))
 
 @bp.route('/toggle_news_status/<int:news_id>', methods=['POST'])
 @login_required
 def toggle_news_status(news_id):
-    """
-    Быстрое переключение статуса новости (Опубликована <-> В архиве).
-    Вызывается кнопкой из таблицы новостей на дашборде.
-    """
     current_status = request.form.get('current_status')
     new_status = 'archived' if current_status == 'published' else 'published'
     
-    with get_db_connection() as conn:
-        conn.execute('UPDATE news SET status = ? WHERE id = ?', (new_status, news_id))
-        conn.commit()
-        
-        title = conn.execute('SELECT title FROM news WHERE id = ?', (news_id,)).fetchone()
-        log_title = title['title'] if title else f"ID {news_id}"
+    try:
+        NewsRepository.update_status(news_id, new_status)
+        item = NewsRepository.get_by_id(news_id)
+        log_title = item['title'] if item else f"ID {news_id}"
         action_desc = "Опубликована" if new_status == 'published' else "Отправлена в архив"
         log_admin_action('UPDATE', 'news', entity_id=news_id, details=f'Изменен статус новости "{log_title}": {action_desc}')
-    
-    flash(f"Статус новости изменен на '{new_status}'", "success")
-    return redirect(url_for('admin.dashboard'))
-
+        flash(f"Статус новости изменен на '{new_status}'", "success")
+    except Exception as e:
+        flash(f"Ошибка: {e}", "error")
+        
+    return redirect(url_for('admin.dashboard', tab='news'))
 
 @bp.route('/delete_news/<int:news_id>', methods=['POST'])
 @login_required
 def delete_news(news_id):
-    """
-    Полное удаление новости из БД.
-    Также физически удаляет прикрепленные к новости картинки из файловой системы.
-    """
-    with get_db_connection() as conn:
-        item = conn.execute('SELECT main_image, extra_images FROM news WHERE id = ?', (news_id,)).fetchone()
+    item = NewsRepository.get_by_id(news_id)
+    if item:
+        NewsRepository.delete(news_id)
+        log_title = item['title']
+        log_admin_action('DELETE', 'news', entity_id=news_id, details=f'Удалена новость: "{log_title}"')
         
-        if item:
-            title = conn.execute('SELECT title FROM news WHERE id = ?', (news_id,)).fetchone()
-            # Удаляем запись из БД
-            conn.execute('DELETE FROM news WHERE id = ?', (news_id,))
-            conn.commit()
-            
-            log_title = title['title'] if title else f"ID {news_id}"
-            log_admin_action('DELETE', 'news', entity_id=news_id, details=f'Удалена новость: "{log_title}"')
-            
-            # Физически удаляем файлы картинок
-            if item['main_image']:
-                main_img_path = os.path.join('app', 'static', item['main_image'])
-                if os.path.exists(main_img_path):
-                    os.remove(main_img_path)
-                    
-            if item['extra_images']:
-                for ext_img in item['extra_images'].split(','):
-                    if ext_img:
-                        ext_img_path = os.path.join('app', 'static', ext_img)
-                        if os.path.exists(ext_img_path):
-                            os.remove(ext_img_path)
-    
+        if item['main_image']:
+            main_img_path = os.path.join('app', 'static', item['main_image'])
+            if os.path.exists(main_img_path):
+                os.remove(main_img_path)
+                
+        if item['extra_images']:
+            for ext_img in item['extra_images'].split(','):
+                if ext_img:
+                    ext_img_path = os.path.join('app', 'static', ext_img)
+                    if os.path.exists(ext_img_path):
+                        os.remove(ext_img_path)
+                        
     flash("Новость и прикрепленные файлы успешно удалены!", "success")
-    return redirect(url_for('admin.dashboard'))
-
+    return redirect(url_for('admin.dashboard', tab='news'))
 
 @bp.route('/export_news', methods=['GET'])
 @login_required
 def export_news():
-    """
-    Экспорт новостей в Excel.
-    Принимает опциональные параметры month и status.
-    """
     import pandas as pd
     import io
     from datetime import datetime
@@ -227,20 +139,7 @@ def export_news():
     month = request.args.get('month')
     status = request.args.get('status')
     
-    query = 'SELECT * FROM news WHERE 1=1'
-    params = []
-    
-    if month:
-        query += ' AND publish_date LIKE ?'
-        params.append(f'{month}%')
-    if status:
-        query += ' AND status = ?'
-        params.append(status)
-        
-    query += ' ORDER BY publish_date DESC'
-    
-    with get_db_connection() as conn:
-        rows = conn.execute(query, params).fetchall()
+    rows = NewsRepository.export(month=month, status=status)
         
     data = []
     for r in rows:

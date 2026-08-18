@@ -40,65 +40,75 @@ def dashboard():
     import json
     import os
     from app.admin.directory.professions import CATEGORIES_RU
+    from app.repositories.models import (
+        NewsRepository, PagesRepository, DocumentsRepository, ProjectsRepository,
+        StatisticsRepository, SocialNetworksRepository, ContactSettingsRepository,
+        ContactRequestsRepository, MenuItemsRepository, PageFormsRepository,
+        FormSubmissionsRepository, DashboardUploadsRepository, ProfessionsRepository,
+        TeamMembersRepository, CareerTestResultsRepository, AdminUsersRepository,
+        SystemRepository
+    )
 
-    with get_db_connection() as conn:
-        news_list       = conn.execute('SELECT * FROM news ORDER BY id DESC').fetchall()
-        pages_list      = conn.execute('SELECT * FROM pages ORDER BY id DESC').fetchall()
-        documents_list  = conn.execute('SELECT * FROM documents ORDER BY id DESC').fetchall()
-        projects_list   = conn.execute('SELECT * FROM projects ORDER BY id DESC').fetchall()
-        stats_list      = conn.execute('SELECT * FROM statistics ORDER BY display_order ASC').fetchall()
-        socials_list    = conn.execute('SELECT * FROM social_networks ORDER BY display_order ASC').fetchall()
-        contact_settings  = conn.execute('SELECT * FROM contact_settings WHERE id = 1').fetchone()
-        menu_groups_list  = conn.execute('SELECT DISTINCT menu_group FROM pages WHERE menu_group IS NOT NULL AND menu_group != ""').fetchall()
-        tables_list       = conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall()
-        contact_requests  = conn.execute('SELECT * FROM contact_requests ORDER BY id DESC').fetchall()
-        menu_items_list   = conn.execute('SELECT * FROM menu_items ORDER BY position ASC, id ASC').fetchall()
+    # Инициализируем пустые списки для шаблона
+    news_list, pages_list, documents_list, projects_list = [], [], [], []
+    stats_list, socials_list, menu_items_list, contact_requests = [], [], [], []
+    forms_list, submissions_list, prof_uploads, professions_list = [], [], [], []
+    team_members, career_test_stats, users_list = [], [], []
+    tables_list, menu_groups_list = [], []
+    contact_settings = None
 
+    # Загружаем только те данные, которые нужны для текущей вкладки (ленивая загрузка)
+    if active_tab == 'news':
+        news_list = NewsRepository.get_all()
+    elif active_tab == 'pages':
+        pages_list = PagesRepository.get_all()
+        menu_groups_list = PagesRepository.get_menu_groups()
+    elif active_tab == 'documents':
+        documents_list = DocumentsRepository.get_all()
+    elif active_tab == 'projects':
+        projects_list = ProjectsRepository.get_all()
+    elif active_tab == 'stats':
+        stats_list = StatisticsRepository.get_all(order_by='display_order ASC')
+    elif active_tab == 'socials':
+        socials_list = SocialNetworksRepository.get_all(order_by='display_order ASC')
+    elif active_tab == 'contacts':
+        contact_settings = ContactSettingsRepository.get_settings()
+        contact_requests = ContactRequestsRepository.get_all()
+    elif active_tab == 'menu':
+        menu_items_list = MenuItemsRepository.get_all(order_by='position ASC, id ASC')
+    elif active_tab == 'database':
+        tables_list = SystemRepository.get_all_tables()
+    elif active_tab == 'forms_data':
         try:
-            forms_list = conn.execute('SELECT * FROM page_forms ORDER BY id DESC').fetchall()
-            submissions_list = conn.execute('''
-                SELECT s.*, f.title as form_title, f.year
-                FROM form_submissions s
-                JOIN page_forms f ON s.form_id = f.id
-                ORDER BY s.id DESC
-            ''').fetchall()
+            forms_list = PageFormsRepository.get_all()
+            submissions_list = FormSubmissionsRepository.get_all_with_form_titles()
         except Exception:
-            forms_list = []
-            submissions_list = []
-
+            pass
+    elif active_tab == 'prof_stats':
         try:
-            prof_uploads = conn.execute('SELECT * FROM dashboard_uploads ORDER BY upload_date DESC').fetchall()
+            prof_uploads = DashboardUploadsRepository.get_all()
         except Exception:
-            prof_uploads = []
-
+            pass
+    elif active_tab == 'prof_atlas':
         try:
-            professions_list = conn.execute('SELECT * FROM professions ORDER BY id DESC').fetchall()
+            professions_list = ProfessionsRepository.get_all()
         except Exception:
-            professions_list = []
-
+            pass
+    elif active_tab == 'team':
         try:
-            team_members = conn.execute('SELECT * FROM team_members ORDER BY display_order ASC, id DESC').fetchall()
+            team_members = TeamMembersRepository.get_all()
         except Exception:
-            team_members = []
-            
+            pass
+    elif active_tab == 'statistics':
         try:
-            career_test_stats = conn.execute('''
-                SELECT c.id, c.created_at, p.name as profession_name 
-                FROM career_test_results c
-                LEFT JOIN professions p ON c.top_profession_id = p.id
-                ORDER BY c.created_at DESC
-                LIMIT 50
-            ''').fetchall()
+            career_test_stats = CareerTestResultsRepository.get_recent_stats(50)
         except Exception:
-            career_test_stats = []
-
-        # Список субадминов (только для суперадмина)
-        users_list = []
-        if session.get('is_admin'):
-            try:
-                users_list = conn.execute('SELECT * FROM admin_users ORDER BY created_at DESC').fetchall()
-            except Exception:
-                users_list = []
+            pass
+    elif active_tab == 'users' and session.get('is_admin'):
+        try:
+            users_list = AdminUsersRepository.get_all()
+        except Exception:
+            pass
 
     # Загружаем список учебных заведений для чекбоксов
     colleges_list = []
@@ -117,26 +127,26 @@ def dashboard():
     edit_project_item = None
     extra_images_list = []
     
-    with get_db_connection() as conn:
-        if request.args.get('edit_news_id'):
-            edit_item = conn.execute('SELECT * FROM news WHERE id = ?', (request.args.get('edit_news_id'),)).fetchone()
-            
-        if request.args.get('edit_page_id'):
-            edit_page_item = conn.execute('SELECT * FROM pages WHERE id = ?', (request.args.get('edit_page_id'),)).fetchone()
+    if request.args.get('edit_news_id'):
+        edit_item = NewsRepository.get_by_id(request.args.get('edit_news_id'))
+        
+    if request.args.get('edit_page_id'):
+        edit_page_item = PagesRepository.get_by_id(request.args.get('edit_page_id'))
+        with get_db_connection() as conn:
             page_form = conn.execute("SELECT * FROM page_forms WHERE page_id = ? AND status != 'archived'", (request.args.get('edit_page_id'),)).fetchone()
-            if edit_page_item and edit_page_item['attached_files']:
-                try:
-                    attached_files_list = json.loads(edit_page_item['attached_files'])
-                except:
-                    pass
-                    
-        if request.args.get('edit_project_id'):
-            edit_project_item = conn.execute('SELECT * FROM projects WHERE id = ?', (request.args.get('edit_project_id'),)).fetchone()
-            if edit_project_item and edit_project_item['extra_images']:
-                try:
-                    extra_images_list = json.loads(edit_project_item['extra_images'])
-                except:
-                    pass
+        if edit_page_item and edit_page_item['attached_files']:
+            try:
+                attached_files_list = json.loads(edit_page_item['attached_files'])
+            except:
+                pass
+                
+    if request.args.get('edit_project_id'):
+        edit_project_item = ProjectsRepository.get_by_id(request.args.get('edit_project_id'))
+        if edit_project_item and edit_project_item['extra_images']:
+            try:
+                extra_images_list = json.loads(edit_project_item['extra_images'])
+            except:
+                pass
 
     return render_template(
         'admin_dashboard.html',
