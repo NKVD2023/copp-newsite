@@ -66,6 +66,9 @@
                     </td>
                     <td>
                         <div class="d-flex gap-2">
+                            <button type="button" class="a-btn a-btn-primary a-btn-sm" data-bs-toggle="modal" data-bs-target="#viewContactModal{{ req.id }}">
+                                <i class="fas fa-eye"></i> Открыть
+                            </button>
                             {% if req.status == 'new' %}
                             <form action="{{ url_for('admin.mark_request_read', id=req.id) }}" method="POST">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -77,6 +80,34 @@
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="a-btn a-btn-danger a-btn-sm"><i class="fas fa-trash"></i> Удалить</button>
                             </form>
+                        </div>
+
+                        <!-- Модальное окно просмотра заявки -->
+                        <div class="modal fade" id="viewContactModal{{ req.id }}" tabindex="-1" aria-labelledby="viewContactModalLabel{{ req.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="viewContactModalLabel{{ req.id }}">Заявка от {{ req.created_at }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                                    </div>
+                                    <div class="modal-body" style="white-space: pre-wrap; font-size: 1rem;">
+                                        <p><strong>ФИО:</strong> {{ req.last_name }} {{ req.first_name }} {{ req.middle_name }}</p>
+                                        <p><strong>Email:</strong> <a href="mailto:{{ req.email }}">{{ req.email }}</a></p>
+                                        <hr>
+                                        <p><strong>Сообщение:</strong></p>
+                                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e9ecef;">{{ req.message }}</div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        {% if req.status == 'new' %}
+                                        <form action="{{ url_for('admin.mark_request_read', id=req.id) }}" method="POST" class="m-0">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="a-btn a-btn-success"><i class="fas fa-check"></i> Отметить прочитанным</button>
+                                        </form>
+                                        {% endif %}
+                                        <button type="button" class="a-btn a-btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </td>
                 </tr>
