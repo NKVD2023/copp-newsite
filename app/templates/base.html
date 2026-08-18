@@ -213,14 +213,6 @@
                         <label class="form-label" style="display: block; font-size: 0.9rem; color: var(--copp-text); font-weight: 600; margin-bottom: 5px; opacity: 0.8;">Имя <span style="color: #ff4d4f;">*</span></label>
                         <input type="text" id="contactFirstName" class="contact-glass-input" required>
                     </div>
-                    <div style="flex: 1; min-width: 130px;">
-                        <label class="form-label" style="display: block; font-size: 0.9rem; color: var(--copp-text); font-weight: 600; margin-bottom: 5px; opacity: 0.8;">Отчество</label>
-                        <input type="text" id="contactMiddleName" class="contact-glass-input">
-                    </div>
-                    <div style="flex: 1; min-width: 130px;">
-                        <label class="form-label" style="display: block; font-size: 0.9rem; color: var(--copp-text); font-weight: 600; margin-bottom: 5px; opacity: 0.8;">Фамилия <span style="color: #ff4d4f;">*</span></label>
-                        <input type="text" id="contactLastName" class="contact-glass-input" required>
-                    </div>
                 </div>
                 
                 <div>
@@ -289,13 +281,20 @@
                 const alertBox = document.getElementById('contactAlert');
                 const submitBtn = document.getElementById('contactSubmitBtn');
                 const consent = document.getElementById('contactConsent').checked;
-                
-                if (!consent) return;
+
+                if (!consent) {
+                    alertBox.style.display = 'block';
+                    alertBox.style.backgroundColor = '#fff2f0';
+                    alertBox.style.color = '#ff4d4f';
+                    alertBox.style.border = '1px solid #ffccc7';
+                    alertBox.innerText = 'Пожалуйста, подтвердите согласие на обработку персональных данных.';
+                    return;
+                }
                 
                 const payload = {
                     firstName: document.getElementById('contactFirstName').value,
-                    middleName: document.getElementById('contactMiddleName').value,
-                    lastName: document.getElementById('contactLastName').value,
+                    middleName: '',
+                    lastName: '',
                     email: document.getElementById('contactEmail').value,
                     message: document.getElementById('contactMessage').value
                 };

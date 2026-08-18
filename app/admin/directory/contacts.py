@@ -56,8 +56,8 @@ def delete_request(id):
         
     conn = get_db_connection()
     
-    req = conn.execute('SELECT name FROM contact_requests WHERE id = ?', (id,)).fetchone()
-    req_name = req['name'] if req else f"ID {id}"
+    req = conn.execute('SELECT last_name, first_name FROM contact_requests WHERE id = ?', (id,)).fetchone()
+    req_name = f"{req['last_name']} {req['first_name']}" if req else f"ID {id}"
     
     conn.execute('DELETE FROM contact_requests WHERE id = ?', (id,))
     conn.commit()

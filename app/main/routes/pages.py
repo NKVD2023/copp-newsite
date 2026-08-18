@@ -19,7 +19,7 @@ def contact_submit():
     email = data.get('email')
     message = data.get('message')
 
-    if not first_name or not last_name or not email or not message:
+    if not first_name or not email or not message:
         return jsonify({'success': False, 'message': 'Пожалуйста, заполните все обязательные поля.'}), 400
 
     conn = get_db_connection()
