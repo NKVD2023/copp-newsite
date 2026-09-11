@@ -189,6 +189,9 @@
             <div class="tab-pane fade {% if active_tab == 'logs' %}show active{% endif %}" id="logsAdminTab" role="tabpanel">
                 {% include 'admin_tabs/tab_logs.html' %}
             </div>
+            {% endif %}
+
+            {% if is_superadmin or 'certificates' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'certificates' %}show active{% endif %}" id="certificatesAdminTab" role="tabpanel">
                 {% include 'admin_tabs/tab_certificates.html' %}
             </div>
