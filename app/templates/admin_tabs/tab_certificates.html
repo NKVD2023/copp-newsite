@@ -1,0 +1,146 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Заявки на справки о доходах</h2>
+</div>
+
+<form id="bulkCertificatesForm" method="POST" action="{{ url_for('admin.bulk_action_certificates') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+            <div>
+                <button type="submit" formaction="{{ url_for('admin.bulk_download_certificates') }}" class="btn btn-sm btn-outline-primary" id="btnBulkDownload" disabled>
+                    <i class="fas fa-file-archive me-1"></i> Скачать выбранные (ZIP)
+                </button>
+                <button type="submit" name="action" value="mark_ready" class="btn btn-sm btn-outline-success ms-2" id="btnBulkReady" disabled>
+                    <i class="fas fa-check me-1"></i> Отметить Готово
+                </button>
+                <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger ms-2" id="btnBulkDelete" disabled onclick="return confirm('Вы уверены, что хотите удалить выбранные заявки?');">
+                    <i class="fas fa-trash me-1"></i> Удалить
+                </button>
+            </div>
+            <div class="text-muted small">Управление заявками</div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3" style="width: 40px;">
+                                <input class="form-check-input" type="checkbox" id="selectAllCerts">
+                            </th>
+                            <th>ID</th>
+                            <th>Дата подачи</th>
+                            <th>ФИО</th>
+                            <th>Группа</th>
+                            <th>Период справки</th>
+                            <th>Статус</th>
+                            <th class="text-end pe-3">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in certificates_list %}
+                        <tr>
+                            <td class="ps-3">
+                                <input class="form-check-input cert-checkbox" type="checkbox" name="cert_ids" value="{{ req['id'] }}">
+                            </td>
+                            <td><span class="text-muted">#{{ req['id'] }}</span></td>
+                            <td>
+                                <div class="text-nowrap"><i class="far fa-clock text-muted me-1"></i> {{ req.get('formatted_date', req['created_at']) }}</div>
+                            </td>
+                            <td class="fw-bold">{{ req['fio'] }}</td>
+                            <td><span class="badge bg-secondary">{{ req['group_number'] }}</span></td>
+                            <td>
+                                {% for p in req.get('parsed_periods', []) %}
+                                    <div class="text-nowrap small text-muted"><i class="far fa-calendar-alt me-1"></i> {{ p['formatted'] }}</div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <select name="status_{{ req['id'] }}" class="form-select form-select-sm w-auto d-inline-block cert-status-select 
+                                {% if req['status'] == 'new' %}bg-danger text-white{% elif req['status'] == 'processed' %}bg-warning text-dark{% else %}bg-success text-white{% endif %}" 
+                                data-req-id="{{ req['id'] }}">
+                                    <option value="new" class="bg-white text-dark" {% if req['status'] == 'new' %}selected{% endif %}>Новая</option>
+                                    <option value="processed" class="bg-white text-dark" {% if req['status'] == 'processed' %}selected{% endif %}>В работе</option>
+                                    <option value="ready" class="bg-white text-dark" {% if req['status'] == 'ready' %}selected{% endif %}>Готово</option>
+                                </select>
+                            </td>
+                            <td class="text-end pe-3">
+                                <a href="{{ url_for('admin.download_certificate', req_id=req['id']) }}" class="btn btn-sm btn-primary" title="Скачать PDF">
+                                    <i class="fas fa-download"></i> Скачать
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 text-light"></i><br>
+                                Пока нет ни одной заявки
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Выбор всех чекбоксов
+    const selectAll = document.getElementById('selectAllCerts');
+    const checkboxes = document.querySelectorAll('.cert-checkbox');
+    const actionBtns = [document.getElementById('btnBulkDownload'), document.getElementById('btnBulkReady'), document.getElementById('btnBulkDelete')];
+    
+    function updateBulkButtons() {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        actionBtns.forEach(btn => {
+            if (btn) btn.disabled = !anyChecked;
+        });
+    }
+
+    if(selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateBulkButtons();
+        });
+    }
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            updateBulkButtons();
+        });
+    });
+    
+    // Асинхронное обновление статуса одиночного селекта
+    document.querySelectorAll('.cert-status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const reqId = this.getAttribute('data-req-id');
+            const newStatus = this.value;
+            
+            // Обновляем цвет сразу для визуала
+            this.classList.remove('bg-danger', 'text-white', 'bg-warning', 'text-dark', 'bg-success');
+            if (newStatus === 'new') {
+                this.classList.add('bg-danger', 'text-white');
+            } else if (newStatus === 'processed') {
+                this.classList.add('bg-warning', 'text-dark');
+            } else {
+                this.classList.add('bg-success', 'text-white');
+            }
+            
+            // Отправляем AJAX запрос
+            const formData = new FormData();
+            formData.append('status', newStatus);
+            formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+            
+            fetch("{{ url_for('admin.dashboard') }}".replace('dashboard', 'certificates/update_status/') + reqId, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if(!response.ok) {
+                    alert('Ошибка обновления статуса');
+                }
+            });
+        });
+    });
+});
+</script>

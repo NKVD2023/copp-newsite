@@ -53,7 +53,7 @@ def dashboard():
     news_list, pages_list, documents_list, projects_list = [], [], [], []
     stats_list, socials_list, menu_items_list, contact_requests = [], [], [], []
     forms_list, submissions_list, prof_uploads, professions_list = [], [], [], []
-    team_members, career_test_stats, users_list = [], [], []
+    team_members, career_test_stats, users_list, certificates_list = [], [], [], []
     tables_list, menu_groups_list = [], []
     contact_settings = None
 
@@ -109,6 +109,46 @@ def dashboard():
             users_list = AdminUsersRepository.get_all()
         except Exception:
             pass
+    elif active_tab == 'certificates':
+        try:
+            with get_db_connection() as conn:
+                raw_list = conn.execute('SELECT * FROM income_cert_requests ORDER BY created_at DESC').fetchall()
+                certificates_list = []
+                import json
+                for req in raw_list:
+                    req_dict = dict(req)
+                    # Парсинг периодов
+                    if req_dict.get('income_periods'):
+                        try:
+                            req_dict['parsed_periods'] = json.loads(req_dict['income_periods'])
+                        except:
+                            req_dict['parsed_periods'] = []
+                    else:
+                        if req_dict.get('income_period_start') and req_dict.get('income_period_end'):
+                            req_dict['parsed_periods'] = [{"start": req_dict['income_period_start'], "end": req_dict['income_period_end']}]
+                        else:
+                            req_dict['parsed_periods'] = []
+                            
+                    # Красивое форматирование дат
+                    try:
+                        dt = datetime.strptime(req_dict['created_at'].split('.')[0], '%Y-%m-%d %H:%M:%S')
+                        req_dict['formatted_date'] = dt.strftime('%d.%m.%Y %H:%M')
+                    except Exception:
+                        req_dict['formatted_date'] = req_dict['created_at']
+                        
+                    # Форматирование дат периодов
+                    for p in req_dict['parsed_periods']:
+                        try:
+                            p_start = datetime.strptime(p['start'], '%Y-%m-%d').strftime('%d.%m.%Y')
+                            p_end = datetime.strptime(p['end'], '%Y-%m-%d').strftime('%d.%m.%Y')
+                            p['formatted'] = f"с {p_start} по {p_end}"
+                        except:
+                            p['formatted'] = f"с {p['start']} по {p['end']}"
+                            
+                    certificates_list.append(req_dict)
+        except Exception as e:
+            print(f"Error loading certificates: {e}")
+            certificates_list = []
 
     # Загружаем список учебных заведений для чекбоксов
     colleges_list = []
@@ -147,6 +187,15 @@ def dashboard():
                 extra_images_list = json.loads(edit_project_item['extra_images'])
             except:
                 pass
+                
+    new_certificates_count = 0
+    try:
+        with get_db_connection() as conn:
+            res = conn.execute("SELECT COUNT(*) FROM income_cert_requests WHERE status='new'").fetchone()
+            if res:
+                new_certificates_count = res[0]
+    except Exception:
+        pass
 
     return render_template(
         'admin_dashboard.html',
@@ -184,7 +233,9 @@ def dashboard():
         attached_files_list=attached_files_list,
         edit_project_item=edit_project_item,
         extra_images_list=extra_images_list,
-        career_test_stats=career_test_stats
+        career_test_stats=career_test_stats,
+        certificates_list=certificates_list,
+        new_certificates_count=new_certificates_count
     )
 
 @bp.route('/logs/clear', methods=['POST'])

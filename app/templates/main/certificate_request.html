@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказ справки о доходах</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logoblue2.png') }}">
+    
+    <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=999">
+    
+    <!-- TomSelect для поиска в селекте -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <!-- Flatpickr для красивого выбора дат -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 0;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .cert-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: none;
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+        .cert-header {
+            background: var(--copp-blue, #0d6efd);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .cert-header h3 {
+            margin: 0;
+            font-weight: 700;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        .form-control, .form-select, .ts-control {
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #ced4da;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .form-control:focus, .form-select:focus, .ts-control.focus {
+            border-color: var(--copp-blue, #86b7fe);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+        .btn-submit {
+            background-color: var(--copp-blue, #0d6efd);
+            color: white;
+            font-weight: 600;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            border: none;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover {
+            background-color: #0b5ed7;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+        }
+        .period-row {
+            position: relative;
+        }
+        .remove-period {
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+        .remove-period:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="global-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8 col-xl-7">
+                <div class="cert-card">
+                    <div class="cert-header">
+                        <h3>Заказ справки о доходах</h3>
+                    </div>
+                    
+                    <div class="card-body p-4 p-md-5">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show rounded-3" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <p class="text-muted text-center mb-4 pb-2" style="font-size: 0.95rem;">
+                            Внимательно заполните форму. На основе этих данных будет автоматически сформировано официальное заявление.
+                        </p>
+
+                        <form method="POST" autocomplete="off">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            
+                            <div class="mb-4">
+                                <label for="fio" class="form-label">Ваши ФИО (в родительном падеже)</label>
+                                <input type="text" class="form-control" id="fio" name="fio" required placeholder="от кого: Ивановой Анны Петровны" autocomplete="off">
+                                <div class="form-text text-muted small">Пример: Иванова Ивана Ивановича</div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label for="group_number" class="form-label">Группа №</label>
+                                    <select class="form-select" id="group_number" name="group_number" required autocomplete="off">
+                                        <option value="" disabled selected>Выберите из списка...</option>
+                                        {% for group in groups %}
+                                        <option value="{{ group }}">{{ group }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-4">
+                                    <label for="birth_date" class="form-label">Дата рождения</label>
+                                    <input type="text" class="form-control date-picker" id="birth_date" name="birth_date" required placeholder="ДД.ММ.ГГГГ" autocomplete="off">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label">Период обучения</label>
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <span>с 01.09.20</span>
+                                    <input type="text" class="form-control text-center px-1" name="study_period_start" required placeholder="23" style="width: 50px;" maxlength="2" pattern="\d{2}" autocomplete="off">
+                                    <span>г. по 30.06.20</span>
+                                    <input type="text" class="form-control text-center px-1" name="study_period_end" required placeholder="27" style="width: 50px;" maxlength="2" pattern="\d{2}" autocomplete="off">
+                                    <span>г.</span>
+                                </div>
+                                <div class="form-text text-muted small mt-2">Укажите только две последние цифры года (например, 23 и 27).</div>
+                            </div>
+
+                            <div class="mb-4 pb-3 border-bottom">
+                                <label for="phone" class="form-label">Номер телефона</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required placeholder="+7 (999) 000-00-00" autocomplete="off">
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+                                <h5 class="fw-bold mb-0" style="color: var(--copp-blue, #0d6efd);">Запрашиваемый период для справки</h5>
+                            </div>
+
+                            <div id="periods-container">
+                                <div class="row bg-light rounded-3 p-3 mb-3 mx-0 align-items-center period-row">
+                                    <div class="col-md-6 mb-3 mb-md-0">
+                                        <label class="form-label mb-1">С (начало периода)</label>
+                                        <input type="text" class="form-control date-picker" name="income_period_start[]" required placeholder="ДД.ММ.ГГГГ" autocomplete="off">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label mb-1">По (конец периода)</label>
+                                        <input type="text" class="form-control date-picker" name="income_period_end[]" required placeholder="ДД.ММ.ГГГГ" autocomplete="off">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mb-4">
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" id="add-period-btn">
+                                    <i class="fas fa-plus"></i> Добавить еще один период
+                                </button>
+                            </div>
+                            
+                            <div class="d-grid mt-5">
+                                <button type="submit" class="btn btn-submit">Оформить заявку <i class="fas fa-paper-plane ms-2"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    
+    <!-- TomSelect & Flatpickr Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация TomSelect для удобного поиска группы
+            new TomSelect('#group_number', {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
+                placeholder: "Начните вводить группу..."
+            });
+            
+            // Настройка Flatpickr
+            const fpConfig = {
+                locale: "ru",
+                dateFormat: "Y-m-d", // Отправляем на сервер стандартный формат
+                altInput: true,
+                altFormat: "d.m.Y", // Показываем пользователю красивый
+                allowInput: true
+            };
+            
+            // Инициализация для существующих инпутов
+            flatpickr(".date-picker", fpConfig);
+            
+            // Логика добавления новых периодов
+            const container = document.getElementById('periods-container');
+            const addBtn = document.getElementById('add-period-btn');
+            
+            addBtn.addEventListener('click', function() {
+                const newRow = document.createElement('div');
+                newRow.className = 'row bg-light rounded-3 p-3 mb-3 mx-0 align-items-center period-row';
+                newRow.innerHTML = `
+                    <button type="button" class="remove-period" title="Удалить"><i class="fas fa-times"></i></button>
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="form-label mb-1">С (начало периода)</label>
+                        <input type="text" class="form-control date-picker" name="income_period_start[]" required placeholder="ДД.ММ.ГГГГ" autocomplete="off">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label mb-1">По (конец периода)</label>
+                        <input type="text" class="form-control date-picker" name="income_period_end[]" required placeholder="ДД.ММ.ГГГГ" autocomplete="off">
+                    </div>
+                `;
+                container.appendChild(newRow);
+                
+                // Инициализируем datepicker для новых полей
+                flatpickr(newRow.querySelectorAll('.date-picker'), fpConfig);
+                
+                // Кнопка удаления
+                newRow.querySelector('.remove-period').addEventListener('click', function() {
+                    newRow.remove();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

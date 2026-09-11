@@ -123,4 +123,27 @@ def init_db(app):
         )
         ''')
 
+        # Создание таблицы для заявок на справку о доходах
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS income_cert_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fio TEXT NOT NULL,
+            group_number TEXT NOT NULL,
+            birth_date DATE NOT NULL,
+            study_period_start TEXT NOT NULL,
+            study_period_end TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            income_period_start DATE,
+            income_period_end DATE,
+            income_periods TEXT,
+            status TEXT DEFAULT 'new',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+        
+        try:
+            conn.execute('ALTER TABLE income_cert_requests ADD COLUMN income_periods TEXT')
+        except sqlite3.OperationalError:
+            pass # Колонка уже существует
+
         conn.commit()

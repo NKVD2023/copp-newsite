@@ -11,3 +11,4 @@ apscheduler
 pytz
 pyotp
 qrcode
+fpdf2

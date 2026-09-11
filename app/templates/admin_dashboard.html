@@ -57,6 +57,14 @@
                     <i class="fas fa-list-check"></i> Журнал действий
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'certificates' %}active{% endif %}" href="?tab=certificates">
+                    <i class="fas fa-file-invoice"></i> Заявки на справки
+                    {% if new_certificates_count > 0 %}
+                    <span class="badge bg-danger ms-1 rounded-pill">{{ new_certificates_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
             {% endif %}
 
             {% if is_superadmin or 'news' in allowed_modules %}
@@ -177,6 +185,9 @@
             </div>
             <div class="tab-pane fade {% if active_tab == 'logs' %}show active{% endif %}" id="logsAdminTab" role="tabpanel">
                 {% include 'admin_tabs/tab_logs.html' %}
+            </div>
+            <div class="tab-pane fade {% if active_tab == 'certificates' %}show active{% endif %}" id="certificatesAdminTab" role="tabpanel">
+                {% include 'admin_tabs/tab_certificates.html' %}
             </div>
             {% endif %}
 
