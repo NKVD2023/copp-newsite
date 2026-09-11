@@ -57,6 +57,9 @@
                     <i class="fas fa-list-check"></i> Журнал действий
                 </a>
             </li>
+            {% endif %}
+
+            {% if is_superadmin or 'certificates' in allowed_modules %}
             <li class="nav-item">
                 <a class="nav-link {% if active_tab == 'certificates' %}active{% endif %}" href="?tab=certificates">
                     <i class="fas fa-file-invoice"></i> Заявки на справки
