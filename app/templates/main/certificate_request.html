@@ -243,6 +243,14 @@
             const addBtn = document.getElementById('add-period-btn');
             
             addBtn.addEventListener('click', function() {
+                const MAX_PERIODS = 10;
+                const currentRows = container.querySelectorAll('.period-row').length;
+                if (currentRows >= MAX_PERIODS) {
+                    addBtn.disabled = true;
+                    addBtn.textContent = 'Достигнут максимум периодов';
+                    return;
+                }
+                
                 const newRow = document.createElement('div');
                 newRow.className = 'row bg-light rounded-3 p-3 mb-3 mx-0 align-items-center period-row';
                 newRow.innerHTML = `
