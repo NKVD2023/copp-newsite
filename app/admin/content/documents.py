@@ -1,5 +1,5 @@
 import os
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 from app.admin import bp
 from app.admin.core.auth import login_required
@@ -11,6 +11,25 @@ ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'zip', 'rar', 'txt', 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@bp.route('/documents/list_json')
+@login_required
+def list_documents_json():
+    """AJAX-эндпоинт: возвращает список всех загруженных документов в формате JSON."""
+    conn = get_db_connection()
+    rows = conn.execute('SELECT id, original_name, filepath, upload_date FROM documents ORDER BY upload_date DESC').fetchall()
+    docs = [
+        {
+            'id': r['id'],
+            'original_name': r['original_name'],
+            'filepath': r['filepath'],
+            'upload_date': str(r['upload_date'])[:10] if r['upload_date'] else ''
+        }
+        for r in rows
+    ]
+    return jsonify(docs)
+
 
 @bp.route('/upload_document', methods=['POST'])
 @login_required

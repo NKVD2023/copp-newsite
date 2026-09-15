@@ -333,25 +333,18 @@
       <div class="modal-body">
         <ul class="nav nav-tabs mb-3" id="tmceTabs">
             <li class="nav-item">
-                <a class="nav-link active" href="?tab=news">
+                <a class="nav-link active" href="#tmce-existing" data-bs-toggle="tab">
                     Выбрать загруженный</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="?tab=news">
+                <a class="nav-link" href="#tmce-upload" data-bs-toggle="tab">
                     Загрузить новый</a>
             </li>
         </ul>
         <div class="tab-content">
             <div class="tab-pane fade show active" id="tmce-existing">
-                <div class="list-group" style="max-height: 350px; overflow-y: auto;">
-                    {% for doc in documents_list %}
-                        <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" onclick="insertDocToEditor('{{ url_for('static', filename=doc.filepath) }}', '{{ doc.original_name }}')">
-                            <span><strong>{{ doc.original_name }}</strong></span>
-                            <span class="badge bg-secondary rounded-pill">{{ doc.upload_date[:10] }}</span>
-                        </button>
-                    {% else %}
-                        <p class="text-muted p-3">Нет загруженных документов.</p>
-                    {% endfor %}
+                <div id="tmce-docs-list" class="list-group" style="max-height: 350px; overflow-y: auto;">
+                    <p class="text-muted p-3">Загрузка списка документов...</p>
                 </div>
             </div>
             <div class="tab-pane fade" id="tmce-upload">
@@ -371,6 +364,38 @@
 <!-- СКРИПТЫ ЗАГРУЗКИ И ВСТАВКИ ФАЙЛОВ ИЗ МОДАЛКИ -->
 <!-- ========================================== -->
 <script>
+// Загрузка списка документов через AJAX (вызывается при открытии модала)
+async function loadDocsList() {
+    const listEl = document.getElementById('tmce-docs-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<p class="text-muted p-3">Загрузка...</p>';
+    try {
+        const resp = await fetch('{{ url_for("admin.list_documents_json") }}');
+        const docs = await resp.json();
+        if (docs.length === 0) {
+            listEl.innerHTML = '<p class="text-muted p-3">Нет загруженных документов. Загрузите файл на вкладке «Загрузить новый».</p>';
+            return;
+        }
+        listEl.innerHTML = docs.map(doc => `
+            <button type="button"
+                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                onclick="insertDocToEditor('/static/${doc.filepath}', '${doc.original_name.replace(/'/g, "\\'")}')">
+                <span><i class="fas fa-file me-2 text-muted"></i><strong>${doc.original_name}</strong></span>
+                <span class="badge bg-secondary rounded-pill">${doc.upload_date}</span>
+            </button>`).join('');
+    } catch(e) {
+        listEl.innerHTML = '<p class="text-danger p-3">Ошибка загрузки списка документов.</p>';
+    }
+}
+
+// Загружаем список при каждом открытии модала
+document.getElementById('tinymceFileModal').addEventListener('show.bs.modal', function() {
+    loadDocsList();
+    // Сбрасываем на первую вкладку
+    const firstTab = document.querySelector('#tmceTabs .nav-link:first-child');
+    if (firstTab) bootstrap.Tab.getOrCreateInstance(firstTab).show();
+});
+
 function insertDocToEditor(url, name) {
     if(currentEditor) {
         currentEditor.insertContent(`<p><a href="${url}" class="btn-download" target="_blank" style="display:inline-block; padding:10px 20px; background:#00334e; color:#fff; text-decoration:none; border-radius:8px;">Скачать: ${name}</a></p>`);
@@ -383,7 +408,7 @@ function insertDocToEditor(url, name) {
 async function uploadAndInsertDoc() {
     const fileInput = document.getElementById('tmce-file-input');
     if(fileInput.files.length === 0) return alert('Выберите файл');
-    
+
     const btn = document.getElementById('btn-upload-tmce');
     btn.disabled = true;
     btn.textContent = 'Загрузка...';
@@ -392,16 +417,22 @@ async function uploadAndInsertDoc() {
     const formData = new FormData();
     formData.append('document', file);
     formData.append('ajax', '1');
-    
+
     try {
-        const response = await fetch('{{ url_for("admin.upload_document") }}', { headers: { "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
+        const response = await fetch('{{ url_for("admin.upload_document") }}', {
             method: 'POST',
+            headers: { "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
             body: formData
         });
         const result = await response.json();
         if(result.success) {
-            insertDocToEditor(result.filepath, file.name);
             fileInput.value = '';
+            // Переключаемся на вкладку «Выбрать загруженный» и обновляем список
+            const firstTab = document.querySelector('#tmceTabs .nav-link:first-child');
+            if (firstTab) bootstrap.Tab.getOrCreateInstance(firstTab).show();
+            await loadDocsList();
+            // Вставляем только что загруженный файл
+            insertDocToEditor(result.filepath, file.name);
         } else {
             alert('Ошибка загрузки: ' + result.error);
         }
@@ -413,6 +444,7 @@ async function uploadAndInsertDoc() {
     }
 }
 </script>
+
 <!-- ========================================== -->
 <!-- ОБЩАЯ ЛОГИКА DRAG & DROP ДЛЯ ФАЙЛОВ -->
 <!-- ========================================== -->
