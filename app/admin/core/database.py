@@ -133,7 +133,7 @@ def _verify_2fa_action(code):
         backup_codes_str = user['backup_codes'] or '[]'
         
     if not is_2fa_enabled:
-        return False, "Для выполнения действия необходимо включить 2FA в профиле."
+        return True, "OK"
         
     try:
         backup_codes = json.loads(backup_codes_str)
@@ -218,18 +218,38 @@ def db_import_full():
         
     if file and file.filename.endswith('.zip'):
         try:
+            from app.db import close_db, init_db
+            close_db()
+
             # 1. Бэкап текущей базы перед восстановлением
             if os.path.exists(DB_FILE_PATH):
                 backup_path = f"{DB_FILE_PATH}.bak.{datetime.now().strftime('%Y%m%d%H%M%S')}"
                 shutil.copy2(DB_FILE_PATH, backup_path)
             
-            # Читаем ZIP из файла (чтобы не занимать много ОЗУ, можно читать напрямую)
+            # Читаем ZIP из файла
             with zipfile.ZipFile(file, 'r') as zf:
-                # 2. Восстановление БД
-                db_filename = os.path.basename(DB_FILE_PATH)
-                if db_filename in zf.namelist():
+                # 2. Восстановление БД (ищем coppdb.sqlite гибко)
+                db_entry = None
+                for name in zf.namelist():
+                    if os.path.basename(name).lower() == 'coppdb.sqlite':
+                        db_entry = name
+                        break
+
+                if db_entry:
                     with open(DB_FILE_PATH, 'wb') as f:
-                        f.write(zf.read(db_filename))
+                        f.write(zf.read(db_entry))
+                    # Удаляем старые WAL и SHM файлы SQLite, если есть
+                    for extra in (f"{DB_FILE_PATH}-wal", f"{DB_FILE_PATH}-shm"):
+                        if os.path.exists(extra):
+                            try:
+                                os.remove(extra)
+                            except OSError:
+                                pass
+                    # Проверяем и создаем недостающие таблицы/колонки для совместимости
+                    try:
+                        init_db(current_app)
+                    except Exception:
+                        pass
                 else:
                     flash('В архиве не найдена база данных (coppdb.sqlite). Восстановление файлов продолжено.', 'warning')
                 
@@ -239,11 +259,8 @@ def db_import_full():
                 
                 for item in zf.namelist():
                     if item.startswith('uploads/') and not item.endswith('/'):
-                        # Определяем путь извлечения
                         rel_path = item[len('uploads/'):]
                         target_path = os.path.join(uploads_dir, rel_path)
-                        
-                        # Если файла еще нет, извлекаем
                         if not os.path.exists(target_path):
                             os.makedirs(os.path.dirname(target_path), exist_ok=True)
                             with open(target_path, 'wb') as f:

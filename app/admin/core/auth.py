@@ -27,7 +27,8 @@ ALL_MODULES = [
     ('socials',    'Соцсети',              'fa-share-nodes'),
     ('menu',       'Меню сайта',           'fa-bars'),
     ('team',       'Команда',              'fa-users'),
-    ('certificates', 'Заявки на справки',    'fa-file-invoice'),
+    ('certificates', 'Справки о доходах',   'fa-file-invoice'),
+    ('study_certificates', 'Справки об обучении', 'fa-graduation-cap'),
     ('database',   'База данных',          'fa-database'),
 ]
 

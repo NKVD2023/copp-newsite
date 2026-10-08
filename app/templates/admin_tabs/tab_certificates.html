@@ -1,85 +1,143 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Заявки на справки о доходах</h2>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_certificates.css') }}">
+
+<!-- Заголовок страницы -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="h4 fw-bold mb-1" style="color: #0f172a; letter-spacing: -0.3px;">Справки о доходах</h2>
+        <p class="text-muted small mb-0">Заявки студентов на выдачу справок о доходах и стипендии (РКИГ)</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge rounded-pill px-3 py-2 fw-medium" style="background: #f1f5f9; color: #475569; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+            <i class="fas fa-file-invoice-dollar me-1 text-muted"></i> Всего заявок: {{ certificates_list|length }}
+        </span>
+    </div>
 </div>
 
 <form id="bulkCertificatesForm" method="POST" action="{{ url_for('admin.bulk_action_certificates') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
-            <div>
-                <button type="submit" formaction="{{ url_for('admin.bulk_download_certificates') }}" class="btn btn-sm btn-outline-primary" id="btnBulkDownload" disabled>
-                    <i class="fas fa-file-archive me-1"></i> Скачать выбранные (ZIP)
+    <div class="module-card mb-4">
+        <!-- Тулбар действий и поиска -->
+        <div class="module-toolbar d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <button type="submit" formaction="{{ url_for('admin.bulk_download_certificates') }}" 
+                        class="btn btn-outline-secondary btn-sm btn-toolbar-action" id="btnBulkDownload" disabled>
+                    <i class="fas fa-file-archive me-1 text-muted"></i> Скачать выбранные (ZIP)
                 </button>
-                <button type="submit" name="action" value="mark_ready" class="btn btn-sm btn-outline-success ms-2" id="btnBulkReady" disabled>
+                <button type="submit" name="action" value="mark_ready" 
+                        class="btn btn-outline-success btn-sm btn-toolbar-action" id="btnBulkReady" disabled>
                     <i class="fas fa-check me-1"></i> Отметить Готово
                 </button>
-                <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger ms-2" id="btnBulkDelete" disabled onclick="return confirm('Вы уверены, что хотите удалить выбранные заявки?');">
+                <button type="submit" name="action" value="delete" 
+                        class="btn btn-outline-danger btn-sm btn-toolbar-action" id="btnBulkDelete" disabled 
+                        onclick="return confirm('Вы уверены, что хотите удалить выбранные заявки?');">
                     <i class="fas fa-trash me-1"></i> Удалить
                 </button>
             </div>
-            <div class="text-muted small">Управление заявками</div>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-3" style="width: 40px;">
-                                <input class="form-check-input" type="checkbox" id="selectAllCerts">
-                            </th>
-                            <th>ID</th>
-                            <th>Дата подачи</th>
-                            <th>ФИО</th>
-                            <th>Группа</th>
-                            <th>Период справки</th>
-                            <th>Статус</th>
-                            <th class="text-end pe-3">Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for req in certificates_list %}
-                        <tr>
-                            <td class="ps-3">
-                                <input class="form-check-input cert-checkbox" type="checkbox" name="cert_ids" value="{{ req['id'] }}">
-                            </td>
-                            <td><span class="text-muted">#{{ req['id'] }}</span></td>
-                            <td>
-                                <div class="text-nowrap"><i class="far fa-clock text-muted me-1"></i> {{ req.get('formatted_date', req['created_at']) }}</div>
-                            </td>
-                            <td class="fw-bold">{{ req['fio'] }}</td>
-                            <td><span class="badge bg-secondary">{{ req['group_number'] }}</span></td>
-                            <td>
-                                {% for p in req.get('parsed_periods', []) %}
-                                    <div class="text-nowrap small text-muted"><i class="far fa-calendar-alt me-1"></i> {{ p['formatted'] }}</div>
-                                {% endfor %}
-                            </td>
-                            <td>
-                                <select name="status_{{ req['id'] }}" class="form-select form-select-sm w-auto d-inline-block cert-status-select 
-                                {% if req['status'] == 'new' %}bg-danger text-white{% elif req['status'] == 'processed' %}bg-warning text-dark{% else %}bg-success text-white{% endif %}" 
-                                data-req-id="{{ req['id'] }}">
-                                    <option value="new" class="bg-white text-dark" {% if req['status'] == 'new' %}selected{% endif %}>Новая</option>
-                                    <option value="processed" class="bg-white text-dark" {% if req['status'] == 'processed' %}selected{% endif %}>В работе</option>
-                                    <option value="ready" class="bg-white text-dark" {% if req['status'] == 'ready' %}selected{% endif %}>Готово</option>
-                                </select>
-                            </td>
-                            <td class="text-end pe-3">
-                                <a href="{{ url_for('admin.download_certificate', req_id=req['id']) }}" class="btn btn-sm btn-primary" title="Скачать PDF">
-                                    <i class="fas fa-download"></i> Скачать
-                                </a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-5">
-                                <i class="fas fa-inbox fa-3x mb-3 text-light"></i><br>
-                                Пока нет ни одной заявки
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <!-- Фильтры по статусам -->
+                <div class="status-filter-pills" id="incomeStatusFilters">
+                    <button type="button" class="status-filter-btn active" data-status-filter="all">Все</button>
+                    <button type="button" class="status-filter-btn" data-status-filter="new">Новые</button>
+                    <button type="button" class="status-filter-btn" data-status-filter="processed">В работе</button>
+                    <button type="button" class="status-filter-btn" data-status-filter="ready">Готово</button>
+                </div>
+
+                <!-- Живой поиск -->
+                <div class="live-search-box">
+                    <i class="fas fa-search live-search-icon"></i>
+                    <input type="text" id="searchIncomeCerts" class="form-control form-control-sm" placeholder="Поиск по ФИО, группе...">
+                </div>
             </div>
+        </div>
+
+        <!-- Таблица данных -->
+        <div class="table-responsive">
+            <table class="table module-table align-middle mb-0" id="incomeCertsTable">
+                <thead>
+                    <tr>
+                        <th class="ps-3" style="width: 40px;">
+                            <input class="form-check-input" type="checkbox" id="selectAllCerts">
+                        </th>
+                        <th style="width: 60px;">ID</th>
+                        <th>Студент</th>
+                        <th>Группа</th>
+                        <th>Период справки</th>
+                        <th>Дата подачи</th>
+                        <th>Статус</th>
+                        <th class="text-end pe-3">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in certificates_list %}
+                    <tr class="income-cert-row" data-status="{{ req['status'] }}">
+                        <td class="ps-3">
+                            <input class="form-check-input cert-checkbox" type="checkbox" name="cert_ids" value="{{ req['id'] }}">
+                        </td>
+                        <td><span class="text-muted small">#{{ req['id'] }}</span></td>
+                        <td>
+                            <div class="fw-semibold text-dark search-target-fio">{{ req['fio'] }}</div>
+                            {% if req.get('phone') %}
+                                <div class="text-muted small"><i class="fas fa-phone-alt me-1 text-secondary opacity-75" style="font-size: 0.72rem;"></i>{{ req['phone'] }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="search-target-group">
+                                {% if req['group_number'] %}
+                                    <span class="tag-group">{{ req['group_number'] }}</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                {% for p in req.get('parsed_periods', []) %}
+                                    <div class="tag-period text-nowrap"><i class="far fa-calendar-alt me-1 text-muted"></i>{{ p['formatted'] }}</div>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-nowrap small text-muted">
+                                <i class="far fa-clock me-1 text-secondary opacity-75"></i>{{ req.get('formatted_date', req['created_at']) }}
+                            </div>
+                        </td>
+                        <td>
+                            <select name="status_{{ req['id'] }}" class="form-select form-select-sm w-auto d-inline-block cert-status-select 
+                            {% if req['status'] == 'new' %}status-new{% elif req['status'] == 'processed' %}status-processed{% else %}status-ready{% endif %}" 
+                            data-req-id="{{ req['id'] }}">
+                                <option value="new" {% if req['status'] == 'new' %}selected{% endif %}>Новая</option>
+                                <option value="processed" {% if req['status'] == 'processed' %}selected{% endif %}>В работе</option>
+                                <option value="ready" {% if req['status'] == 'ready' %}selected{% endif %}>Готово</option>
+                            </select>
+                        </td>
+                        <td class="text-end pe-3">
+                            <a href="{{ url_for('admin.download_certificate', req_id=req['id']) }}" 
+                               class="btn btn-action-download" title="Скачать PDF">
+                                <i class="fas fa-download me-1"></i> Скачать
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-inbox fa-3x mb-3 text-secondary opacity-25"></i><br>
+                            Пока нет заявок на справки о доходах
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <!-- Строка когда поиск не дал результатов -->
+                    <tr id="noIncomeResultsRow" style="display: none;">
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-search fa-2x mb-2 text-secondary opacity-25"></i><br>
+                            По вашему запросу ничего не найдено
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </form>
@@ -89,13 +147,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Выбор всех чекбоксов
     const selectAll = document.getElementById('selectAllCerts');
     const checkboxes = document.querySelectorAll('.cert-checkbox');
-    const actionBtns = [document.getElementById('btnBulkDownload'), document.getElementById('btnBulkReady'), document.getElementById('btnBulkDelete')];
+    const btnBulkDownload = document.getElementById('btnBulkDownload');
+    const btnBulkReady = document.getElementById('btnBulkReady');
+    const btnBulkDelete = document.getElementById('btnBulkDelete');
     
     function updateBulkButtons() {
-        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-        actionBtns.forEach(btn => {
-            if (btn) btn.disabled = !anyChecked;
-        });
+        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+        const count = checkedBoxes.length;
+        const anyChecked = count > 0;
+
+        btnBulkDownload.disabled = !anyChecked;
+        btnBulkReady.disabled = !anyChecked;
+        btnBulkDelete.disabled = !anyChecked;
+
+        if (anyChecked) {
+            btnBulkDownload.innerHTML = `<i class="fas fa-file-archive me-1"></i> Скачать выбранные (${count})`;
+        } else {
+            btnBulkDownload.innerHTML = `<i class="fas fa-file-archive me-1 text-muted"></i> Скачать выбранные (ZIP)`;
+        }
     }
 
     if(selectAll) {
@@ -110,29 +179,80 @@ document.addEventListener('DOMContentLoaded', function() {
             updateBulkButtons();
         });
     });
+
+    // Живой поиск и фильтрация по статусам
+    const searchInput = document.getElementById('searchIncomeCerts');
+    const tableRows = document.querySelectorAll('.income-cert-row');
+    const noResultsRow = document.getElementById('noIncomeResultsRow');
+    const statusFilterBtns = document.querySelectorAll('#incomeStatusFilters .status-filter-btn');
+    let currentStatusFilter = 'all';
+
+    function applyFilters() {
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        let visibleCount = 0;
+
+        tableRows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status') || '';
+            const statusMatches = (currentStatusFilter === 'all' || rowStatus === currentStatusFilter);
+
+            const fioEl = row.querySelector('.search-target-fio');
+            const groupEl = row.querySelector('.search-target-group');
+            const text = (fioEl ? fioEl.textContent : '') + ' ' + (groupEl ? groupEl.textContent : '');
+            const textMatches = !query || text.toLowerCase().includes(query);
+
+            if (statusMatches && textMatches) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (noResultsRow) {
+            noResultsRow.style.display = (visibleCount === 0 && tableRows.length > 0) ? '' : 'none';
+        }
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applyFilters);
+    }
+
+    statusFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            statusFilterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentStatusFilter = this.getAttribute('data-status-filter') || 'all';
+            applyFilters();
+        });
+    });
     
     // Асинхронное обновление статуса одиночного селекта
     document.querySelectorAll('.cert-status-select').forEach(select => {
         select.addEventListener('change', function() {
             const reqId = this.getAttribute('data-req-id');
             const newStatus = this.value;
+            const parentRow = this.closest('.income-cert-row');
             
-            // Обновляем цвет сразу для визуала
-            this.classList.remove('bg-danger', 'text-white', 'bg-warning', 'text-dark', 'bg-success');
+            this.classList.remove('status-new', 'status-processed', 'status-ready');
             if (newStatus === 'new') {
-                this.classList.add('bg-danger', 'text-white');
+                this.classList.add('status-new');
             } else if (newStatus === 'processed') {
-                this.classList.add('bg-warning', 'text-dark');
+                this.classList.add('status-processed');
             } else {
-                this.classList.add('bg-success', 'text-white');
+                this.classList.add('status-ready');
+            }
+
+            if (parentRow) {
+                parentRow.setAttribute('data-status', newStatus);
+                applyFilters();
             }
             
-            // Отправляем AJAX запрос
             const formData = new FormData();
             formData.append('status', newStatus);
             formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
             
-            fetch("{{ url_for('admin.dashboard') }}".replace('dashboard', 'certificates/update_status/') + reqId, {
+            const statusBaseUrl = "{{ url_for('admin.update_certificate_status', req_id=0) }}".replace('/0', '/');
+            fetch(statusBaseUrl + reqId, {
                 method: 'POST',
                 body: formData
             }).then(response => {

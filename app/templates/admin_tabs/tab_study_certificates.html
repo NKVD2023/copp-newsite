@@ -1,0 +1,586 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_certificates.css') }}">
+
+<!-- Заголовок страницы -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="h4 fw-bold mb-1" style="color: #0f172a; letter-spacing: -0.3px;">Справки об обучении</h2>
+        <p class="text-muted small mb-0">Заявки студентов на подтверждение факта обучения в колледже (РКИГ)</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge rounded-pill px-3 py-2 fw-medium" style="background: #f1f5f9; color: #475569; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+            <i class="fas fa-file-lines me-1 text-muted"></i> Всего заявок: {{ study_certificates_list|length }}
+        </span>
+    </div>
+</div>
+
+<form id="bulkStudyCertificatesForm" method="POST" action="{{ url_for('admin.bulk_action_study_certificates') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    
+    <div class="module-card mb-4">
+        <!-- Тулбар действий и поиска -->
+        <div class="module-toolbar d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <button type="submit" formaction="{{ url_for('admin.bulk_download_study_certificates') }}" 
+                        class="btn btn-outline-secondary btn-sm btn-toolbar-action" id="btnStudyBulkDownload" disabled>
+                    <i class="fas fa-file-archive me-1 text-muted"></i> Скачать выбранные (ZIP)
+                </button>
+                <button type="submit" name="action" value="mark_ready" 
+                        class="btn btn-outline-success btn-sm btn-toolbar-action" id="btnStudyBulkReady" disabled>
+                    <i class="fas fa-check me-1"></i> Отметить Готово
+                </button>
+                <button type="submit" name="action" value="delete" 
+                        class="btn btn-outline-danger btn-sm btn-toolbar-action" id="btnStudyBulkDelete" disabled 
+                        onclick="return confirm('Вы уверены, что хотите удалить выбранные заявки?');">
+                    <i class="fas fa-trash me-1"></i> Удалить
+                </button>
+            </div>
+            
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <!-- Фильтры по статусам -->
+                <div class="status-filter-pills" id="studyStatusFilters">
+                    <button type="button" class="status-filter-btn active" data-status-filter="all">Все</button>
+                    <button type="button" class="status-filter-btn" data-status-filter="new">Новые</button>
+                    <button type="button" class="status-filter-btn" data-status-filter="processed">В работе</button>
+                    <button type="button" class="status-filter-btn" data-status-filter="ready">Готово</button>
+                </div>
+
+                <!-- Живой поиск -->
+                <div class="live-search-box">
+                    <i class="fas fa-search live-search-icon"></i>
+                    <input type="text" id="searchStudyCerts" class="form-control form-control-sm" placeholder="Поиск по ФИО, группе...">
+                </div>
+            </div>
+        </div>
+
+        <!-- Таблица данных -->
+        <div class="table-responsive">
+            <table class="table module-table align-middle mb-0" id="studyCertsTable">
+                <thead>
+                    <tr>
+                        <th class="ps-3" style="width: 40px;">
+                            <input class="form-check-input" type="checkbox" id="selectAllStudyCerts">
+                        </th>
+                        <th style="width: 60px;">ID</th>
+                        <th>Студент</th>
+                        <th>Группа</th>
+                        <th>Специальность / Срок</th>
+                        <th>Данные приказа</th>
+                        <th>Дата подачи</th>
+                        <th>Статус</th>
+                        <th class="text-end pe-3">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in study_certificates_list %}
+                    <tr class="study-cert-row" data-status="{{ req['status'] }}">
+                        <td class="ps-3">
+                            <input class="form-check-input study-cert-checkbox" type="checkbox" name="cert_ids" value="{{ req['id'] }}">
+                        </td>
+                        <td><span class="text-muted small">#{{ req['id'] }}</span></td>
+                        <td>
+                            <div class="fw-semibold text-dark search-target-fio">{{ req['fio'] }}</div>
+                            <div class="text-muted small"><i class="far fa-calendar me-1 text-secondary opacity-75"></i>{{ req['birth_date'] }}</div>
+                        </td>
+                        <td>
+                            <div class="search-target-group">
+                                {% if req['group_number'] %}
+                                    <span class="tag-group">{{ req['group_number'] }}</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </div>
+                            {% if req.get('copies_count') and req['copies_count'] > 1 %}
+                                <div class="mt-1">
+                                    <span class="tag-copies" title="Количество запрашиваемых копий"><i class="fas fa-copy me-1"></i>{{ req['copies_count'] }} экз.</span>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-medium text-truncate" style="max-width: 220px; font-size: 0.85rem;" title="{{ req['specialty'] }}">
+                                {{ req['specialty'] }}
+                            </div>
+                            <span class="badge rounded-pill text-muted bg-white border" style="font-size: 0.72rem;">{{ req['study_duration'] }}</span>
+                        </td>
+                        <td>
+                            {% if req['order_number'] %}
+                                <div class="small text-nowrap"><i class="fas fa-file-contract text-muted me-1"></i>Приказ № {{ req['order_number'] }} {% if req['order_date'] %}от {{ req['order_date'] }}{% endif %}</div>
+                                <div class="mt-1">
+                                    {% if req['is_state_support'] %}<span class="badge rounded-pill px-2" style="background: #e0f2fe; color: #0369a1; font-size: 0.7rem;">Гособеспечение</span>{% endif %}
+                                    <span class="badge rounded-pill px-2" style="background: #f1f5f9; color: #475569; font-size: 0.7rem;">
+                                        {{ 'Бюджет' if req['funding_type'] == 'budget' else 'Коммерция' }}
+                                    </span>
+                                </div>
+                            {% else %}
+                                <span class="badge rounded-pill px-2" style="background: #fef3c7; color: #92400e; font-size: 0.72rem;">
+                                    <i class="fas fa-pen me-1"></i> Не оформлен
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="text-nowrap small text-muted">
+                                <i class="far fa-clock me-1 text-secondary opacity-75"></i>{{ req.get('formatted_date', req['created_at']) }}
+                            </div>
+                        </td>
+                        <td>
+                            <select name="status_{{ req['id'] }}" class="form-select form-select-sm w-auto d-inline-block study-cert-status-select 
+                            {% if req['status'] == 'new' %}status-new{% elif req['status'] == 'processed' %}status-processed{% else %}status-ready{% endif %}" 
+                            data-req-id="{{ req['id'] }}">
+                                <option value="new" {% if req['status'] == 'new' %}selected{% endif %}>Новая</option>
+                                <option value="processed" {% if req['status'] == 'processed' %}selected{% endif %}>В работе</option>
+                                <option value="ready" {% if req['status'] == 'ready' %}selected{% endif %}>Готово</option>
+                            </select>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group gap-1">
+                                <button type="button" class="btn btn-action-edit btn-edit-study-cert" 
+                                        data-bs-toggle="modal" data-bs-target="#editStudyCertModal"
+                                        data-id="{{ req['id'] }}"
+                                        data-fio="{{ req['fio'] }}"
+                                        data-group="{{ req['group_number'] or '' }}"
+                                        data-copies="{{ req['copies_count'] or 1 }}"
+                                        data-birth-date="{{ req['birth_date'] }}"
+                                        data-specialty="{{ req['specialty'] }}"
+                                        data-duration="{{ req['study_duration'] }}"
+                                        data-period-start="{{ req['study_period_start'] or '' }}"
+                                        data-period-end="{{ req['study_period_end'] or '' }}"
+                                        data-state-support="{{ req['is_state_support'] or 0 }}"
+                                        data-funding-type="{{ req['funding_type'] or 'budget' }}"
+                                        data-order-number="{{ req['order_number'] or '' }}"
+                                        data-order-date="{{ req['order_date'] or '' }}"
+                                        data-cert-number="{{ req['cert_number'] or '' }}"
+                                        data-cert-date="{{ req['cert_date'] or '' }}"
+                                        data-director-title="{{ req['director_title'] or 'Директор' }}"
+                                        data-director-name="{{ req['director_name'] or 'М.И. Пальчук' }}"
+                                        data-head-teacher-title="{{ req['head_teacher_title'] or 'И.о. зав. учебной частью' }}"
+                                        data-head-teacher-name="{{ req['head_teacher_name'] or 'В.А. Чупахина' }}"
+                                        data-status="{{ req['status'] or 'processed' }}"
+                                        title="Оформить реквизиты справки">
+                                    <i class="fas fa-pen me-1 text-muted"></i> Оформить
+                                </button>
+                                <a href="{{ url_for('admin.download_study_certificate', req_id=req['id']) }}" 
+                                   class="btn btn-action-download" title="Скачать PDF">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-5">
+                            <i class="fas fa-graduation-cap fa-3x mb-3 text-secondary opacity-25"></i><br>
+                            Пока нет заявок на справки об обучении
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <!-- Строка когда поиск не дал результатов -->
+                    <tr id="noSearchResultsRow" style="display: none;">
+                        <td colspan="10" class="text-center text-muted py-5">
+                            <i class="fas fa-search fa-2x mb-2 text-secondary opacity-25"></i><br>
+                            По вашему запросу ничего не найдено
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+<!-- МОДАЛЬНОЕ ОКНО ОФОРМЛЕНИЯ СПРАВКИ -->
+<div class="modal fade" id="editStudyCertModal" tabindex="-1" aria-labelledby="editStudyCertModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+            <form id="editStudyCertForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="action_save_download" id="actionSaveDownload" value="0"/>
+
+                <div class="modal-header modal-clean-header d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="modal-clean-icon">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <div>
+                            <h5 class="modal-title fw-bold fs-6 mb-0 text-dark" id="editStudyCertModalLabel">
+                                Оформление справки об обучении
+                            </h5>
+                            <div class="text-muted small">Заполните служебные реквизиты для генерации PDF-документа</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <!-- Блок данных студента (Заказ) -->
+                    <div class="p-3 rounded-3 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <div class="text-muted small mb-1">ФИО студента (в род. падеже):</div>
+                                <div class="fw-bold fs-6 text-dark" id="modalStudentFio">—</div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="text-muted small mb-1">Группа:</div>
+                                <div class="fw-bold fs-6"><span class="tag-group" id="modalStudentGroup">—</span></div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="text-muted small mb-1">Специальность / Профессия:</div>
+                                <div class="fw-semibold text-dark" id="modalStudentSpecialty">—</div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="text-muted small mb-1">Дата рождения:</div>
+                                <div class="fw-semibold text-dark" id="modalStudentBirthDate">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Группа и Количество экземпляров -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Группа студента:</label>
+                            <input type="text" class="form-control form-control-sm rounded-3" name="group_number" id="modalGroupNumber" placeholder="например: 1.21 ПКД">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Количество экземпляров в PDF:</label>
+                            <input type="number" class="form-control form-control-sm rounded-3" name="copies_count" id="modalCopiesCount" min="1" max="10" value="1">
+                            <div class="form-text small text-muted">Формирует указанное количество одинаковых листов в PDF.</div>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3 mt-4 mb-3">
+                        <div class="fw-semibold text-dark fs-6 d-flex align-items-center gap-2 mb-3">
+                            <i class="fas fa-sliders text-muted small"></i> Служебные данные приказа и обучения
+                        </div>
+                    </div>
+
+                    <!-- Период обучения -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Дата начала обучения (с):</label>
+                            <input type="date" class="form-control form-control-sm rounded-3" name="study_period_start" id="modalStudyPeriodStart">
+                            <div class="form-text small text-muted">Обычно 1 сентября года поступления (2024-09-01).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Дата окончания обучения (по):</label>
+                            <input type="date" class="form-control form-control-sm rounded-3" name="study_period_end" id="modalStudyPeriodEnd">
+                            <div class="form-text small text-muted">Обычно 30 июня года выпуска (2026-06-30).</div>
+                        </div>
+                    </div>
+
+                    <!-- Обеспечение и Финансирование -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Полное гособеспечение:</label>
+                            <select class="form-select form-select-sm rounded-3" name="is_state_support" id="modalIsStateSupport">
+                                <option value="0">Не находится на полном гособеспечении</option>
+                                <option value="1">Находится на полном гособеспечении</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Форма финансирования:</label>
+                            <select class="form-select form-select-sm rounded-3" name="funding_type" id="modalFundingType">
+                                <option value="budget">Бюджетная форма обучения</option>
+                                <option value="contract">Коммерческая форма (с возмещением затрат)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Приказ о зачислении -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Приказ о зачислении №:</label>
+                            <input type="text" class="form-control form-control-sm rounded-3" name="order_number" id="modalOrderNumber" placeholder="например: 29-к">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Дата приказа о зачислении:</label>
+                            <input type="date" class="form-control form-control-sm rounded-3" name="order_date" id="modalOrderDate">
+                        </div>
+                    </div>
+
+                    <!-- Исходящий номер и дата справки -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Исходящий номер справки:</label>
+                            <input type="text" class="form-control form-control-sm rounded-3" name="cert_number" id="modalCertNumber" placeholder="например: 145 / 02">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Дата выдачи справки:</label>
+                            <input type="date" class="form-control form-control-sm rounded-3" name="cert_date" id="modalCertDate">
+                            <div class="form-text small text-muted">Формируется автоматически при нажатии «Скачать» или «Сохранить и скачать».</div>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-3 mt-4 mb-3">
+                        <div class="fw-semibold text-dark fs-6 d-flex align-items-center gap-2 mb-3">
+                            <i class="fas fa-signature text-muted small"></i> Лица, подписывающие справку
+                        </div>
+                    </div>
+
+                    <!-- Директор / И.о. -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Должность руководителя:</label>
+                            <input type="text" class="form-control form-control-sm rounded-3" name="director_title" id="modalDirectorTitle" placeholder="Директор или И.о. директора">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">ФИО руководителя:</label>
+                            <input type="text" class="form-control form-control-sm rounded-3" name="director_name" id="modalDirectorName" placeholder="М.И. Пальчук">
+                        </div>
+                    </div>
+
+                    <!-- Зав. учебной частью / И.о. -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Должность зав. учебной частью:</label>
+                            <input type="text" class="form-control form-control-sm rounded-3" name="head_teacher_title" id="modalHeadTeacherTitle" placeholder="И.о. зав. учебной частью">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">ФИО зав. учебной частью:</label>
+                            <input type="text" class="form-control form-control-sm rounded-3" name="head_teacher_name" id="modalHeadTeacherName" placeholder="В.А. Чупахина">
+                        </div>
+                    </div>
+
+                    <!-- Статус заявки -->
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-secondary">Статус заявки:</label>
+                            <select class="form-select form-select-sm rounded-3" name="status" id="modalStatus">
+                                <option value="ready" selected>Готово</option>
+                                <option value="processed">В работе</option>
+                                <option value="new">Новая</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer px-4 py-3" style="background: #f8fafc; border-top: 1px solid #f1f5f9;">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-pill" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-secondary btn-sm px-3 rounded-pill" id="btnSaveStudyCert">
+                        <i class="fas fa-check me-1"></i> Сохранить
+                    </button>
+                    <button type="button" class="btn btn-dark btn-sm px-4 rounded-pill" id="btnSaveAndDownloadStudyCert">
+                        <i class="fas fa-file-arrow-down me-1"></i> Сохранить и скачать PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Чекбоксы массового выбора
+    const selectAll = document.getElementById('selectAllStudyCerts');
+    const checkboxes = document.querySelectorAll('.study-cert-checkbox');
+    const btnBulkDownload = document.getElementById('btnStudyBulkDownload');
+    const btnBulkReady = document.getElementById('btnStudyBulkReady');
+    const btnBulkDelete = document.getElementById('btnStudyBulkDelete');
+    
+    function updateBulkButtons() {
+        const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+        const count = checkedBoxes.length;
+        const anyChecked = count > 0;
+        
+        btnBulkDownload.disabled = !anyChecked;
+        btnBulkReady.disabled = !anyChecked;
+        btnBulkDelete.disabled = !anyChecked;
+        
+        if (anyChecked) {
+            btnBulkDownload.innerHTML = `<i class="fas fa-file-archive me-1"></i> Скачать выбранные (${count})`;
+        } else {
+            btnBulkDownload.innerHTML = `<i class="fas fa-file-archive me-1 text-muted"></i> Скачать выбранные (ZIP)`;
+        }
+    }
+
+    if(selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateBulkButtons();
+        });
+    }
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            updateBulkButtons();
+        });
+    });
+
+    // Живой поиск и фильтрация по статусам
+    const searchInput = document.getElementById('searchStudyCerts');
+    const tableRows = document.querySelectorAll('.study-cert-row');
+    const noResultsRow = document.getElementById('noSearchResultsRow');
+    const statusFilterBtns = document.querySelectorAll('#studyStatusFilters .status-filter-btn');
+    let currentStatusFilter = 'all';
+
+    function applyStudyFilters() {
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        let visibleCount = 0;
+
+        tableRows.forEach(row => {
+            const rowStatus = row.getAttribute('data-status') || '';
+            const statusMatches = (currentStatusFilter === 'all' || rowStatus === currentStatusFilter);
+
+            const fioEl = row.querySelector('.search-target-fio');
+            const groupEl = row.querySelector('.search-target-group');
+            const text = (fioEl ? fioEl.textContent : '') + ' ' + (groupEl ? groupEl.textContent : '');
+            const textMatches = !query || text.toLowerCase().includes(query);
+
+            if (statusMatches && textMatches) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (noResultsRow) {
+            noResultsRow.style.display = (visibleCount === 0 && tableRows.length > 0) ? '' : 'none';
+        }
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', applyStudyFilters);
+    }
+
+    statusFilterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            statusFilterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentStatusFilter = this.getAttribute('data-status-filter') || 'all';
+            applyStudyFilters();
+        });
+    });
+
+    // Заполнение модального окна при клике "Оформить"
+    const editForm = document.getElementById('editStudyCertForm');
+    const actionSaveDownloadInput = document.getElementById('actionSaveDownload');
+    const btnSave = document.getElementById('btnSaveStudyCert');
+    const btnSaveAndDownload = document.getElementById('btnSaveAndDownloadStudyCert');
+    const editModalEl = document.getElementById('editStudyCertModal');
+
+    function populateStudyCertModal(btn) {
+        if (!btn || !editForm) return;
+        actionSaveDownloadInput.value = '0';
+        const reqId = btn.getAttribute('data-id');
+        const updateBaseUrl = "{{ url_for('admin.update_study_certificate', req_id=0) }}".replace('/0', '/');
+        editForm.action = updateBaseUrl + reqId;
+
+        // Заполняем информационные поля
+        document.getElementById('modalStudentFio').textContent = btn.getAttribute('data-fio') || '—';
+        document.getElementById('modalStudentGroup').textContent = btn.getAttribute('data-group') || '—';
+        document.getElementById('modalStudentBirthDate').textContent = btn.getAttribute('data-birth-date') || '—';
+        document.getElementById('modalStudentSpecialty').textContent = btn.getAttribute('data-specialty') || '—';
+        const durationEl = document.getElementById('modalStudentDuration');
+        if (durationEl) durationEl.textContent = btn.getAttribute('data-duration') || '—';
+
+        // Заполняем форму
+        document.getElementById('modalGroupNumber').value = btn.getAttribute('data-group') || '';
+        document.getElementById('modalCopiesCount').value = btn.getAttribute('data-copies') || '1';
+        document.getElementById('modalStudyPeriodStart').value = btn.getAttribute('data-period-start') || '';
+        document.getElementById('modalStudyPeriodEnd').value = btn.getAttribute('data-period-end') || '';
+        document.getElementById('modalIsStateSupport').value = btn.getAttribute('data-state-support') || '0';
+        document.getElementById('modalFundingType').value = btn.getAttribute('data-funding-type') || 'budget';
+        document.getElementById('modalOrderNumber').value = btn.getAttribute('data-order-number') || '';
+        document.getElementById('modalOrderDate').value = btn.getAttribute('data-order-date') || '';
+        document.getElementById('modalCertNumber').value = btn.getAttribute('data-cert-number') || '';
+        
+        // Дата выдачи справки формируется при нажатии «Скачать» или «Сохранить и скачать»
+        document.getElementById('modalCertDate').value = btn.getAttribute('data-cert-date') || '';
+
+        document.getElementById('modalDirectorTitle').value = btn.getAttribute('data-director-title') || 'Директор';
+        document.getElementById('modalDirectorName').value = btn.getAttribute('data-director-name') || 'М.И. Пальчук';
+        document.getElementById('modalHeadTeacherTitle').value = btn.getAttribute('data-head-teacher-title') || 'И.о. зав. учебной частью';
+        document.getElementById('modalHeadTeacherName').value = btn.getAttribute('data-head-teacher-name') || 'В.А. Чупахина';
+        document.getElementById('modalStatus').value = 'ready';
+    }
+
+    if (editModalEl) {
+        editModalEl.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            if (btn) {
+                populateStudyCertModal(btn);
+            }
+        });
+    }
+
+    document.querySelectorAll('.btn-edit-study-cert').forEach(btn => {
+        btn.addEventListener('click', function() {
+            populateStudyCertModal(this);
+        });
+    });
+
+    if (btnSave) {
+        btnSave.addEventListener('click', function() {
+            actionSaveDownloadInput.value = '0';
+            document.getElementById('modalStatus').value = 'ready';
+        });
+    }
+
+    if (btnSaveAndDownload) {
+        btnSaveAndDownload.addEventListener('click', function() {
+            actionSaveDownloadInput.value = '1';
+            document.getElementById('modalStatus').value = 'ready';
+            
+            // Если дата выдачи не задана вручную — формируем сегодняшней датой
+            const certDateInput = document.getElementById('modalCertDate');
+            if (certDateInput && !certDateInput.value) {
+                certDateInput.value = new Date().toISOString().split('T')[0];
+            }
+
+            // Перезагружаем страницу через 1.2 сек после начала скачивания, чтобы обновить статус в таблице
+            setTimeout(function() {
+                const modalInstance = bootstrap.Modal.getInstance(editModalEl);
+                if (modalInstance) modalInstance.hide();
+                window.location.reload();
+            }, 1200);
+
+            editForm.submit();
+        });
+    }
+
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            document.getElementById('modalStatus').value = 'ready';
+            if (!editForm.action || editForm.action.endsWith('/admin/?tab=study_certificates') || editForm.action === window.location.href) {
+                e.preventDefault();
+                alert('Не удалось определить ID заявки для сохранения. Пожалуйста, откройте окно повторно.');
+                return false;
+            }
+        });
+    }
+
+    // Асинхронное обновление статуса одиночного селекта
+    document.querySelectorAll('.study-cert-status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const reqId = this.getAttribute('data-req-id');
+            const newStatus = this.value;
+            const parentRow = this.closest('.study-cert-row');
+            
+            this.classList.remove('status-new', 'status-processed', 'status-ready');
+            if (newStatus === 'new') {
+                this.classList.add('status-new');
+            } else if (newStatus === 'processed') {
+                this.classList.add('status-processed');
+            } else {
+                this.classList.add('status-ready');
+            }
+
+            if (parentRow) {
+                parentRow.setAttribute('data-status', newStatus);
+                applyStudyFilters();
+            }
+            
+            const formData = new FormData();
+            formData.append('status', newStatus);
+            formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+            
+            const statusBaseUrl = "{{ url_for('admin.update_study_certificate_status', req_id=0) }}".replace('/0', '/');
+            fetch(statusBaseUrl + reqId, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if(!response.ok) {
+                    alert('Ошибка при обновлении статуса');
+                }
+            });
+        });
+    });
+});
+</script>

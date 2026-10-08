@@ -6,22 +6,7 @@ from app.main import bp
 from app.db import get_db_connection
 from app import limiter
 
-# Актуальный список групп
-GROUPS = [
-    # 1 курс
-    "1.01 ГРД", "1.02 Ф", "1.03 ОБ", "1.21 ПКД", "1.22 ПКД", "1.24 ПКД",
-    "1.25 СТ", "1.26 ТГг", "1.27 ТГг", "1.28 ТГп", "1.29 ТГэ", "1.30 ТГт",
-    "1.31 БПЛА", "1.100 А",
-    # 2 курс
-    "2.01 ПКД", "2.02 ПКД", "2.03 ПКД", "2.04 ПКД", "2.05 СТ", "2.06 ТГг",
-    "2.07 ТГг", "2.08 ТГп", "2.09 ТГп", "2.10 ТГт", "2.97 А", "2.98 ГРД",
-    "2.99 Ф",
-    # 3 курс
-    "3.76 ГРД", "3.84 ПКД", "3.85 ПКД", "3.87 ПКД", "3.88 СТ", "3.91 ТГг",
-    "3.94 ТГп", "3.95 ТГт",
-    # 4 курс
-    "4.56 ГРД", "4.62 ПКД", "4.63 ПКД"
-]
+from app.constants import GROUPS
 
 
 MAX_PERIODS = 10  # Максимальное количество периодов в одной заявке
@@ -33,7 +18,7 @@ def _err(msg):
 
 
 @bp.route('/request/income-certificate-h7K9pQ', methods=['GET', 'POST'])
-@limiter.limit("10 per hour")
+@limiter.limit("30 per hour", methods=["POST"])
 def request_income_certificate():
     if request.method == 'POST':
         fio = request.form.get('fio')
@@ -46,6 +31,10 @@ def request_income_certificate():
         income_starts = request.form.getlist('income_period_start[]')
         income_ends = request.form.getlist('income_period_end[]')
         
+        consent = request.form.get('consent_personal_data')
+        if not consent:
+            return _err("Необходимо дать согласие на обработку персональных данных для заказа справки.")
+
         # --- Валидация обязательных полей ---
         if not all([fio, group_number, birth_date, study_period_start, study_period_end, phone]):
             return _err("Пожалуйста, заполните все обязательные поля.")
@@ -98,8 +87,8 @@ def request_income_certificate():
         conn = get_db_connection()
         conn.execute('''
             INSERT INTO income_cert_requests 
-            (fio, group_number, birth_date, study_period_start, study_period_end, phone, income_period_start, income_period_end, income_periods)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (fio, group_number, birth_date, study_period_start, study_period_end, phone, income_period_start, income_period_end, income_periods, consent_personal_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
         ''', (fio, group_number, birth_date, study_period_start, study_period_end, phone, first_start, first_end, periods_json))
         conn.commit()
         

@@ -62,9 +62,20 @@
             {% if is_superadmin or 'certificates' in allowed_modules %}
             <li class="nav-item">
                 <a class="nav-link {% if active_tab == 'certificates' %}active{% endif %}" href="?tab=certificates">
-                    <i class="fas fa-file-invoice"></i> Заявки на справки
+                    <i class="fas fa-file-invoice"></i> Справки о доходах
                     {% if new_certificates_count > 0 %}
                     <span class="badge bg-danger ms-1 rounded-pill">{{ new_certificates_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            {% endif %}
+
+            {% if is_superadmin or 'study_certificates' in allowed_modules %}
+            <li class="nav-item">
+                <a class="nav-link {% if active_tab == 'study_certificates' %}active{% endif %}" href="?tab=study_certificates">
+                    <i class="fas fa-graduation-cap"></i> Справки об обучении
+                    {% if new_study_certificates_count > 0 %}
+                    <span class="badge bg-danger ms-1 rounded-pill">{{ new_study_certificates_count }}</span>
                     {% endif %}
                 </a>
             </li>
@@ -180,6 +191,20 @@
 
     <!-- КОНТЕНТ ВКЛАДОК -->
     <div class="admin-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container-fluid px-0 mb-3">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category in ['error', 'danger'] else ('warning' if category == 'warning' else 'success') }} alert-dismissible fade show shadow-sm" role="alert">
+                            <i class="fas {{ 'fa-circle-exclamation' if category in ['error', 'danger'] else ('fa-triangle-exclamation' if category == 'warning' else 'fa-circle-check') }} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <div class="tab-content">
         
             {% if is_superadmin %}
@@ -194,6 +219,12 @@
             {% if is_superadmin or 'certificates' in allowed_modules %}
             <div class="tab-pane fade {% if active_tab == 'certificates' %}show active{% endif %}" id="certificatesAdminTab" role="tabpanel">
                 {% include 'admin_tabs/tab_certificates.html' %}
+            </div>
+            {% endif %}
+
+            {% if is_superadmin or 'study_certificates' in allowed_modules %}
+            <div class="tab-pane fade {% if active_tab == 'study_certificates' %}show active{% endif %}" id="studyCertificatesAdminTab" role="tabpanel">
+                {% include 'admin_tabs/tab_study_certificates.html' %}
             </div>
             {% endif %}
 

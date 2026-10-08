@@ -139,8 +139,16 @@ class AdminUsersRepository(BaseRepository):
     def get_all(cls):
         return super().get_all(order_by='created_at DESC')
 
+class StudyCertRequestsRepository(BaseRepository):
+    table_name = 'study_cert_requests'
+
+    @classmethod
+    def get_all(cls):
+        return super().get_all(order_by='created_at DESC')
+
 class SystemRepository:
     @staticmethod
     def get_all_tables():
         with get_db_connection() as conn:
             return conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall()
+

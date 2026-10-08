@@ -1,6 +1,7 @@
 import os
 import io
 import zipfile
+import tempfile
 from flask import render_template, request, redirect, url_for, flash, send_file, current_app
 from app.admin import bp
 from app.admin.core.auth import login_required, module_required
@@ -60,7 +61,7 @@ def download_certificate(req_id):
     file_name = f"Заявление_{surname}_{req_id}.pdf"
 
     try:
-        tmp_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'tmp')
+        tmp_dir = os.path.join(tempfile.gettempdir(), 'copp_pdf_tmp')
         os.makedirs(tmp_dir, exist_ok=True)
         file_path = os.path.join(tmp_dir, file_name)
 
@@ -77,8 +78,8 @@ def download_certificate(req_id):
 
         log_admin_action('download_pdf', 'certificates', req_id, f"Скачано заявление от {req_data['fio']}")
 
-        # Автоматическая смена статуса на Готово при первом скачивании
-        if req_data['status'] == 'new':
+        # Автоматическая смена статуса на Готово при скачивании
+        if req_data['status'] in ('new', 'processed'):
             conn.execute("UPDATE income_cert_requests SET status = 'ready' WHERE id = ?", (req_id,))
             conn.commit()
 
@@ -103,7 +104,7 @@ def bulk_download_certificates():
 
     conn = get_db_connection()
 
-    tmp_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'tmp')
+    tmp_dir = os.path.join(tempfile.gettempdir(), 'copp_pdf_tmp')
     os.makedirs(tmp_dir, exist_ok=True)
 
     zip_buffer = io.BytesIO()
@@ -133,7 +134,7 @@ def bulk_download_certificates():
                 except OSError:
                     pass
 
-                if req_data['status'] == 'new':
+                if req_data['status'] in ('new', 'processed'):
                     conn.execute("UPDATE income_cert_requests SET status = 'ready' WHERE id = ?", (req_id,))
 
                 generated_count += 1

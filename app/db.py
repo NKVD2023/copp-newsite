@@ -137,6 +137,7 @@ def init_db(app):
             income_period_end DATE,
             income_periods TEXT,
             status TEXT DEFAULT 'new',
+            consent_personal_data BOOLEAN DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
@@ -145,5 +146,48 @@ def init_db(app):
             conn.execute('ALTER TABLE income_cert_requests ADD COLUMN income_periods TEXT')
         except sqlite3.OperationalError:
             pass # Колонка уже существует
+
+        try:
+            conn.execute('ALTER TABLE income_cert_requests ADD COLUMN consent_personal_data BOOLEAN DEFAULT 1')
+        except sqlite3.OperationalError:
+            pass
+
+        # Создание таблицы для заявок на справку об обучении
+        conn.execute('''
+        CREATE TABLE IF NOT EXISTS study_cert_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fio TEXT NOT NULL,
+            group_number TEXT,
+            birth_date TEXT NOT NULL,
+            specialty TEXT NOT NULL,
+            study_duration TEXT NOT NULL,
+            copies_count INTEGER DEFAULT 1,
+            study_period_start TEXT,
+            study_period_end TEXT,
+            is_state_support BOOLEAN DEFAULT 0,
+            funding_type TEXT DEFAULT 'budget',
+            order_number TEXT,
+            order_date TEXT,
+            cert_number TEXT,
+            cert_date TEXT,
+            director_title TEXT DEFAULT 'Директор',
+            director_name TEXT DEFAULT 'М.И. Пальчук',
+            head_teacher_title TEXT DEFAULT 'И.о. зав. учебной частью',
+            head_teacher_name TEXT DEFAULT 'В.А. Чупахина',
+            status TEXT DEFAULT 'new',
+            consent_personal_data BOOLEAN DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+
+        try:
+            conn.execute('ALTER TABLE study_cert_requests ADD COLUMN group_number TEXT')
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            conn.execute('ALTER TABLE study_cert_requests ADD COLUMN copies_count INTEGER DEFAULT 1')
+        except sqlite3.OperationalError:
+            pass
 
         conn.commit()

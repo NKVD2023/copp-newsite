@@ -54,6 +54,7 @@ def dashboard():
     stats_list, socials_list, menu_items_list, contact_requests = [], [], [], []
     forms_list, submissions_list, prof_uploads, professions_list = [], [], [], []
     team_members, career_test_stats, users_list, certificates_list = [], [], [], []
+    study_certificates_list = []
     tables_list, menu_groups_list = [], []
     contact_settings = None
 
@@ -149,6 +150,22 @@ def dashboard():
         except Exception as e:
             print(f"Error loading certificates: {e}")
             certificates_list = []
+    elif active_tab == 'study_certificates':
+        try:
+            with get_db_connection() as conn:
+                raw_study = conn.execute('SELECT * FROM study_cert_requests ORDER BY created_at DESC').fetchall()
+                study_certificates_list = []
+                for req in raw_study:
+                    req_dict = dict(req)
+                    try:
+                        dt = datetime.strptime(req_dict['created_at'].split('.')[0], '%Y-%m-%d %H:%M:%S')
+                        req_dict['formatted_date'] = dt.strftime('%d.%m.%Y %H:%M')
+                    except Exception:
+                        req_dict['formatted_date'] = req_dict['created_at']
+                    study_certificates_list.append(req_dict)
+        except Exception as e:
+            print(f"Error loading study certificates: {e}")
+            study_certificates_list = []
 
     # Загружаем список учебных заведений для чекбоксов
     colleges_list = []
@@ -197,6 +214,28 @@ def dashboard():
     except Exception:
         pass
 
+    new_study_certificates_count = 0
+    try:
+        with get_db_connection() as conn:
+            res = conn.execute("SELECT COUNT(*) FROM study_cert_requests WHERE status='new'").fetchone()
+            if res:
+                new_study_certificates_count = res[0]
+    except Exception:
+        pass
+
+    is_2fa_enabled = False
+    if session.get('is_admin'):
+        from dotenv import load_dotenv
+        load_dotenv()
+        is_2fa_enabled = os.environ.get('ADMIN_2FA_ENABLED') == '1'
+    else:
+        user_id = session.get('user_id')
+        if user_id:
+            with get_db_connection() as conn:
+                u = conn.execute('SELECT is_2fa_enabled FROM admin_users WHERE id = ?', (user_id,)).fetchone()
+                if u:
+                    is_2fa_enabled = bool(u['is_2fa_enabled'])
+
     return render_template(
         'admin_dashboard.html',
         active_tab=active_tab,
@@ -226,6 +265,7 @@ def dashboard():
         current_username=session.get('username', 'Суперадмин'),
         current_role=session.get('user_role', 'superadmin'),
         is_superadmin=bool(session.get('is_admin')),
+        is_2fa_enabled=is_2fa_enabled,
         now_str=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         edit_item=edit_item,
         edit_page_item=edit_page_item,
@@ -235,7 +275,9 @@ def dashboard():
         extra_images_list=extra_images_list,
         career_test_stats=career_test_stats,
         certificates_list=certificates_list,
-        new_certificates_count=new_certificates_count
+        new_certificates_count=new_certificates_count,
+        study_certificates_list=study_certificates_list,
+        new_study_certificates_count=new_study_certificates_count
     )
 
 @bp.route('/logs/clear', methods=['POST'])
