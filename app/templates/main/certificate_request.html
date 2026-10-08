@@ -424,9 +424,22 @@
                 placeholder: "Начните вводить группу..."
             });
             
+            const ruLocale = (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.ru) ? 'ru' : {
+                firstDayOfWeek: 1,
+                weekdays: {
+                    shorthand: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+                    longhand: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
+                },
+                months: {
+                    shorthand: ["Янв", "Фев", "Март", "Апр", "Май", "Июнь", "Июль", "Авг", "Сен", "Окт", "Ноя", "Дек"],
+                    longhand: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
+                },
+                rangeSeparator: " — "
+            };
+
             // Настройка Flatpickr
             const fpConfig = {
-                locale: "ru",
+                locale: ruLocale,
                 dateFormat: "Y-m-d", // Отправляем на сервер стандартный формат
                 altInput: true,
                 altFormat: "d.m.Y", // Показываем пользователю красивый

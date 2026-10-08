@@ -9,12 +9,12 @@
     
     <link href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=999">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fontawesome/css/all.min.css') }}">
     
-    <!-- TomSelect для удобного поиска в селекте -->
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
-    <!-- Flatpickr для выбора дат -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- TomSelect локально -->
+    <link href="{{ url_for('static', filename='vendor/tom-select/tom-select.bootstrap5.min.css') }}" rel="stylesheet">
+    <!-- Flatpickr локально -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.css') }}">
     
     <style>
         :root {
@@ -337,16 +337,30 @@
         </div>
     </div>
 
-    <!-- Подключение скриптов -->
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/ru.js"></script>
+    <!-- Подключение скриптов локально (без внешних подключений к CDN) -->
+    <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/tom-select/tom-select.complete.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/flatpickr/flatpickr.min.js') }}"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Русская локализация Flatpickr (встроена для моментальной работы без задержек CDN)
+            const ruLocale = (window.flatpickr && window.flatpickr.l10ns && window.flatpickr.l10ns.ru) ? 'ru' : {
+                firstDayOfWeek: 1,
+                weekdays: {
+                    shorthand: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"],
+                    longhand: ["Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]
+                },
+                months: {
+                    shorthand: ["Янв", "Фев", "Март", "Апр", "Май", "Июнь", "Июль", "Авг", "Сен", "Окт", "Ноя", "Дек"],
+                    longhand: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
+                },
+                rangeSeparator: " — "
+            };
+
             // Инициализация календаря Flatpickr
             flatpickr(".date-picker", {
-                locale: "ru",
+                locale: ruLocale,
                 dateFormat: "d.m.Y",
                 allowInput: true,
                 maxDate: "today"
