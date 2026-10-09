@@ -514,7 +514,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (btnSaveAndDownload) {
-        btnSaveAndDownload.addEventListener('click', function() {
+        btnSaveAndDownload.addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (!editForm.action || editForm.action.endsWith('/admin/?tab=study_certificates') || editForm.action === window.location.href) {
+                alert('Не удалось определить ID заявки для сохранения. Пожалуйста, откройте окно повторно.');
+                return;
+            }
+
             actionSaveDownloadInput.value = '1';
             document.getElementById('modalStatus').value = 'ready';
             
@@ -524,14 +530,86 @@ document.addEventListener('DOMContentLoaded', function() {
                 certDateInput.value = new Date().toISOString().split('T')[0];
             }
 
-            // Перезагружаем страницу через 1.2 сек после начала скачивания, чтобы обновить статус в таблице
-            setTimeout(function() {
-                const modalInstance = bootstrap.Modal.getInstance(editModalEl);
-                if (modalInstance) modalInstance.hide();
-                window.location.reload();
-            }, 1200);
+            const origHtml = btnSaveAndDownload.innerHTML;
+            btnSaveAndDownload.disabled = true;
+            if (btnSave) btnSave.disabled = true;
+            btnSaveAndDownload.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Генерация PDF...';
 
-            editForm.submit();
+            try {
+                const formData = new FormData(editForm);
+                formData.append('is_ajax', '1');
+
+                const response = await fetch(editForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера при сохранении данных (' + response.status + ')');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Закрываем модальное окно
+                    const modalInstance = bootstrap.Modal.getInstance(editModalEl);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+
+                    // Скачиваем PDF через временную скрытую ссылку
+                    if (data.download_url) {
+                        const dlLink = document.createElement('a');
+                        dlLink.href = data.download_url;
+                        dlLink.setAttribute('download', '');
+                        document.body.appendChild(dlLink);
+                        dlLink.click();
+                        setTimeout(() => {
+                            try { document.body.removeChild(dlLink); } catch(_) {}
+                        }, 1000);
+                    }
+
+                    // Обновляем строку заявки в таблице
+                    const reqId = data.req_id;
+                    const rowSelect = document.querySelector(`.study-cert-status-select[data-req-id="${reqId}"]`);
+                    if (rowSelect) {
+                        rowSelect.value = 'ready';
+                        rowSelect.classList.remove('status-new', 'status-processed');
+                        rowSelect.classList.add('status-ready');
+                        const parentRow = rowSelect.closest('.study-cert-row');
+                        if (parentRow) {
+                            parentRow.setAttribute('data-status', 'ready');
+                            const editBtn = parentRow.querySelector('.btn-edit-study-cert');
+                            if (editBtn) {
+                                editBtn.setAttribute('data-status', 'ready');
+                                if (data.cert_date) editBtn.setAttribute('data-cert-date', data.cert_date);
+                                if (data.cert_number) editBtn.setAttribute('data-cert-number', data.cert_number);
+                                if (data.order_number) editBtn.setAttribute('data-order-number', data.order_number);
+                                if (data.order_date) editBtn.setAttribute('data-order-date', data.order_date);
+                                const groupInput = document.getElementById('modalGroupNumber');
+                                if (groupInput && groupInput.value) {
+                                    editBtn.setAttribute('data-group', groupInput.value);
+                                    const groupSpan = parentRow.querySelector('.search-target-group .tag-group');
+                                    if (groupSpan) groupSpan.textContent = groupInput.value;
+                                }
+                            }
+                            applyStudyFilters();
+                        }
+                    }
+                } else {
+                    alert('Не удалось сохранить справку: ' + (data.message || 'неизвестная ошибка'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Произошла ошибка при сохранении и скачивании: ' + err.message);
+            } finally {
+                btnSaveAndDownload.disabled = false;
+                btnSaveAndDownload.innerHTML = origHtml;
+                if (btnSave) btnSave.disabled = false;
+            }
         });
     }
 
@@ -580,6 +658,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Ошибка при обновлении статуса');
                 }
             });
+        });
+    });
+
+    // При прямом клике «Скачать PDF» в таблице — сразу визуально переводим статус строки в «Готово»
+    document.querySelectorAll('.btn-action-download').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = this.closest('.study-cert-row');
+            if (row) {
+                const select = row.querySelector('.study-cert-status-select');
+                if (select && select.value !== 'ready') {
+                    select.value = 'ready';
+                    select.classList.remove('status-new', 'status-processed');
+                    select.classList.add('status-ready');
+                    row.setAttribute('data-status', 'ready');
+                    const editBtn = row.querySelector('.btn-edit-study-cert');
+                    if (editBtn) editBtn.setAttribute('data-status', 'ready');
+                    applyStudyFilters();
+                }
+            }
         });
     });
 });

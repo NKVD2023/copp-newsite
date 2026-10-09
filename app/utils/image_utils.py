@@ -34,22 +34,43 @@ def save_image_as_webp(file, upload_folder, quality=80, add_uuid=False):
         return filename
         
     try:
-        from PIL import Image
-        # Если загружаемый файл в памяти - открываем его
+        from PIL import Image, ImageOps
+        # Если загружаемый файл в памяти или во временном файле
         img = Image.open(file.stream)
         
-        # Конвертация RGBA (png с прозрачностью) в RGB, если нужно, 
-        # но WebP отлично поддерживает RGBA, так что просто сохраняем
+        # Исправляем ориентацию фотографии по EXIF (актуально для смартфонов)
+        try:
+            img = ImageOps.exif_transpose(img)
+        except Exception:
+            pass
+            
+        # Автоматическое пропорциональное уменьшение гигантских фото (например, 48MP с телефона)
+        # Для веб-новостей максимального разрешения 1920x1920 более чем достаточно
+        max_dim = 1920
+        if max(img.size) > max_dim:
+            img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+            
+        # Корректная обработка цветовых пространств
+        if img.mode in ('RGBA', 'LA'):
+            # WebP отлично поддерживает альфа-канал
+            pass
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
         
         webp_filename = f"{basename}.webp"
         filepath = os.path.join(upload_folder, webp_filename)
         
-        img.save(filepath, 'webp', quality=quality, optimize=True)
+        # Сохраняем в WebP с method=4 (быстрое и качественное сжатие без долгого exhaustive search)
+        img.save(filepath, 'webp', quality=quality, method=4)
         return webp_filename
     except Exception as e:
         print(f"Ошибка при конвертации в WebP: {e}")
         # Если не получилось (например, битый файл) - просто сохраняем оригинал
-        file.stream.seek(0)
-        filepath = os.path.join(upload_folder, filename)
-        file.save(filepath)
-        return filename
+        try:
+            file.stream.seek(0)
+            filepath = os.path.join(upload_folder, filename)
+            file.save(filepath)
+            return filename
+        except Exception as save_err:
+            print(f"Ошибка сохранения оригинального файла: {save_err}")
+            return None

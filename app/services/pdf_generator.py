@@ -1,4 +1,5 @@
 import os
+os.environ['FONTTOOLS_DONT_USE_CYTHON'] = '1'
 from fpdf import FPDF
 from flask import current_app
 

@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, send_file
+from flask import render_template, request, redirect, url_for, flash, send_file, current_app
 import os
 from werkzeug.utils import secure_filename
 from app.admin import bp
@@ -28,8 +28,17 @@ def add_news():
         from datetime import datetime
         publish_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    main_image_path = UploadService.handle_main_image(upload_folder='uploads/news')
-    extra_images_str = UploadService.handle_extra_images(upload_folder='uploads/news')
+    try:
+        main_image_path = UploadService.handle_main_image(upload_folder='uploads/news')
+    except Exception as img_err:
+        current_app.logger.error(f"Ошибка обработки главного фото: {img_err}")
+        main_image_path = request.form.get('existing_main_image', '')
+
+    try:
+        extra_images_str = UploadService.handle_extra_images(upload_folder='uploads/news')
+    except Exception as img_err:
+        current_app.logger.error(f"Ошибка обработки доп. фото: {img_err}")
+        extra_images_str = ','.join(request.form.getlist('existing_extra_images'))
 
     try:
         data = {
@@ -68,8 +77,17 @@ def update_news(news_id):
         if len(publish_date) == 16:
             publish_date += ":00"
             
-    main_image_path = UploadService.handle_main_image(upload_folder='uploads/news')
-    extra_images_str = UploadService.handle_extra_images(upload_folder='uploads/news')
+    try:
+        main_image_path = UploadService.handle_main_image(upload_folder='uploads/news')
+    except Exception as img_err:
+        current_app.logger.error(f"Ошибка обработки главного фото при обновлении: {img_err}")
+        main_image_path = request.form.get('existing_main_image', '')
+
+    try:
+        extra_images_str = UploadService.handle_extra_images(upload_folder='uploads/news')
+    except Exception as img_err:
+        current_app.logger.error(f"Ошибка обработки доп. фото при обновлении: {img_err}")
+        extra_images_str = ','.join(request.form.getlist('existing_extra_images'))
 
     try:
         data = {

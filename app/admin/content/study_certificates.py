@@ -3,7 +3,7 @@ import io
 import zipfile
 import tempfile
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, flash, send_file, current_app
+from flask import render_template, request, redirect, url_for, flash, send_file, current_app, jsonify
 from app.admin import bp
 from app.admin.core.auth import login_required, module_required
 from app.admin.core.logger import log_admin_action
@@ -71,6 +71,26 @@ def update_study_certificate(req_id):
     conn.commit()
 
     log_admin_action('update', 'study_certificates', req_id, f"Оформлена справка об обучении #{req_id} (статус: Готово)")
+
+    is_ajax = (
+        request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+        request.form.get('is_ajax') == '1' or
+        request.accept_mimetypes.best == 'application/json'
+    )
+    if is_ajax:
+        download_url = url_for('admin.download_study_certificate', req_id=req_id) if request.form.get('action_save_download') == '1' else None
+        return jsonify({
+            'success': True,
+            'message': 'Данные справки успешно сохранены, статус переключен в «Готово»',
+            'download_url': download_url,
+            'req_id': req_id,
+            'status': status,
+            'cert_date': cert_date,
+            'cert_number': cert_number,
+            'order_number': order_number,
+            'order_date': order_date
+        })
+
     flash('Данные справки успешно сохранены, статус переключен в «Готово»', 'success')
 
     # Если была нажата кнопка «Сохранить и скачать PDF»
